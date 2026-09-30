@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Add Staff Member | HallMaster{% endblock %}
+{% block page_key %}staff{% endblock %}
+{% block page_content %}
+<div class="staff-create-page">
+	<nav class="staff-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'staff' %}">Staff &amp; Roles</a><span aria-hidden="true">/</span><span>Add member</span></nav>
+
+	<header class="staff-create-heading">
+		<div>
+			<span class="eyebrow">TEAM DIRECTORY <span class="staff-heading-dot"></span> NEW PROFILE</span>
+			<h1>Add a team member</h1>
+			<p>Set up their profile, contact details and access to HallMaster.</p>
+		</div>
+		<a class="text-button" href="{% url 'staff' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12"/></svg>Back to staff</a>
+	</header>
+
+	<div class="staff-create-layout">
+		<form class="staff-create-form" id="add-staff-form" novalidate>
+			<section class="staff-form-section" aria-labelledby="staff-profile-title">
+				<div class="staff-section-heading">
+					<span class="staff-section-index">01</span>
+					<div><h2 id="staff-profile-title">Profile information</h2><p>Start with the details your team will recognize.</p></div>
+				</div>
+				<div class="staff-avatar-row">
+					<label class="staff-avatar-upload" for="staff-avatar" aria-label="Upload profile photo">
+						<span class="staff-avatar-preview" id="staff-avatar-preview">ST</span>
+						<span class="staff-avatar-add" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+					</label>
+					<span class="staff-avatar-copy"><strong>Profile photo</strong><span>Optional · JPG or PNG, up to 5 MB</span><span class="staff-avatar-action">Choose image</span></span>
+					<input class="staff-file-input" id="staff-avatar" type="file" accept="image/png,image/jpeg,image/webp">
+				</div>
+				<div class="staff-field-grid">
+					<label class="staff-field staff-field-wide"><span>Full name <i>Required</i></span><input class="input" id="staff-name" name="staff_name" type="text" placeholder="e.g. Ayesha Khan" autocomplete="name" required><small>Use the name shown on their official documents.</small></label>
+					<label class="staff-field"><span>Staff ID</span><div class="staff-id-field"><span class="staff-id-mark">HM</span><input class="input" name="staff_id" type="text" value="Auto-assigned on save" readonly aria-label="Staff ID will be auto-assigned"></div></label>
+					<label class="staff-field"><span>Role <i>Required</i></span><select class="select" id="staff-role-select" name="staff_role" required><option value="" disabled>Select a role</option><option>Manager</option><option>Administrator</option><option>Accountant</option><option>Event Manager</option><option>Receptionist</option></select></label>
+				</div>
+			</section>
+
+			<section class="staff-form-section" aria-labelledby="staff-contact-title">
+				<div class="staff-section-heading">
+					<span class="staff-section-index">02</span>
+					<div><h2 id="staff-contact-title">Contact &amp; identity</h2><p>Keep the team's contact record accurate and up to date.</p></div>
+				</div>
+				<div class="staff-field-grid">
+					<label class="staff-field"><span>Email address <i>Required</i></span><input class="input" name="staff_email" type="email" placeholder="name@example.com" autocomplete="email" required><small>Used for work communication and invitations.</small></label>
+					<label class="staff-field"><span>Phone number <i>Required</i></span><div class="staff-phone-field"><span aria-hidden="true">+92</span><input class="input" name="staff_number" type="tel" placeholder="300 123 4567" autocomplete="tel-national" required></div></label>
+					<label class="staff-field staff-field-wide"><span>National ID number <i>Required</i></span><input class="input" name="staff_nic_num" type="text" inputmode="numeric" placeholder="XXXXX-XXXXXXX-X" autocomplete="off" required><small>Stored with the staff record for identity verification.</small></label>
+				</div>
+			</section>
+
+			<section class="staff-form-section staff-form-section-last" aria-labelledby="staff-access-title">
+				<div class="staff-section-heading">
+					<span class="staff-section-index">03</span>
+					<div><h2 id="staff-access-title">Access &amp; invitation</h2><p>Choose how this team member will join your workspace.</p></div>
+				</div>
+				<div class="staff-invite-option">
+					<span class="staff-invite-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+					<span class="staff-invite-copy"><strong>Send an email invitation</strong><span>They'll receive a secure link to access HallMaster.</span></span>
+					<label class="staff-switch"><input type="checkbox" name="send_invite" checked><span aria-hidden="true"></span><span class="sr-only">Send an email invitation</span></label>
+				</div>
+				<label class="staff-field staff-status-field"><span>Account status</span><select class="select" name="staff_status"><option selected>Active</option><option>Invited</option><option>Inactive</option></select><small>Inactive accounts cannot sign in to the workspace.</small></label>
+			</section>
+
+			<div class="staff-form-footer">
+				<p><span class="staff-required-mark">*</span> Required fields</p>
+				<div class="staff-form-actions"><a class="text-button" href="{% url 'staff' %}">Cancel</a><button class="primary-button" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add team member</button></div>
+			</div>
+			<p class="staff-form-feedback" id="staff-form-feedback" role="status" aria-live="polite"></p>
+		</form>
+
+		<aside class="staff-create-aside" aria-label="Staff profile preview">
+			<div class="staff-preview-label"><span class="staff-live-dot"></span> PROFILE PREVIEW</div>
+			<div class="staff-preview-person"><span class="staff-preview-avatar" id="staff-preview-avatar">ST</span><div><strong id="staff-preview-name">New team member</strong><span id="staff-preview-role">Manager</span></div></div>
+			<div class="staff-preview-divider"></div>
+			<div class="staff-preview-meta"><span>Workspace</span><strong>Royal Palace Hall</strong></div>
+			<div class="staff-preview-meta"><span>Account status</span><strong class="staff-active-label"><i></i> Active</strong></div>
+			<div class="staff-access-summary"><span class="staff-access-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></span><span><strong>Role-based access</strong><small>Permissions follow the selected role.</small></span></div>
+			<div class="staff-aside-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><p>Preview only. This frontend screen does not save staff records yet.</p></div>
+			<div class="staff-preview-watermark" aria-hidden="true">HM</div>
+		</aside>
+	</div>
+</div>
+{% endblock %}
+{% block page_scripts %}
+<link rel="stylesheet" href="{% static 'css/addstaff.css' %}">
+{{ block.super }}
+<script defer src="{% static 'javascript/addstaff.js' %}"></script>
+{% endblock %}

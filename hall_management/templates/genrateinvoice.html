@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Invoice {{ invoice_id }} | HallMaster{% endblock %}
+{% block page_content %}
+<header class="page-heading invoice-page-heading">
+	<div>
+		<span class="eyebrow">BILLING / INVOICE</span>
+		<h1>{{ invoice_id }}</h1>
+		<p>Invoice for {{ invoice.event }} · {{ invoice.customer }}</p>
+	</div>
+	<div class="heading-actions invoice-actions">
+		<a class="text-button" href="{% url 'invoices' %}">Back to invoices</a>
+		<button class="primary-button" type="button" onclick="window.print()">Print invoice</button>
+	</div>
+</header>
+
+<section class="invoice-page">
+	<article class="invoice-document" aria-label="Invoice {{ invoice_id }}">
+		<header class="invoice-document-head">
+			<div class="invoice-brand">
+				<span class="invoice-brand-mark">HM</span>
+				<div><strong>ROYAL PALACE HALL</strong><span>EVENTS &amp; HOSPITALITY</span></div>
+			</div>
+			<div class="invoice-heading-meta">
+				<span class="invoice-word">INVOICE</span>
+				<strong>{{ invoice_id }}</strong>
+				<span class="status {{ invoice.status }}">{{ invoice.status|capfirst }}</span>
+			</div>
+		</header>
+
+		<div class="invoice-detail-grid">
+			<section class="invoice-party">
+				<span class="invoice-label">BILLED TO</span>
+				<h2>{{ invoice.customer }}</h2>
+				<p>{{ invoice.event }}</p>
+				<p>{{ invoice.venue }}</p>
+			</section>
+			<section class="invoice-meta-grid" aria-label="Invoice details">
+				<div><span class="invoice-label">BOOKING ID</span><strong>{{ invoice.booking }}</strong></div>
+				<div><span class="invoice-label">EVENT DATE</span><strong>{{ invoice.event_date }}</strong></div>
+				<div><span class="invoice-label">ISSUED ON</span><strong>{{ invoice.issued }}</strong></div>
+				<div><span class="invoice-label">DUE DATE</span><strong>{{ invoice.due }}</strong></div>
+			</section>
+		</div>
+
+		<div class="invoice-items-wrap">
+			<table class="invoice-items">
+				<thead><tr><th>DESCRIPTION</th><th>AMOUNT</th></tr></thead>
+				<tbody>
+					{% for item in invoice.items %}
+					<tr><td>{{ item.0 }}</td><td>Rs {{ item.1 }}</td></tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		<section class="invoice-payment-summary">
+			<div class="invoice-note">
+				<span class="invoice-label">PAYMENT NOTE</span>
+				<p>Please include <strong>{{ invoice_id }}</strong> as the payment reference.</p>
+				<p>Thank you for choosing Royal Palace Hall.</p>
+			</div>
+			<dl class="invoice-totals">
+				<div><dt>Subtotal</dt><dd>Rs {{ invoice.total }}</dd></div>
+				<div><dt>Amount paid</dt><dd>Rs {{ invoice.paid }}</dd></div>
+				<div class="invoice-balance"><dt>Balance due</dt><dd>Rs {{ invoice.balance }}</dd></div>
+			</dl>
+		</section>
+
+		<footer class="invoice-document-footer">
+			<span>ROYAL PALACE HALL</span>
+			<span>Karachi, Pakistan</span>
+			<span>{{ invoice_id }}</span>
+		</footer>
+	</article>
+</section>
+{% endblock %}

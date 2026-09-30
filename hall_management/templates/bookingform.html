@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}New Booking | HallMaster{% endblock %}
+{% block page_scripts %}{{ block.super }}<script defer src="{% static 'javascript/bookingform.js' %}?v=1"></script>{% endblock %}
+{% block page_content %}
+<header class="page-heading booking-page-heading">
+  <div>
+    <span class="eyebrow">RESERVATIONS</span>
+    <h1>New booking</h1>
+    <p>Create a premium venue reservation with all event details in one place.</p>
+  </div>
+  <div class="heading-actions">
+    <a class="text-button" href="{% url 'bookings' %}">Back to bookings</a>
+    <button class="primary-button" type="submit" form="booking-form">Save booking</button>
+  </div>
+</header>
+
+<section class="booking-form-shell">
+  <form id="booking-form" class="booking-form-card" method="post">
+    {% csrf_token %}
+    <div class="booking-form-header">
+      <h2>Royal Palace Hall reservation</h2>
+      <span class="booking-form-pill">Live reservation</span>
+    </div>
+
+    <div class="booking-form-layout">
+      <div class="booking-form-main">
+        <div class="booking-form-section">
+          <h3>Customer information</h3>
+          <div class="booking-form-grid">
+            <div class="booking-form-field">
+              <label for="customer-name">Customer name</label>
+              <input id="customer-name" type="text" name="customer_name" value="Sarah Khan" required>
+            </div>
+            <div class="booking-form-field">
+              <label for="customer-phone">Phone number</label>
+              <input id="customer-phone" type="tel" name="phone" value="+92 300 1234567" required>
+            </div>
+            <div class="booking-form-field">
+              <label for="customer-email">Email</label>
+              <input id="customer-email" type="email" name="email" value="sarah.khan@email.com" required>
+            </div>
+            <div class="booking-form-field">
+              <label for="booking-source">Booking source</label>
+              <select id="booking-source" name="source">
+                <option selected>Instagram</option>
+                <option>Website</option>
+                <option>Referral</option>
+                <option>Walk-in</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="booking-form-section">
+          <h3>Event details</h3>
+          <div class="booking-form-grid">
+            <div class="booking-form-field">
+              <label for="event-name">Event name</label>
+              <input id="event-name" type="text" name="event_name" value="Wedding Reception" required>
+            </div>
+            <div class="booking-form-field">
+              <label for="event-type">Event type</label>
+              <select id="event-type" name="event_type">
+                <option selected>Wedding</option>
+                <option>Engagement</option>
+                <option>Mehndi</option>
+                <option>Corporate</option>
+                <option>Birthday</option>
+              </select>
+            </div>
+            <div class="booking-form-field">
+              <label for="event-date">Event date</label>
+              <input id="event-date" type="date" name="event_date" value="2026-10-05" required>
+            </div>
+            <div class="booking-form-field">
+              <label for="event-time">Start time</label>
+              <input id="event-time" type="time" name="event_time" value="18:00" required>
+            </div>
+            <div class="booking-form-field">
+              <label for="guest-count">Guests</label>
+              <input id="guest-count" type="number" name="guest_count" value="420" min="1" required>
+            </div>
+            <div class="booking-form-field">
+              <label for="hall-select">Hall</label>
+              <select id="hall-select" name="hall">
+                <option selected>Grand Ballroom</option>
+                <option>Crystal Hall</option>
+                <option>Garden Pavilion</option>
+                <option>Royal Terrace</option>
+              </select>
+            </div>
+            <div class="booking-form-field full">
+              <label for="event-notes">Special requirements</label>
+              <textarea id="event-notes" name="notes">Luxury floral stage, gold accent décor, live band at 8:30 PM, and a 3-course dinner setup.</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="booking-form-section">
+          <h3>Package & add-ons</h3>
+          <div class="booking-form-grid">
+            <div class="booking-form-field">
+              <label for="package-type">Package</label>
+              <select id="package-type" name="package_type">
+                <option selected>Royal Wedding Signature</option>
+                <option>Premium Wedding</option>
+                <option>Corporate Event Master</option>
+                <option>Garden Celebration</option>
+              </select>
+            </div>
+            <div class="booking-form-field">
+              <label for="package-price">Package value</label>
+              <input id="package-price" type="text" name="package_value" value="Rs 1,850,000" readonly>
+            </div>
+            <div class="booking-form-field full">
+              <label>Included services</label>
+              <div class="booking-form-checks">
+                <label class="check-chip"><input type="checkbox" checked> Catering</label>
+                <label class="check-chip"><input type="checkbox" checked> Stage décor</label>
+                <label class="check-chip"><input type="checkbox" checked> Sound system</label>
+                <label class="check-chip"><input type="checkbox"> Floral ceiling</label>
+                <label class="check-chip"><input type="checkbox"> Photographer</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="booking-form-summary">
+        <div class="summary-card">
+          <h3>Booking summary</h3>
+          <div class="summary-meta">
+            <div class="summary-row"><span>Customer</span><strong>Sarah Khan</strong></div>
+            <div class="summary-row"><span>Event date</span><strong>05 Oct 2026</strong></div>
+            <div class="summary-row"><span>Venue</span><strong>Grand Ballroom</strong></div>
+            <div class="summary-row"><span>Package</span><strong>Royal Wedding</strong></div>
+            <div class="summary-row"><span>Guests</span><strong>420</strong></div>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-total">
+            <div>
+              <span>Total estimate</span>
+              <strong>Rs 1.85M</strong>
+            </div>
+            <span>Deposit 30%</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="booking-form-footer">
+      <span class="booking-form-note">Auto-saved 2 minutes ago</span>
+      <div class="heading-actions">
+        <button class="text-button" type="button">Save draft</button>
+        <button class="primary-button" type="submit">Confirm booking</button>
+      </div>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard | HallMaster{% endblock %}
+{% block page_content %}
+		<main class="content-wrap">
+			<header class="page-heading">
+				<div><span class="eyebrow">MONDAY · 28 SEPTEMBER 2026</span><h1>Welcome back, Faisal.</h1><p>Here is what is happening at Royal Palace Hall today.</p></div>
+				<div class="heading-actions"><a class="text-button" href="/reports/">View reports</a><a class="primary-button" href="/bookings/">+ New booking</a></div>
+			</header>
+
+			<section class="stats-grid" aria-label="Venue performance summary">
+				<article class="stat-card"><div class="stat-top"><span class="stat-label">Total revenue</span><span class="stat-icon" aria-hidden="true">Rs</span></div><strong class="stat-value">Rs 7.76M</strong><div class="stat-foot"><span class="trend">+12.8%</span><span>vs. last month</span></div></article>
+				<article class="stat-card"><div class="stat-top"><span class="stat-label">Total bookings</span><span class="stat-icon" aria-hidden="true">BK</span></div><strong class="stat-value">284</strong><div class="stat-foot"><span class="trend">+8.2%</span><span>vs. last month</span></div></article>
+				<article class="stat-card"><div class="stat-top"><span class="stat-label">Total customers</span><span class="stat-icon" aria-hidden="true">CU</span></div><strong class="stat-value">1,248</strong><div class="stat-foot"><span class="trend">+6.4%</span><span>vs. last month</span></div></article>
+				<article class="stat-card"><div class="stat-top"><span class="stat-label">Pending payments</span><span class="stat-icon" aria-hidden="true">Rs</span></div><strong class="stat-value">Rs 1.25M</strong><div class="stat-foot"><span class="trend down">12 invoices</span><span>awaiting payment</span></div></article>
+			</section>
+
+			<section class="section dashboard-grid" aria-label="Revenue and upcoming bookings">
+				<article class="panel chart-panel">
+					<div class="chart-header"><div><strong>Revenue overview</strong><span>Monthly revenue · 2026</span></div><div class="chart-total"><strong>Rs 7.76M</strong><span>+12.8% this year</span></div></div>
+					<div class="chart-box" role="img" aria-label="Monthly revenue trend from January to December">
+						<svg viewBox="0 0 720 205" preserveAspectRatio="none" aria-hidden="true">
+							<defs><linearGradient id="revenue-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c9a96e" stop-opacity=".22"/><stop offset="1" stop-color="#c9a96e" stop-opacity="0"/></linearGradient></defs>
+							<line class="chart-gridline" x1="32" y1="20" x2="710" y2="20"/><line class="chart-gridline" x1="32" y1="73" x2="710" y2="73"/><line class="chart-gridline" x1="32" y1="126" x2="710" y2="126"/><line class="chart-gridline" x1="32" y1="179" x2="710" y2="179"/>
+							<path class="chart-area" d="M32 132 L93 121 L155 105 L216 116 L278 88 L339 70 L401 81 L462 60 L524 43 L585 54 L647 34 L710 19 L710 180 L32 180 Z"/>
+							<path class="chart-line" d="M32 132 L93 121 L155 105 L216 116 L278 88 L339 70 L401 81 L462 60 L524 43 L585 54 L647 34 L710 19"/>
+							<circle class="chart-point" cx="32" cy="132" r="3.4"/><circle class="chart-point" cx="93" cy="121" r="3.4"/><circle class="chart-point" cx="155" cy="105" r="3.4"/><circle class="chart-point" cx="216" cy="116" r="3.4"/><circle class="chart-point" cx="278" cy="88" r="3.4"/><circle class="chart-point" cx="339" cy="70" r="3.4"/><circle class="chart-point" cx="401" cy="81" r="3.4"/><circle class="chart-point" cx="462" cy="60" r="3.4"/><circle class="chart-point" cx="524" cy="43" r="3.4"/><circle class="chart-point" cx="585" cy="54" r="3.4"/><circle class="chart-point" cx="647" cy="34" r="3.4"/><circle class="chart-point" cx="710" cy="19" r="3.4"/>
+							<text class="chart-label" x="32" y="200" text-anchor="middle">Jan</text><text class="chart-label" x="93" y="200" text-anchor="middle">Feb</text><text class="chart-label" x="155" y="200" text-anchor="middle">Mar</text><text class="chart-label" x="216" y="200" text-anchor="middle">Apr</text><text class="chart-label" x="278" y="200" text-anchor="middle">May</text><text class="chart-label" x="339" y="200" text-anchor="middle">Jun</text><text class="chart-label" x="401" y="200" text-anchor="middle">Jul</text><text class="chart-label" x="462" y="200" text-anchor="middle">Aug</text><text class="chart-label" x="524" y="200" text-anchor="middle">Sep</text><text class="chart-label" x="585" y="200" text-anchor="middle">Oct</text><text class="chart-label" x="647" y="200" text-anchor="middle">Nov</text><text class="chart-label" x="710" y="200" text-anchor="middle">Dec</text>
+						</svg>
+					</div>
+					<div class="legend"><i class="legend-dot"></i> Revenue collected</div>
+				</article>
+
+				<section class="panel panel-pad">
+					<div class="section-head"><div><h2>Upcoming bookings</h2><p>Next events at your venue</p></div><a class="section-link" href="/bookings/">View all</a></div>
+					<div class="booking-list">
+						<article class="booking-row"><span class="date-tile"><strong>28</strong><span>Sep</span></span><span class="booking-row-copy"><strong>Sarah Khan</strong><span>Wedding Reception · 420 guests</span></span><span class="status confirmed">Confirmed</span></article>
+						<article class="booking-row"><span class="date-tile"><strong>30</strong><span>Sep</span></span><span class="booking-row-copy"><strong>Ahmed Malik</strong><span>Corporate Gala · 250 guests</span></span><span class="status confirmed">Confirmed</span></article>
+						<article class="booking-row"><span class="date-tile"><strong>03</strong><span>Oct</span></span><span class="booking-row-copy"><strong>Ayesha Siddiqui</strong><span>Mehndi · 360 guests</span></span><span class="status pending">Pending</span></article>
+						<article class="booking-row"><span class="date-tile"><strong>05</strong><span>Oct</span></span><span class="booking-row-copy"><strong>Mariam Ali</strong><span>Engagement · 180 guests</span></span><span class="status confirmed">Confirmed</span></article>
+					</div>
+				</section>
+			</section>
+
+			<section class="section dashboard-grid" aria-label="Transactions and hall availability">
+				<section>
+					<div class="section-head"><div><h2>Recent transactions</h2><p>Latest payments recorded</p></div><a class="section-link" href="/payments/">All payments</a></div>
+					<div class="panel table-scroll">
+						<table class="data-table">
+							<thead><tr><th>CUSTOMER</th><th>PAYMENT DATE</th><th>AMOUNT</th><th>STATUS</th></tr></thead>
+							<tbody>
+								<tr><td><span class="cell-primary">Sarah Khan</span><span class="cell-sub">BK-2026-084</span></td><td>19 Sep 2026</td><td class="cell-primary">Rs 350,000</td><td><span class="status paid">Paid</span></td></tr>
+								<tr><td><span class="cell-primary">Ahmed Malik</span><span class="cell-sub">BK-2026-083</span></td><td>18 Sep 2026</td><td class="cell-primary">Rs 960,000</td><td><span class="status paid">Paid</span></td></tr>
+								<tr><td><span class="cell-primary">Ayesha Siddiqui</span><span class="cell-sub">BK-2026-082</span></td><td>16 Sep 2026</td><td class="cell-primary">Rs 200,000</td><td><span class="status paid">Paid</span></td></tr>
+								<tr><td><span class="cell-primary">Mariam Ali</span><span class="cell-sub">BK-2026-081</span></td><td>15 Sep 2026</td><td class="cell-primary">Rs 150,000</td><td><span class="status paid">Paid</span></td></tr>
+							</tbody>
+						</table>
+					</div>
+				</section>
+				<section class="panel panel-pad">
+					<div class="section-head"><div><h2>Hall availability</h2><p>September occupancy</p></div><a class="section-link" href="/availability/">Calendar</a></div>
+					<div class="progress-label"><span>Booked capacity</span><strong>78%</strong></div>
+					<div class="progress-track" role="progressbar" aria-label="Booked capacity" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" style="width:78%"></div></div>
+					<div class="availability-summary"><div><strong>18</strong><span>Confirmed</span></div><div><strong>3</strong><span>Pending</span></div><div><strong>12</strong><span>Available</span></div></div>
+					<div class="section"><h2>Quick actions</h2><div class="quick-grid">
+						<a class="quick-action" href="/bookings/"><span class="stat-icon" aria-hidden="true">+</span><span class="quick-action-copy"><strong>New booking</strong><span>Create a reservation</span></span></a>
+						<a class="quick-action" href="/customers/"><span class="stat-icon" aria-hidden="true">+</span><span class="quick-action-copy"><strong>Add customer</strong><span>Save a new profile</span></span></a>
+						<a class="quick-action" href="/payments/"><span class="stat-icon" aria-hidden="true">Rs</span><span class="quick-action-copy"><strong>Record payment</strong><span>Log a collection</span></span></a>
+						<a class="quick-action" href="/invoices/"><span class="stat-icon" aria-hidden="true">IN</span><span class="quick-action-copy"><strong>Create invoice</strong><span>Prepare a bill</span></span></a>
+					</div></div>
+				</section>
+			</section>
+		</main>
+		<footer class="app-footer"><span>HallMaster &copy; 2026 · Secure Venue Management System</span><span class="footer-right"><i class="sync-dot"></i>All changes saved</span></footer>
+	</div>
+</div>
+{% endblock %}

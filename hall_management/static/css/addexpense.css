@@ -1,0 +1,2 @@
+.expense-entry-page { --operation-accent: #91c8a8; --operation-accent-dim: rgba(145,200,168,.1); }
+.expense-preview-amount { display: block; overflow-wrap: anywhere; margin-top: 5px; color: var(--operation-accent); font-family: "Playfair Display",serif; font-size: 25px; font-weight: 600; line-height: 1.2; }

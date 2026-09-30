@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Customers | HallMaster{% endblock %}
+{% block page_content %}
+<header class="page-heading">
+	<div><span class="eyebrow">GUEST RELATIONSHIPS</span><h1>Customers</h1><p>Know your guests and keep every event personal.</p></div>
+	<div class="heading-actions"><a class="text-button" href="#customer-list">Export list</a><a class="primary-button" href="#customer-list">+ Add customer</a></div>
+</header>
+<section class="stats-grid" aria-label="Customer summary">
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Total customers</span><span class="stat-icon" aria-hidden="true">CU</span></div><strong class="stat-value">1,248</strong><div class="stat-foot"><span class="trend">+6.4%</span><span>vs. last month</span></div></article>
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">New this month</span><span class="stat-icon" aria-hidden="true">NW</span></div><strong class="stat-value">86</strong><div class="stat-foot"><span class="trend">+14.2%</span><span>vs. last month</span></div></article>
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Repeat customers</span><span class="stat-icon" aria-hidden="true">RP</span></div><strong class="stat-value">38%</strong><div class="stat-foot"><span class="trend">+3.1%</span><span>returning guests</span></div></article>
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Outstanding balance</span><span class="stat-icon" aria-hidden="true">Rs</span></div><strong class="stat-value">Rs 255K</strong><div class="stat-foot">Across 3 customer accounts</div></article>
+</section>
+<section class="section" id="customer-list">
+	<div class="section-head"><div><h2>Customer directory</h2><p>Recent customer profiles and booking history</p></div><span class="cell-sub">1,248 customers</span></div>
+	<div class="panel">
+		<div class="table-toolbar"><div class="toolbar-left"><label class="sr-only" for="customer-search">Search customers</label><input class="input search-field" id="customer-search" type="search" placeholder="Search name, email or phone"></div><div class="toolbar-right"><label class="sr-only" for="customer-sort">Sort customers</label><select class="select select-compact" id="customer-sort"><option>Recently active</option><option>Name A to Z</option><option>Highest spend</option></select></div></div>
+		<div class="table-scroll"><table class="data-table"><thead><tr><th>CUSTOMER ID</th><th>NAME</th><th>PHONE</th><th>EMAIL</th><th>BOOKINGS</th><th>TOTAL SPENT</th><th>LAST BOOKING</th><th>STATUS</th></tr></thead><tbody>
+			<tr><td class="cell-primary">CUS-2048</td><td class="cell-primary">Sarah Khan</td><td>+92 300 482 1901</td><td>sarah.khan@email.com</td><td>4</td><td class="cell-primary">Rs 2,140,000</td><td>19 Sep 2026</td><td><span class="status active">Active</span></td></tr>
+			<tr><td class="cell-primary">CUS-2047</td><td class="cell-primary">Ahmed Malik</td><td>+92 321 770 6152</td><td>ahmed.malik@email.com</td><td>2</td><td class="cell-primary">Rs 1,360,000</td><td>14 Sep 2026</td><td><span class="status active">Active</span></td></tr>
+			<tr><td class="cell-primary">CUS-2046</td><td class="cell-primary">Ayesha Siddiqui</td><td>+92 333 421 5508</td><td>ayesha.s@email.com</td><td>3</td><td class="cell-primary">Rs 1,885,000</td><td>12 Sep 2026</td><td><span class="status active">Active</span></td></tr>
+			<tr><td class="cell-primary">CUS-2045</td><td class="cell-primary">Usman Raza</td><td>+92 300 888 0340</td><td>usman.r@email.com</td><td>1</td><td class="cell-primary">Rs 625,000</td><td>08 Sep 2026</td><td><span class="status active">Active</span></td></tr>
+			<tr><td class="cell-primary">CUS-2044</td><td class="cell-primary">Mariam Ali</td><td>+92 301 518 6692</td><td>mariam.ali@email.com</td><td>5</td><td class="cell-primary">Rs 3,170,000</td><td>29 Aug 2026</td><td><span class="status active">Active</span></td></tr>
+		</tbody></table></div>
+		<div class="table-footer"><span>Showing 5 of 1,248 customers</span><nav class="pagination" aria-label="Customer pages"><button type="button" disabled aria-label="Previous page">&#8249;</button><button class="active" type="button" aria-current="page">1</button><button type="button">2</button><button type="button">3</button><button type="button" aria-label="Next page">&#8250;</button></nav></div>
+	</div>
+</section>
+{% endblock %}

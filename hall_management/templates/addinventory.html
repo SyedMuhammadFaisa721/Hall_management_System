@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Add Inventory Item | HallMaster{% endblock %}
+{% block page_key %}inventory{% endblock %}
+{% block page_content %}
+<div class="operations-page inventory-entry-page">
+	<nav class="operations-breadcrumb" aria-label="Breadcrumb"><a href="/inventory/">Inventory</a><span aria-hidden="true">/</span><span>New item</span></nav>
+	<header class="operations-heading">
+		<div><span class="eyebrow">OPERATIONS <span class="operations-heading-dot"></span> STOCK CONTROL</span><h1>Add inventory item</h1><p>Register equipment and keep the venue stock count accurate.</p></div>
+		<a class="text-button" href="/inventory/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12"/></svg>Back to inventory</a>
+	</header>
+
+	<div class="operation-create-layout">
+		<form class="operation-form" id="add-inventory-form" novalidate>
+			<section class="operation-form-section" aria-labelledby="inventory-item-title">
+				<div class="operation-section-heading"><span class="operation-section-index">01</span><div><h2 id="inventory-item-title">Item information</h2><p>Identify the item and place it in the right stock category.</p></div></div>
+				<div class="operation-field-grid">
+					<label class="operation-field operation-field-wide"><span>Item name <i>Required</i></span><input class="input" id="inventory-name" name="inventory_name" type="text" maxlength="20" placeholder="e.g. Banquet chair" required><small>Keep the name short and easy to scan in the stock list.</small></label>
+					<label class="operation-field operation-field-wide"><span>Category <i>Required</i></span><select class="select" id="inventory-category" name="category" required><option value="" disabled selected>Select a category</option><option>Seating</option><option>Tables</option><option>Linens</option><option>Glassware</option><option>Audio &amp; visual</option><option>Lighting</option><option>Kitchen</option><option>Other</option></select></label>
+				</div>
+			</section>
+
+			<section class="operation-form-section" aria-labelledby="inventory-quantities-title">
+				<div class="operation-section-heading"><span class="operation-section-index">02</span><div><h2 id="inventory-quantities-title">Stock quantities</h2><p>Enter current quantities after your latest stock count.</p></div></div>
+				<div class="operation-field-grid">
+					<label class="operation-field"><span>Total quantity <i>Required</i></span><input class="input inventory-quantity-input" id="inventory-total" name="inventory_quantity" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required></label>
+					<label class="operation-field"><span>Available quantity <i>Required</i></span><input class="input inventory-quantity-input" id="inventory-available" name="available_quantity" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required></label>
+					<label class="operation-field"><span>Damaged quantity <i>Required</i></span><input class="input inventory-quantity-input" id="inventory-damaged" name="damage_quantity" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required><small>Available plus damaged cannot exceed total quantity.</small></label>
+				</div>
+			</section>
+
+			<div class="operation-form-footer"><p><span class="operation-required-mark">*</span> Required fields</p><div class="operation-form-actions"><a class="text-button" href="/inventory/">Cancel</a><button class="primary-button" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add item</button></div></div>
+			<p class="operation-form-feedback" id="inventory-feedback" role="status" aria-live="polite"></p>
+		</form>
+
+		<aside class="operation-summary-panel inventory-summary-panel" aria-label="Inventory quantity preview">
+			<div class="operation-summary-kicker"><span class="operation-live-dot"></span> STOCK PREVIEW</div>
+			<span class="operation-summary-label">Item</span>
+			<strong class="inventory-preview-name" id="inventory-preview-name">New inventory item</strong>
+			<div class="operation-summary-divider"></div>
+			<div class="inventory-count-grid"><div><strong id="inventory-preview-total">0</strong><span>Total units</span></div><div><strong id="inventory-preview-available">0</strong><span>Available</span></div><div><strong id="inventory-preview-damaged">0</strong><span>Damaged</span></div></div>
+			<div class="inventory-stock-meter"><div class="inventory-stock-label"><span>Stock condition</span><strong id="inventory-stock-percent">0%</strong></div><div class="inventory-stock-track"><span id="inventory-stock-fill"></span></div></div>
+			<div class="operation-summary-row"><span>Category</span><strong id="inventory-preview-category">Not selected</strong></div>
+			<div class="operation-preview-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><p>Frontend preview only. Stock counts are not saved yet.</p></div>
+		</aside>
+	</div>
+</div>
+{% endblock %}
+{% block page_scripts %}
+<link rel="stylesheet" href="{% static 'css/operations.css' %}">
+<link rel="stylesheet" href="{% static 'css/addinventory.css' %}">
+{{ block.super }}
+<script defer src="{% static 'javascript/addinventory.js' %}"></script>
+{% endblock %}

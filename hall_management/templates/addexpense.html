@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Add Expense | HallMaster{% endblock %}
+{% block page_key %}expenses{% endblock %}
+{% block page_content %}
+<div class="operations-page expense-entry-page">
+	<nav class="operations-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'expenses' %}">Expenses</a><span aria-hidden="true">/</span><span>New expense</span></nav>
+	<header class="operations-heading">
+		<div><span class="eyebrow">FINANCE <span class="operations-heading-dot"></span> EXPENSE LEDGER</span><h1>Record an expense</h1><p>Log a venue cost and keep your monthly ledger up to date.</p></div>
+		<a class="text-button" href="{% url 'expenses' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12"/></svg>Back to expenses</a>
+	</header>
+
+	<div class="operation-create-layout">
+		<form class="operation-form" id="add-expense-form" novalidate>
+			<section class="operation-form-section" aria-labelledby="expense-details-title">
+				<div class="operation-section-heading"><span class="operation-section-index">01</span><div><h2 id="expense-details-title">Expense details</h2><p>Enter the purchase or service being recorded.</p></div></div>
+				<div class="operation-field-grid">
+					<label class="operation-field operation-field-wide"><span>Expense title <i>Required</i></span><input class="input" id="expense-title" name="expense_title" type="text" placeholder="e.g. Generator fuel reserve" maxlength="100" required></label>
+					<label class="operation-field"><span>Category <i>Required</i></span><select class="select" id="expense-category" name="expense_category" required><option value="" disabled selected>Select a category</option><option>Food</option><option>Decoration</option><option>Maintenance</option><option>Staff</option><option>Electricity</option><option>Marketing</option><option>Other</option></select></label>
+					<label class="operation-field"><span>Expense date <i>Required</i></span><input class="input" id="expense-date" name="date" type="date" value="{% now 'Y-m-d' %}" required></label>
+					<label class="operation-field"><span>Amount <i>Required</i></span><span class="operation-input-prefix"><span aria-hidden="true">Rs</span><input class="input" id="expense-amount" name="amount" type="number" min="1" step="1" inputmode="numeric" placeholder="0" required></span><small>Enter the total amount in Pakistani rupees.</small></label>
+					<label class="operation-field"><span>Paid by <i>Required</i></span><input class="input" id="expense-paid-by" name="paid_by" type="text" maxlength="30" placeholder="Staff member or supplier" required></label>
+					<label class="operation-field operation-field-wide"><span>Payment status <i>Required</i></span><div class="operation-status-options"><label><input type="radio" name="status" value="Paid" checked><span><i class="operation-status-dot paid"></i>Paid</span></label><label><input type="radio" name="status" value="Pending"><span><i class="operation-status-dot pending"></i>Pending</span></label></div></label>
+				</div>
+			</section>
+
+			<div class="operation-form-footer"><p><span class="operation-required-mark">*</span> Required fields</p><div class="operation-form-actions"><a class="text-button" href="{% url 'expenses' %}">Cancel</a><button class="primary-button" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Save expense</button></div></div>
+			<p class="operation-form-feedback" id="expense-feedback" role="status" aria-live="polite"></p>
+		</form>
+
+		<aside class="operation-summary-panel" aria-label="Expense preview">
+			<div class="operation-summary-kicker"><span class="operation-live-dot"></span> EXPENSE PREVIEW</div>
+			<span class="operation-summary-label">Total amount</span>
+			<strong class="expense-preview-amount" id="expense-preview-amount">Rs 0</strong>
+			<div class="operation-summary-divider"></div>
+			<div class="operation-summary-row"><span>Expense</span><strong id="expense-preview-title">New expense</strong></div>
+			<div class="operation-summary-row"><span>Category</span><strong id="expense-preview-category">Not selected</strong></div>
+			<div class="operation-summary-row"><span>Paid by</span><strong id="expense-preview-payer">Not entered</strong></div>
+			<div class="operation-summary-row"><span>Status</span><strong class="operation-preview-status" id="expense-preview-status">Paid</strong></div>
+			<div class="operation-preview-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><p>Frontend preview only. This form does not save an expense yet.</p></div>
+		</aside>
+	</div>
+</div>
+{% endblock %}
+{% block page_scripts %}
+<link rel="stylesheet" href="{% static 'css/operations.css' %}">
+<link rel="stylesheet" href="{% static 'css/addexpense.css' %}">
+{{ block.super }}
+<script defer src="{% static 'javascript/addexpense.js' %}"></script>
+{% endblock %}

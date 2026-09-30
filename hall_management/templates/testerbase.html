@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#0b0b0c">
+
+    <meta name="description"
+          content="HallMaster - Premium Hall and Venue Management System">
+
+    <title>{% block title %}HallMaster | Luxury Venue Management{% endblock %}</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Base CSS -->
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2">
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     APP SHELL
+========================================================= -->
+
+<div class="app-shell" id="appShell">
+
+
+    <!-- =====================================================
+         MOBILE OVERLAY
+    ====================================================== -->
+
+    <div class="sidebar-overlay"
+         id="sidebarOverlay"></div>
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="sidebar" id="sidebar">
+
+
+        <!-- BRAND -->
+        <div class="sidebar-brand">
+
+            <a href="index.html" class="brand-link">
+
+                <div class="brand-logo">
+                    HM
+                </div>
+
+                <div class="brand-info">
+
+                    <h1>HallMaster</h1>
+
+                    <span>
+                        Luxury Venue Management
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- Mobile Close -->
+
+            <button class="sidebar-close"
+                    id="sidebarClose"
+                    aria-label="Close navigation">
+
+                <svg width="20"
+                     height="20"
+                     viewBox="0 0 24 24"
+                     fill="none">
+
+                    <path d="M18 6L6 18"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"/>
+
+                    <path d="M6 6L18 18"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"/>
+
+                </svg>
+
+            </button>
+
+        </div>
+
+
+
+        <!-- VENUE CARD -->
+
+        <div class="venue-card">
+
+            <div class="venue-icon">
+
+                <svg width="19"
+                     height="19"
+                     viewBox="0 0 24 24"
+                     fill="none">
+
+                    <path d="M3 21V9L12 3L21 9V21"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+
+                    <path d="M7 21V12H17V21"
+                          stroke="currentColor"
+                          stroke-width="1.6"/>
+
+                </svg>
+
+            </div>
+
+
+            <div class="venue-details">
+
+                <strong>
+                    Royal Palace Hall
+                </strong>
+
+                <span>
+                    Karachi, Pakistan
+                </span>
+
+            </div>
+
+
+            <span class="online-dot"></span>
+
+        </div>
+
+
+
+        <!-- =================================================
+             NAVIGATION
+        ================================================== -->
+
+        <nav class="sidebar-navigation"
+             aria-label="Main navigation">
+
+
+            <!-- MAIN -->
+
+            <div class="navigation-section">
+
+                <span class="navigation-title">
+                    Main
+                </span>
+
+
+                <!-- Dashboard -->
+
+                <a href="index.html"
+                   class="nav-item active"
+                   data-page="dashboard">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <rect x="3"
+                                  y="3"
+                                  width="7"
+                                  height="7"
+                                  rx="1.5"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <rect x="14"
+                                  y="3"
+                                  width="7"
+                                  height="7"
+                                  rx="1.5"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <rect x="3"
+                                  y="14"
+                                  width="7"
+                                  height="7"
+                                  rx="1.5"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <rect x="14"
+                                  y="14"
+                                  width="7"
+                                  height="7"
+                                  rx="1.5"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Dashboard
+                    </span>
+
+                </a>
+
+
+
+                <!-- Bookings -->
+
+                <a href="bookings.html"
+                   class="nav-item"
+                   data-page="bookings">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <rect x="3"
+                                  y="5"
+                                  width="18"
+                                  height="16"
+                                  rx="2"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M16 3V7"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M8 3V7"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M3 10H21"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M8 14H8.01"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"/>
+
+                            <path d="M12 14H12.01"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"/>
+
+                            <path d="M16 14H16.01"
+                                  stroke="currentColor"
+                                  stroke-width="2.5"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Bookings
+                    </span>
+
+                    <span class="nav-count">
+                        24
+                    </span>
+
+                </a>
+
+
+
+                <!-- Availability -->
+
+                <a href="availability.html"
+                   class="nav-item"
+                   data-page="availability">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <rect x="3"
+                                  y="4"
+                                  width="18"
+                                  height="17"
+                                  rx="2"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M7 2V6"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M17 2V6"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M3 9H21"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M8 13L10 15L14 11"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Availability
+                    </span>
+
+                </a>
+
+
+
+                <!-- Customers -->
+
+                <a href="customers.html"
+                   class="nav-item"
+                   data-page="customers">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <circle cx="9"
+                                    cy="8"
+                                    r="3"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"/>
+
+                            <path d="M3 21C3 17.686 5.686 15 9 15C12.314 15 15 17.686 15 21"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M16 5.5C17.657 5.5 19 6.843 19 8.5C19 10.157 17.657 11.5 16 11.5"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M16 15C18.761 15 21 17.239 21 20"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Customers
+                    </span>
+
+                </a>
+
+
+
+                <!-- Packages -->
+
+                <a href="packages.html"
+                   class="nav-item"
+                   data-page="packages">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <path d="M4 7L12 3L20 7V17L12 21L4 17V7Z"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M4 7L12 11L20 7"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M12 11V21"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Packages
+                    </span>
+
+                </a>
+
+            </div>
+
+
+
+            <!-- FINANCE -->
+
+            <div class="navigation-section">
+
+                <span class="navigation-title">
+                    Finance
+                </span>
+
+
+                <!-- Payments -->
+
+                <a href="payments.html"
+                   class="nav-item"
+                   data-page="payments">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <rect x="2.5"
+                                  y="5"
+                                  width="19"
+                                  height="14"
+                                  rx="2"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M2.5 10H21.5"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"/>
+
+                            <path d="M6 15H10"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Payments
+                    </span>
+
+                    <span class="nav-alert">
+                        6
+                    </span>
+
+                </a>
+
+
+
+                <!-- Invoices -->
+
+                <a href="invoices.html"
+                   class="nav-item"
+                   data-page="invoices">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <path d="M6 3H18V21L15 19L12 21L9 19L6 21V3Z"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M9 8H15"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M9 12H15"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M9 16H12"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Invoices
+                    </span>
+
+                </a>
+
+
+
+                <!-- Expenses -->
+
+                <a href="expenses.html"
+                   class="nav-item"
+                   data-page="expenses">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <path d="M4 19V5"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M4 19H20"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M8 16V12"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M12 16V8"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M16 16V10"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Expenses
+                    </span>
+
+                </a>
+
+
+
+                <!-- Reports -->
+
+                <a href="reports.html"
+                   class="nav-item"
+                   data-page="reports">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <path d="M4 19V5"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M4 19H20"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M7 15L11 11L14 13L19 7"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M16 7H19V10"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Reports
+                    </span>
+
+                </a>
+
+            </div>
+
+
+
+            <!-- MANAGEMENT -->
+
+            <div class="navigation-section">
+
+                <span class="navigation-title">
+                    Management
+                </span>
+
+
+                <!-- Staff -->
+
+                <a href="staff.html"
+                   class="nav-item"
+                   data-page="staff">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <circle cx="9"
+                                    cy="7"
+                                    r="3"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"/>
+
+                            <path d="M3 20C3 16.686 5.686 14 9 14C12.314 14 15 16.686 15 20"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M16 11C18.209 11 20 12.791 20 15"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                            <path d="M16 16C18.761 16 21 18.239 21 21"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Staff & Roles
+                    </span>
+
+                </a>
+
+
+
+                <!-- Notifications -->
+
+                <a href="notifications.html"
+                   class="nav-item"
+                   data-page="notifications">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <path d="M18 8C18 4.686 15.761 2 12 2C8.239 2 6 4.686 6 8C6 14 3 15 3 17H21C21 15 18 14 18 8Z"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M9.5 21C10.05 21.63 10.93 22 12 22C13.07 22 13.95 21.63 14.5 21"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Notifications
+                    </span>
+
+                    <span class="nav-alert">
+                        3
+                    </span>
+
+                </a>
+
+
+
+                <!-- Settings -->
+
+                <a href="settings.html"
+                   class="nav-item"
+                   data-page="settings">
+
+                    <span class="nav-icon">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none">
+
+                            <circle cx="12"
+                                    cy="12"
+                                    r="3"
+                                    stroke="currentColor"
+                                    stroke-width="1.7"/>
+
+                            <path d="M19.4 15A1.65 1.65 0 0 0 19.73 16.82L19.8 16.9L16.9 19.8L16.82 19.73A1.65 1.65 0 0 0 15 19.4A1.65 1.65 0 0 0 13.8 20.9V21H10.2V20.9A1.65 1.65 0 0 0 9 19.4A1.65 1.65 0 0 0 7.18 19.73L7.1 19.8L4.2 16.9L4.27 16.82A1.65 1.65 0 0 0 4.6 15A1.65 1.65 0 0 0 3.1 13.8H3V10.2H3.1A1.65 1.65 0 0 0 4.6 9A1.65 1.65 0 0 0 4.27 7.18L4.2 7.1L7.1 4.2L7.18 4.27A1.65 1.65 0 0 0 9 4.6A1.65 1.65 0 0 0 10.2 3.1V3H13.8V3.1A1.65 1.65 0 0 0 15 4.6A1.65 1.65 0 0 0 16.82 4.27L16.9 4.2L19.8 7.1L19.73 7.18A1.65 1.65 0 0 0 19.4 9A1.65 1.65 0 0 0 20.9 10.2H21V13.8H20.9A1.65 1.65 0 0 0 19.4 15Z"
+                                  stroke="currentColor"
+                                  stroke-width="1.4"
+                                  stroke-linejoin="round"/>
+
+                        </svg>
+
+                    </span>
+
+                    <span class="nav-text">
+                        Settings
+                    </span>
+
+                </a>
+
+            </div>
+
+        </nav>
+
+
+
+        <!-- =================================================
+             SIDEBAR FOOTER
+        ================================================== -->
+
+        <div class="sidebar-footer">
+
+            <div class="workspace-card">
+
+                <div class="workspace-icon">
+
+                    <svg width="18"
+                         height="18"
+                         viewBox="0 0 24 24"
+                         fill="none">
+
+                        <path d="M12 3L19 7V17L12 21L5 17V7L12 3Z"
+                              stroke="currentColor"
+                              stroke-width="1.6"
+                              stroke-linejoin="round"/>
+
+                        <path d="M5 7L12 11L19 7"
+                              stroke="currentColor"
+                              stroke-width="1.6"/>
+
+                        <path d="M12 11V21"
+                              stroke="currentColor"
+                              stroke-width="1.6"/>
+
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        Premium Workspace
+                    </strong>
+
+                    <span>
+                        Secure & synced
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =====================================================
+         MAIN AREA
+    ====================================================== -->
+
+    <main class="main-area" id="mainContent">
+
+
+        <!-- =================================================
+             TOPBAR
+        ================================================== -->
+
+        <header class="topbar">
+
+
+            <!-- LEFT -->
+
+            <div class="topbar-left">
+
+
+                <!-- Mobile Menu -->
+
+                <button class="menu-toggle"
+                        id="menuToggle"
+                        aria-label="Open navigation"
+                        aria-expanded="false">
+
+                    <svg width="22"
+                         height="22"
+                         viewBox="0 0 24 24"
+                         fill="none">
+
+                        <path d="M4 7H20"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              stroke-linecap="round"/>
+
+                        <path d="M4 12H20"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              stroke-linecap="round"/>
+
+                        <path d="M4 17H20"
+                              stroke="currentColor"
+                              stroke-width="1.8"
+                              stroke-linecap="round"/>
+
+                    </svg>
+
+                </button>
+
+
+                <!-- Page Context -->
+
+                <div class="topbar-context">
+
+                    <span class="topbar-date"
+                          id="currentDate">
+                        Friday, September 25, 2026
+                    </span>
+
+                    <span class="topbar-greeting"
+                          id="greeting">
+                        Good evening, Faisal
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- RIGHT -->
+
+            <div class="topbar-right">
+
+
+                <!-- Search -->
+
+                <div class="global-search"
+                     id="globalSearch">
+
+                    <svg width="18"
+                         height="18"
+                         viewBox="0 0 24 24"
+                         fill="none">
+
+                        <circle cx="11"
+                                cy="11"
+                                r="7"
+                                stroke="currentColor"
+                                stroke-width="1.7"/>
+
+                        <path d="M16.5 16.5L21 21"
+                              stroke="currentColor"
+                              stroke-width="1.7"
+                              stroke-linecap="round"/>
+
+                    </svg>
+
+                    <input type="search"
+                           id="globalSearchInput"
+                           placeholder="Search..."
+                           autocomplete="off">
+
+                    <span class="search-shortcut">
+                        /
+                    </span>
+
+                </div>
+
+
+
+                <!-- Notification -->
+
+                <div class="notification-wrapper">
+
+                    <button class="topbar-icon-button"
+                            id="notificationButton"
+                            aria-label="Notifications"
+                            aria-expanded="false">
+
+                        <svg width="20"
+                             height="20"
+                             viewBox="0 0 24 24"
+                             fill="none">
+
+                            <path d="M18 8C18 4.686 15.761 2 12 2C8.239 2 6 4.686 6 8C6 14 3 15 3 17H21C21 15 18 14 18 8Z"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linejoin="round"/>
+
+                            <path d="M9.5 21C10.05 21.63 10.93 22 12 22C13.07 22 13.95 21.63 14.5 21"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"/>
+
+                        </svg>
+
+                        <span class="notification-dot"></span>
+
+                    </button>
+
+
+
+                    <!-- Notification Dropdown -->
+
+                    <div class="notification-panel"
+                         id="notificationPanel">
+
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <strong>
+                                    Notifications
+                                </strong>
+
+                                <span>
+                                    3 unread
+                                </span>
+
+                            </div>
+
+                            <button class="text-button"
+                                    id="markNotificationsRead">
+                                Mark all read
+                            </button>
+
+                        </div>
+
+
+
+                        <div class="notification-list">
+
+
+                            <a href="payments.html"
+                               class="notification-item unread">
+
+                                <div class="notification-symbol payment">
+
+                                    ₨
+
+                                </div>
+
+                                <div class="notification-content">
+
+                                    <strong>
+                                        Payment pending
+                                    </strong>
+
+                                    <p>
+                                        Sarah Khan has ₨85,000 outstanding.
+                                    </p>
+
+                                    <small>
+                                        12 minutes ago
+                                    </small>
+
+                                </div>
+
+                            </a>
+
+
+
+                            <a href="bookings.html"
+                               class="notification-item unread">
+
+                                <div class="notification-symbol booking">
+
+                                    ✓
+
+                                </div>
+
+                                <div class="notification-content">
+
+                                    <strong>
+                                        New booking confirmed
+                                    </strong>
+
+                                    <p>
+                                        Ahmed & Ayesha — Hall A.
+                                    </p>
+
+                                    <small>
+                                        42 minutes ago
+                                    </small>
+
+                                </div>
+
+                            </a>
+
+
+
+                            <a href="availability.html"
+                               class="notification-item unread">
+
+                                <div class="notification-symbol reminder">
+
+                                    !
+
+                                </div>
+
+                                <div class="notification-content">
+
+                                    <strong>
+                                        Upcoming event
+                                    </strong>
+
+                                    <p>
+                                        Corporate Gala is tomorrow.
+                                    </p>
+
+                                    <small>
+                                        2 hours ago
+                                    </small>
+
+                                </div>
+
+                            </a>
+
+
+                        </div>
+
+
+
+                        <a href="notifications.html"
+                           class="panel-footer-link">
+
+                            View all notifications
+
+                            <span>→</span>
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Quick Action -->
+
+                <button class="quick-action-button"
+                        id="quickActionButton">
+
+                    <span>+</span>
+
+                    <strong>
+                        New Booking
+                    </strong>
+
+                </button>
+
+
+
+                <!-- USER -->
+
+                <div class="user-menu-wrapper">
+
+
+                    <button class="user-profile-button"
+                            id="userProfileButton"
+                            aria-expanded="false">
+
+
+                        <span class="user-avatar">
+                            FA
+                        </span>
+
+
+                        <span class="user-details">
+
+                            <strong>
+                                Faisal
+                            </strong>
+
+                            <small>
+                                Admin
+                            </small>
+
+                        </span>
+
+
+                        <svg class="user-chevron"
+                             width="15"
+                             height="15"
+                             viewBox="0 0 24 24"
+                             fill="none">
+
+                            <path d="M6 9L12 15L18 9"
+                                  stroke="currentColor"
+                                  stroke-width="1.7"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+
+                        </svg>
+
+                    </button>
+
+
+
+                    <!-- USER DROPDOWN -->
+
+                    <div class="user-dropdown"
+                         id="userDropdown">
+
+
+                        <div class="dropdown-user-header">
+
+                            <span class="large-avatar">
+                                FA
+                            </span>
+
+                            <div>
+
+                                <strong>
+                                    Faisal
+                                </strong>
+
+                                <span>
+                                    Administrator
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="dropdown-divider"></div>
+
+
+                        <a href="settings.html"
+                           class="dropdown-item">
+
+                            <svg width="17"
+                                 height="17"
+                                 viewBox="0 0 24 24"
+                                 fill="none">
+
+                                <circle cx="12"
+                                        cy="12"
+                                        r="3"
+                                        stroke="currentColor"
+                                        stroke-width="1.7"/>
+
+                                <path d="M19.4 15A1.65 1.65 0 0 0 19.73 16.82L19.8 16.9L16.9 19.8L16.82 19.73A1.65 1.65 0 0 0 15 19.4A1.65 1.65 0 0 0 13.8 20.9V21H10.2V20.9A1.65 1.65 0 0 0 9 19.4A1.65 1.65 0 0 0 7.18 19.73L7.1 19.8L4.2 16.9L4.27 16.82A1.65 1.65 0 0 0 4.6 15A1.65 1.65 0 0 0 3.1 13.8H3V10.2H3.1A1.65 1.65 0 0 0 4.6 9A1.65 1.65 0 0 0 4.27 7.18L4.2 7.1L7.1 4.2L10 7.1"
+                                      stroke="currentColor"
+                                      stroke-width="1.3"
+                                      stroke-linejoin="round"/>
+
+                            </svg>
+
+                            Account Settings
+
+                        </a>
+
+
+                        <a href="notifications.html"
+                           class="dropdown-item">
+
+                            <svg width="17"
+                                 height="17"
+                                 viewBox="0 0 24 24"
+                                 fill="none">
+
+                                <path d="M18 8C18 4.686 15.761 2 12 2C8.239 2 6 4.686 6 8C6 14 3 15 3 17H21C21 15 18 14 18 8Z"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linejoin="round"/>
+
+                                <path d="M9.5 21C10.05 21.63 10.93 22 12 22C13.07 22 13.95 21.63 14.5 21"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"/>
+
+                            </svg>
+
+                            Notifications
+
+                        </a>
+
+
+                        <div class="dropdown-divider"></div>
+
+
+                        <button class="dropdown-item logout-item"
+                                id="logoutButton">
+
+                            <svg width="17"
+                                 height="17"
+                                 viewBox="0 0 24 24"
+                                 fill="none">
+
+                                <path d="M10 17L15 12L10 7"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"
+                                      stroke-linejoin="round"/>
+
+                                <path d="M15 12H3"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"/>
+
+                                <path d="M21 19V5C21 3.895 20.105 3 19 3H12"
+                                      stroke="currentColor"
+                                      stroke-width="1.7"
+                                      stroke-linecap="round"/>
+
+                            </svg>
+
+                            Sign Out
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             PAGE CONTENT
+        ================================================== -->
+
+        <section class="page-content"
+                 id="pageContent">
+
+
+            <!--
+
+                =============================================
+                PAGE CONTENT GOES HERE
+                =============================================
+
+                Example:
+
+                <div class="page-header">
+                    <div>
+                        <span class="eyebrow">
+                            Overview
+                        </span>
+
+                        <h1>
+                            Dashboard
+                        </h1>
+                    </div>
+                </div>
+
+            -->
+
+
+            {% block content %}
+            <div class="empty-content-placeholder">
+
+                <div class="placeholder-mark">
+                    HM
+                </div>
+
+                <h2>
+                    HallMaster
+                </h2>
+
+                <p>
+                    Page content will appear here.
+                </p>
+
+            </div>
+            {% endblock %}
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <footer class="main-footer">
+
+            <div class="footer-left">
+
+                <span>
+                    HallMaster © 2026
+                </span>
+
+                <span class="footer-separator">
+                    /
+                </span>
+
+                <span>
+                    Secure Venue Management System
+                </span>
+
+            </div>
+
+
+            <div class="footer-right">
+
+                <span class="sync-status">
+
+                    <span class="sync-dot"></span>
+
+                    Last synced:
+                    <strong>
+                        Just now
+                    </strong>
+
+                </span>
+
+            </div>
+
+        </footer>
+
+
+    </main>
+
+</div>
+
+
+
+<!-- =========================================================
+     GLOBAL SEARCH RESULTS
+========================================================= -->
+
+<div class="search-results-overlay"
+     id="searchResultsOverlay">
+
+    <div class="search-results-box"
+         id="searchResultsBox">
+
+        <div class="search-results-header">
+
+            <div>
+
+                <span>
+                    SEARCH
+                </span>
+
+                <strong id="searchResultTitle">
+                    Search HallMaster
+                </strong>
+
+            </div>
+
+            <button id="closeSearchResults"
+                    aria-label="Close search">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <div class="search-results-content"
+             id="searchResultsContent">
+
+            <div class="search-empty">
+
+                <div class="search-empty-icon">
+
+                    <svg width="26"
+                         height="26"
+                         viewBox="0 0 24 24"
+                         fill="none">
+
+                        <circle cx="11"
+                                cy="11"
+                                r="7"
+                                stroke="currentColor"
+                                stroke-width="1.6"/>
+
+                        <path d="M16.5 16.5L21 21"
+                              stroke="currentColor"
+                              stroke-width="1.6"
+                              stroke-linecap="round"/>
+
+                    </svg>
+
+                </div>
+
+                <strong>
+                    Search bookings, customers or invoices
+                </strong>
+
+                <span>
+                    Start typing to search across HallMaster.
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     GLOBAL MODAL
+========================================================= -->
+
+<div class="modal-overlay"
+     id="globalModal"
+     aria-hidden="true">
+
+
+    <div class="modal-container"
+         role="dialog"
+         aria-modal="true">
+
+
+        <button class="modal-close"
+                id="modalClose"
+                aria-label="Close modal">
+
+            <svg width="20"
+                 height="20"
+                 viewBox="0 0 24 24"
+                 fill="none">
+
+                <path d="M18 6L6 18"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"/>
+
+                <path d="M6 6L18 18"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"/>
+
+            </svg>
+
+        </button>
+
+
+        <div class="modal-content"
+             id="modalContent">
+
+            <!-- Modal content will be injected by JavaScript -->
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     TOAST CONTAINER
+========================================================= -->
+
+<div class="toast-container"
+     id="toastContainer"
+     aria-live="polite"
+     aria-atomic="true">
+
+</div>
+
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script src="{% static 'base.js' %}?v=2" defer></script>
+
+
+</body>
+
+</html>

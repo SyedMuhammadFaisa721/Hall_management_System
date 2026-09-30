@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Staff &amp; Roles | HallMaster{% endblock %}
+{% block page_content %}
+<header class="page-heading"><div><span class="eyebrow">YOUR TEAM</span><h1>Staff &amp; Roles</h1><p>Manage team access and responsibilities.</p></div><div class="heading-actions"><a class="primary-button" href="#team-directory">+ Invite staff</a></div></header>
+<section class="stats-grid" aria-label="Staff summary">
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Total staff</span><span class="stat-icon" aria-hidden="true">ST</span></div><strong class="stat-value">5</strong><div class="stat-foot"><span class="trend">+1</span><span>this month</span></div></article>
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Active</span><span class="stat-icon" aria-hidden="true">AC</span></div><strong class="stat-value">4</strong><div class="stat-foot">80% of team</div></article>
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Managers</span><span class="stat-icon" aria-hidden="true">MG</span></div><strong class="stat-value">2</strong><div class="stat-foot">Across venue operations</div></article>
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Pending invitations</span><span class="stat-icon" aria-hidden="true">IN</span></div><strong class="stat-value">1</strong><div class="stat-foot">Awaiting response</div></article>
+</section>
+<section class="section" id="team-directory"><div class="section-head"><div><h2>Team directory</h2><p>Staff profiles, roles and recent activity</p></div></div>
+	<div class="panel"><div class="table-toolbar"><div class="toolbar-left"><label class="sr-only" for="staff-search">Search staff</label><input class="input search-field" id="staff-search" type="search" placeholder="Search name, email or role"></div><div class="toolbar-right"><label class="sr-only" for="staff-role">Filter by role</label><select class="select select-compact" id="staff-role"><option>All roles</option><option>Administrator</option><option>Manager</option><option>Accountant</option><option>Event Manager</option></select></div></div>
+		<div class="table-scroll"><table class="data-table"><thead><tr><th>NAME</th><th>EMAIL</th><th>PHONE</th><th>ROLE</th><th>JOINED</th><th>STATUS</th><th>LAST ACTIVE</th></tr></thead><tbody>
+			<tr><td><span class="cell-primary">Faisal Ahmed</span><span class="cell-sub">ST-014</span></td><td>faisal@hallmaster.pk</td><td>+92 300 100 2000</td><td>Administrator</td><td>14 Mar 2022</td><td><span class="status active">Active</span></td><td>Now</td></tr>
+			<tr><td><span class="cell-primary">Nadia Sheikh</span><span class="cell-sub">ST-013</span></td><td>nadia@hallmaster.pk</td><td>+92 321 500 1440</td><td>Manager</td><td>02 Jun 2023</td><td><span class="status active">Active</span></td><td>12 min ago</td></tr>
+			<tr><td><span class="cell-primary">Omar Qureshi</span><span class="cell-sub">ST-012</span></td><td>omar@hallmaster.pk</td><td>+92 333 740 0091</td><td>Accountant</td><td>18 Oct 2023</td><td><span class="status active">Active</span></td><td>1 hour ago</td></tr>
+			<tr><td><span class="cell-primary">Hira Shah</span><span class="cell-sub">ST-011</span></td><td>hira@hallmaster.pk</td><td>+92 301 805 7611</td><td>Event Manager</td><td>09 Jan 2024</td><td><span class="status active">Active</span></td><td>3 hours ago</td></tr>
+			<tr><td><span class="cell-primary">Hamza Tariq</span><span class="cell-sub">ST-010</span></td><td>hamza@hallmaster.pk</td><td>+92 302 199 5512</td><td>Receptionist</td><td>16 Sep 2024</td><td><span class="status invited">Invited</span></td><td>Not yet</td></tr>
+		</tbody></table></div><div class="table-footer"><span>Showing 5 team members</span><span>Invite new members to expand your team</span></div>
+	</div>
+</section>
+<section class="section"><div class="section-head"><div><h2>Role permissions</h2><p>Choose the level of access for each part of HallMaster.</p></div><label class="sr-only" for="permission-role">Choose role</label><select class="select select-compact" id="permission-role"><option>Manager</option><option>Administrator</option><option>Receptionist</option><option>Accountant</option><option>Event Manager</option></select></div>
+	<div class="panel table-scroll"><table class="data-table permission-table"><thead><tr><th>MODULE</th><th>VIEW</th><th>CREATE</th><th>EDIT</th><th>DELETE</th></tr></thead><tbody>
+		<tr><td class="cell-primary">Bookings</td><td><input type="checkbox" checked aria-label="Bookings view"></td><td><input type="checkbox" checked aria-label="Bookings create"></td><td><input type="checkbox" checked aria-label="Bookings edit"></td><td><input type="checkbox" aria-label="Bookings delete"></td></tr>
+		<tr><td class="cell-primary">Customers</td><td><input type="checkbox" checked aria-label="Customers view"></td><td><input type="checkbox" checked aria-label="Customers create"></td><td><input type="checkbox" checked aria-label="Customers edit"></td><td><input type="checkbox" aria-label="Customers delete"></td></tr>
+		<tr><td class="cell-primary">Payments</td><td><input type="checkbox" checked aria-label="Payments view"></td><td><input type="checkbox" aria-label="Payments create"></td><td><input type="checkbox" aria-label="Payments edit"></td><td><input type="checkbox" aria-label="Payments delete"></td></tr>
+		<tr><td class="cell-primary">Invoices</td><td><input type="checkbox" checked aria-label="Invoices view"></td><td><input type="checkbox" aria-label="Invoices create"></td><td><input type="checkbox" aria-label="Invoices edit"></td><td><input type="checkbox" aria-label="Invoices delete"></td></tr>
+		<tr><td class="cell-primary">Expenses</td><td><input type="checkbox" checked aria-label="Expenses view"></td><td><input type="checkbox" checked aria-label="Expenses create"></td><td><input type="checkbox" aria-label="Expenses edit"></td><td><input type="checkbox" aria-label="Expenses delete"></td></tr>
+		<tr><td class="cell-primary">Reports</td><td><input type="checkbox" checked aria-label="Reports view"></td><td><input type="checkbox" aria-label="Reports create"></td><td><input type="checkbox" aria-label="Reports edit"></td><td><input type="checkbox" aria-label="Reports delete"></td></tr>
+		<tr><td class="cell-primary">Settings</td><td><input type="checkbox" checked aria-label="Settings view"></td><td><input type="checkbox" aria-label="Settings create"></td><td><input type="checkbox" aria-label="Settings edit"></td><td><input type="checkbox" aria-label="Settings delete"></td></tr>
+	</tbody></table><div style="padding:12px;text-align:right"><button class="primary-button" type="button">Save permissions</button></div></div>
+</section>
+{% endblock %}

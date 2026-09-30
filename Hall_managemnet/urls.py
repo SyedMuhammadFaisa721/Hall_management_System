@@ -16,7 +16,24 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from hall_management.views import hallmaster_login, hallmaster_page, tester, login, invoice_detail
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('login/', login, name='login'),
+    path('', hallmaster_page, {'page': 'dashboard'}, name='dashboard'),
+    path('bookings/', hallmaster_page, {'page': 'bookings'}, name='bookings'),
+    path('bookingform/', hallmaster_page, {'page': 'bookingform'}, name='bookingform'),
+    path('availability/', hallmaster_page, {'page': 'availability'}, name='availability'),
+    path('customers/', hallmaster_page, {'page': 'customers'}, name='customers'),
+    path('packages/', hallmaster_page, {'page': 'packages'}, name='packages'),
+    path('payments/', hallmaster_page, {'page': 'payments'}, name='payments'),
+    path('invoices/', hallmaster_page, {'page': 'invoices'}, name='invoices'),
+    path('invoices/<str:invoice_id>/', invoice_detail, name='invoice_detail'),
+    path('expenses/', hallmaster_page, {'page': 'expenses'}, name='expenses'),
+    path('reports/', hallmaster_page, {'page': 'reports'}, name='reports'),
+    path('staff/', hallmaster_page, {'page': 'staff'}, name='staff'),
+    path('notifications/', hallmaster_page, {'page': 'notifications'}, name='notifications'),
+    path('settings/', hallmaster_page, {'page': 'settings'}, name='settings'),
+    path('tester/', tester, name='tester'),
 ]

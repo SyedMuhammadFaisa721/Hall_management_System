@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Payments | HallMaster{% endblock %}
+{% block page_content %}
+<header class="page-heading"><div><span class="eyebrow">COLLECTIONS</span><h1>Payments</h1><p>Track deposits, balances and completed collections.</p></div><div class="heading-actions"><a class="text-button" href="#payment-ledger">Export list</a><a class="primary-button" href="#payment-ledger">+ Record payment</a></div></header>
+<section class="stats-grid" aria-label="Payment summary">
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Total received</span><span class="stat-icon" aria-hidden="true">Rs</span></div><strong class="stat-value">Rs 2.05M</strong><div class="stat-foot"><span class="trend">+9.3%</span><span>vs. last month</span></div></article>
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Pending</span><span class="stat-icon" aria-hidden="true">PE</span></div><strong class="stat-value">Rs 1.25M</strong><div class="stat-foot">12 invoices awaiting payment</div></article>
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">Today's collection</span><span class="stat-icon" aria-hidden="true">TD</span></div><strong class="stat-value">Rs 0</strong><div class="stat-foot">No new payments recorded</div></article>
+	<article class="stat-card"><div class="stat-top"><span class="stat-label">This month</span><span class="stat-icon" aria-hidden="true">MO</span></div><strong class="stat-value">Rs 2.05M</strong><div class="stat-foot"><span class="trend">+11.8%</span><span>vs. last month</span></div></article>
+</section>
+<section class="section" id="payment-ledger"><div class="section-head"><div><h2>Payment ledger</h2><p>Recorded deposits, balances and receipts</p></div></div>
+	<div class="panel"><div class="table-toolbar"><div class="toolbar-left"><label class="sr-only" for="payment-search">Search payments</label><input class="input search-field" id="payment-search" type="search" placeholder="Search payment, booking or customer"><label class="sr-only" for="payment-method">Payment method</label><select class="select select-compact" id="payment-method"><option>All methods</option><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Online</option></select></div><div class="toolbar-right"><span class="cell-sub">Updated 28 Sep 2026</span></div></div>
+		<div class="table-scroll"><table class="data-table"><thead><tr><th>PAYMENT ID</th><th>BOOKING ID</th><th>CUSTOMER</th><th>DATE</th><th>METHOD</th><th>AMOUNT</th><th>REFERENCE</th><th>STATUS</th></tr></thead><tbody>
+			<tr><td class="cell-primary">PAY-8062</td><td>BK-2026-084</td><td class="cell-primary">Sarah Khan</td><td>19 Sep 2026</td><td>Bank Transfer</td><td class="cell-primary">Rs 350,000</td><td>HBL-884120</td><td><span class="status paid">Completed</span></td></tr>
+			<tr><td class="cell-primary">PAY-8061</td><td>BK-2026-083</td><td class="cell-primary">Ahmed Malik</td><td>18 Sep 2026</td><td>Card</td><td class="cell-primary">Rs 960,000</td><td>VISA-126485</td><td><span class="status paid">Completed</span></td></tr>
+			<tr><td class="cell-primary">PAY-8060</td><td>BK-2026-082</td><td class="cell-primary">Ayesha Siddiqui</td><td>16 Sep 2026</td><td>Cash</td><td class="cell-primary">Rs 200,000</td><td>RCPT-0682</td><td><span class="status paid">Completed</span></td></tr>
+			<tr><td class="cell-primary">PAY-8059</td><td>BK-2026-081</td><td class="cell-primary">Mariam Ali</td><td>15 Sep 2026</td><td>Online</td><td class="cell-primary">Rs 150,000</td><td>EASY-005921</td><td><span class="status paid">Completed</span></td></tr>
+			<tr><td class="cell-primary">PAY-8058</td><td>BK-2026-080</td><td class="cell-primary">Usman Raza</td><td>13 Sep 2026</td><td>Bank Transfer</td><td class="cell-primary">Rs 385,000</td><td>HBL-883912</td><td><span class="status paid">Completed</span></td></tr>
+		</tbody></table></div><div class="table-footer"><span>Showing 5 recent payments</span><nav class="pagination" aria-label="Payment pages"><button type="button" disabled aria-label="Previous page">&#8249;</button><button class="active" type="button" aria-current="page">1</button><button type="button">2</button><button type="button" aria-label="Next page">&#8250;</button></nav></div>
+	</div>
+</section>
+{% endblock %}

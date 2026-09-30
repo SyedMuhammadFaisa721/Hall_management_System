@@ -1,0 +1,13 @@
+.inventory-entry-page { --operation-accent: #c9a96e; --operation-accent-dim: rgba(201,169,110,.1); }
+.inventory-summary-panel { border-color: rgba(201,169,110,.2); background: radial-gradient(ellipse at 100% 0%,rgba(201,169,110,.11),transparent 58%),linear-gradient(160deg,#14191a,#0c1112 74%); }
+.inventory-summary-panel .operation-live-dot { background: var(--gold-light); box-shadow: 0 0 9px rgba(201,169,110,.4); }
+.inventory-preview-name { display: block; overflow-wrap: anywhere; margin-top: 6px; font-size: 14px; font-weight: 600; }
+.inventory-count-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin: 13px 0 16px; }
+.inventory-count-grid > div { display: grid; min-width: 0; gap: 4px; padding: 9px 7px; border: 1px solid var(--border); border-radius: 6px; background: rgba(255,255,255,.018); }
+.inventory-count-grid strong { overflow-wrap: anywhere; font-family: "Playfair Display",serif; font-size: 15px; }
+.inventory-count-grid span { color: var(--quiet); font-size: 8px; }
+.inventory-stock-meter { margin-bottom: 12px; }
+.inventory-stock-label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 7px; color: var(--quiet); font-size: 9px; }
+.inventory-stock-label strong { color: var(--gold-light); font-size: 9px; font-weight: 600; }
+.inventory-stock-track { display: block; height: 5px; overflow: hidden; border-radius: 6px; background: rgba(255,255,255,.08); }
+.inventory-stock-track > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#927343,var(--gold-light)); transition: width 160ms ease; }

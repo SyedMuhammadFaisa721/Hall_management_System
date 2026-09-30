@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
+:root {
+  color-scheme: dark;
+  --login-bg: #080b0d;
+  --login-panel: #0d1114;
+  --login-border: rgba(255,255,255,.1);
+  --login-text: #f4f1ea;
+  --login-muted: #a8adb2;
+  --login-quiet: #777e84;
+  --login-gold: #c9a96e;
+  --login-gold-light: #e1c58e;
+  font-family: "DM Sans", sans-serif;
+  color: var(--login-text);
+  background: var(--login-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { min-width: 320px; min-height: 100vh; margin: 0; background: radial-gradient(ellipse at 18% 4%, rgba(201,169,110,.08), transparent 32rem), var(--login-bg); }
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--login-gold-light); outline-offset: 3px; }
+
+.login-page { display: grid; min-height: 100vh; min-height: 100svh; place-items: center; padding: 34px; }
+.login-shell { display: grid; width: min(1180px, 100%); min-height: min(740px, calc(100svh - 68px)); grid-template-columns: minmax(0, 1.08fr) minmax(420px, .92fr); overflow: hidden; border: 1px solid var(--login-border); border-radius: 9px; background: var(--login-panel); box-shadow: 0 30px 90px rgba(0,0,0,.38); }
+.login-scene { position: relative; min-height: 620px; overflow: hidden; background: #20201d; }
+.scene-image, .scene-shade { position: absolute; inset: 0; width: 100%; height: 100%; }
+.scene-image { object-fit: cover; object-position: center; }
+.scene-shade { background: linear-gradient(180deg, rgba(4,6,7,.42), rgba(4,6,7,.06) 36%, rgba(4,6,7,.82)), linear-gradient(90deg, rgba(4,6,7,.12), transparent 75%); }
+.brand-lockup { position: absolute; top: 31px; left: 34px; display: inline-flex; align-items: center; gap: 12px; }
+.brand-mark { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: linear-gradient(135deg, var(--login-gold-light), #927343); color: #17130c; font-family: "Playfair Display", serif; font-size: 16px; font-weight: 700; }
+.brand-lockup strong, .brand-lockup small { display: block; }
+.brand-lockup strong { font-family: "Playfair Display", serif; font-size: 19px; font-weight: 600; }
+.brand-lockup small { margin-top: 3px; color: rgba(255,255,255,.68); font-size: 8px; font-weight: 600; letter-spacing: 1.4px; }
+.scene-caption { position: absolute; right: 42px; bottom: 78px; left: 42px; }
+.scene-kicker, .form-kicker { color: var(--login-gold-light); font-size: 9px; font-weight: 700; letter-spacing: 1.7px; }
+.scene-caption p { margin: 16px 0 20px; font-family: "Playfair Display", serif; font-size: clamp(34px, 4vw, 49px); font-weight: 500; line-height: 1.13; }
+.scene-rule { display: block; width: 42px; height: 2px; background: var(--login-gold); }
+.scene-credit { position: absolute; bottom: 29px; left: 42px; color: rgba(255,255,255,.62); font-size: 10px; }
+.login-panel { display: flex; min-width: 0; flex-direction: column; justify-content: center; padding: 64px clamp(34px, 6.2vw, 82px) 27px; }
+.login-content { width: min(100%, 370px); margin: auto; }
+.mobile-brand { display: none; }
+.login-content h1 { margin: 13px 0 7px; font-family: "Playfair Display", serif; font-size: 35px; font-weight: 500; line-height: 1.2; }
+.login-intro { margin: 0 0 30px; color: var(--login-muted); font-size: 12px; line-height: 1.6; }
+.login-form { display: grid; gap: 19px; }
+.field-group { display: grid; gap: 8px; }
+.field-group > label { color: #dedbd4; font-size: 10px; font-weight: 600; }
+.field-group input { width: 100%; height: 46px; padding: 0 13px; border: 1px solid var(--login-border); border-radius: 6px; outline: none; background: #090d10; color: var(--login-text); font-size: 11px; transition: border-color 160ms ease, background 160ms ease; }
+.field-group input::placeholder { color: #626a70; }
+.field-group input:focus { border-color: rgba(201,169,110,.65); background: #0b1013; }
+.password-field { position: relative; }
+.password-field input { padding-right: 48px; }
+.password-toggle { position: absolute; top: 4px; right: 4px; display: grid; width: 38px; height: 38px; place-items: center; border: 0; border-radius: 4px; background: transparent; color: var(--login-quiet); cursor: pointer; }
+.password-toggle:hover { color: var(--login-gold-light); }
+.password-toggle svg { width: 17px; height: 17px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.form-options { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: -2px; }
+.remember-option { display: inline-flex; align-items: center; gap: 8px; color: var(--login-muted); font-size: 10px; cursor: pointer; }
+.remember-option input { width: 14px; height: 14px; margin: 0; accent-color: var(--login-gold); }
+.form-options > a, .login-footer a { color: var(--login-gold-light); font-size: 10px; }
+.form-options > a:hover, .login-footer a:hover { color: #f2dba9; }
+.sign-in-button { display: flex; min-height: 46px; align-items: center; justify-content: center; gap: 9px; margin-top: 3px; border: 1px solid #d8bd87; border-radius: 6px; background: linear-gradient(110deg, #dfc58e, #b48f54); color: #17130c; font-size: 11px; font-weight: 700; cursor: pointer; transition: filter 160ms ease, transform 160ms ease; }
+.sign-in-button:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.sign-in-button span { font-size: 16px; line-height: 1; }
+.form-message { display: none; margin: -7px 0 0; padding: 10px 11px; border: 1px solid rgba(201,169,110,.25); border-radius: 5px; background: rgba(201,169,110,.07); color: #e7d6b3; font-size: 10px; line-height: 1.5; }
+.form-message.visible { display: block; }
+.security-note { display: flex; align-items: center; gap: 8px; margin-top: 22px; color: var(--login-quiet); font-size: 9px; }
+.security-mark { display: grid; width: 17px; height: 17px; place-items: center; border: 1px solid rgba(85,197,138,.28); border-radius: 50%; color: #72c697; font-size: 10px; }
+.login-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.07); color: var(--login-quiet); font-size: 9px; }
+
+@media (max-width: 860px) {
+  .login-page { padding: 20px; }
+  .login-shell { min-height: min(700px, calc(100svh - 40px)); grid-template-columns: minmax(0, 1fr) minmax(350px, .95fr); }
+  .login-panel { padding-right: 34px; padding-left: 34px; }
+  .scene-caption { right: 28px; left: 28px; }
+  .scene-credit { left: 28px; }
+}
+@media (max-width: 680px) {
+  .login-page { display: block; padding: 0; }
+  .login-shell { width: 100%; min-height: 100svh; grid-template-columns: minmax(0, 1fr); border: 0; border-radius: 0; }
+  .login-scene { height: 170px; min-height: 170px; }
+  .brand-lockup, .scene-caption, .scene-credit { display: none; }
+  .login-panel { min-height: calc(100svh - 170px); justify-content: flex-start; padding: 22px 25px 18px; }
+  .mobile-brand { display: flex; width: min(100%, 370px); align-items: center; gap: 10px; margin: 0 auto 22px; }
+  .mobile-brand .brand-mark { width: 36px; height: 36px; }
+  .mobile-brand strong { font-family: "Playfair Display", serif; font-size: 18px; font-weight: 600; }
+  .login-content { margin: 0 auto; }
+  .login-content h1 { font-size: 31px; }
+  .login-intro { margin-bottom: 23px; }
+  .login-form { gap: 16px; }
+  .field-group > label { font-size: 12px; }
+  .field-group input { font-size: 16px; }
+  .remember-option, .form-options > a { font-size: 11px; }
+  .sign-in-button { font-size: 12px; }
+  .security-note { font-size: 10px; }
+  .login-footer { margin-top: auto; }
+}
+@media (max-width: 380px) {
+  .login-scene { height: 145px; min-height: 145px; }
+  .login-panel { min-height: calc(100svh - 145px); padding: 18px 19px 16px; }
+  .mobile-brand { margin-bottom: 17px; }
+  .login-content h1 { font-size: 29px; }
+  .login-footer { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

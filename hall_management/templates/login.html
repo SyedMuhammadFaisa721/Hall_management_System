@@ -1,0 +1,66 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b0d">
+  <meta name="description" content="Sign in to HallMaster venue management">
+  <title>Sign in | HallMaster</title>
+  <link rel="stylesheet" href="{% static 'css/login.css' %}?v=3">
+  <script src="{% static 'javascript/login.js' %}" defer></script>
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-scene" aria-label="Royal Palace Hall">
+      <img class="scene-image" src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1800&q=85" alt="An elegant banquet hall set for an evening celebration" fetchpriority="high">
+      <div class="scene-shade"></div>
+      <a class="brand-lockup" href="/" aria-label="HallMaster home">
+        <span class="brand-mark">HM</span>
+        <span><strong>HallMaster</strong><small>VENUE MANAGEMENT</small></span>
+      </a>
+      <div class="scene-caption">
+        <span class="scene-kicker">ROYAL PALACE HALL · KARACHI</span>
+        <p>Every occasion,<br>beautifully in hand.</p>
+        <span class="scene-rule"></span>
+      </div>
+      <span class="scene-credit">A considered space for life’s important gatherings.</span>
+    </section>
+
+    <section class="login-panel" aria-labelledby="login-title">
+      <a class="mobile-brand" href="/" aria-label="HallMaster home"><span class="brand-mark">HM</span><strong>HallMaster</strong></a>
+      <div class="login-content">
+        <span class="form-kicker">WORKSPACE ACCESS</span>
+        <h1 id="login-title">Welcome back</h1>
+        <p class="login-intro">Sign in to continue to your venue workspace.</p>
+
+        <form class="login-form" id="login-form">
+          <div class="field-group">
+            <label for="email">Work email</label>
+            <input id="email" name="email" type="email" autocomplete="username" placeholder="name@venue.com" required>
+          </div>
+          <div class="field-group">
+            <label for="password">Password</label>
+            <div class="password-field">
+              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+              <button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-options">
+            <label class="remember-option"><input type="checkbox" name="remember"><span>Remember this device</span></label>
+            <a href="mailto:events@royalpalace.pk?subject=HallMaster%20account%20access">Forgot password?</a>
+          </div>
+          <button class="sign-in-button" type="submit">Sign in <span aria-hidden="true">→</span></button>
+          <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+        </form>
+
+        <div class="security-note"><span class="security-mark" aria-hidden="true">✓</span><span>Your workspace is protected with secure sign-in.</span></div>
+      </div>
+      <footer class="login-footer"><span>© 2026 HallMaster</span><a href="/">Return to dashboard</a></footer>
+    </section>
+  </main>
+  <noscript>HallMaster sign-in requires JavaScript.</noscript>
+</body>
+</html>

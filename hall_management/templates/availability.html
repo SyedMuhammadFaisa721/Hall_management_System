@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Bookings | HallMaster{% endblock %}
+{% block page_content %}
+			<header class="page-heading">
+				<div><span class="eyebrow">VENUE SCHEDULE</span><h1>Availability</h1><p>Review confirmed events, pending holds and open dates.</p></div>
+				<div class="heading-actions"><a class="text-button" href="/bookings/">View all bookings</a><a class="primary-button" href="/bookings/">+ Create booking</a></div>
+			</header>
+
+			<section class="stats-grid" aria-label="Availability summary">
+				<article class="stat-card"><div class="stat-top"><span class="stat-label">Events this month</span><span class="stat-icon" aria-hidden="true">EV</span></div><strong class="stat-value">18</strong><div class="stat-foot">September 2026</div></article>
+				<article class="stat-card"><div class="stat-top"><span class="stat-label">Confirmed</span><span class="stat-icon" aria-hidden="true">OK</span></div><strong class="stat-value">14</strong><div class="stat-foot"><span class="trend">+2</span><span>since last month</span></div></article>
+				<article class="stat-card"><div class="stat-top"><span class="stat-label">Pending</span><span class="stat-icon" aria-hidden="true">..</span></div><strong class="stat-value">3</strong><div class="stat-foot">Awaiting confirmation</div></article>
+				<article class="stat-card"><div class="stat-top"><span class="stat-label">Available dates</span><span class="stat-icon" aria-hidden="true">DA</span></div><strong class="stat-value">12</strong><div class="stat-foot">Across all halls</div></article>
+			</section>
+
+			<section class="section grid grid-3" style="grid-template-columns:minmax(0,1.7fr) minmax(240px,.65fr)" aria-label="September calendar and selected date">
+				<div class="panel">
+					<div class="calendar-head">
+						<div><span class="eyebrow">MONTH VIEW</span><strong>September 2026</strong></div>
+						<div class="calendar-controls" aria-label="Calendar month controls"><button class="icon-button" type="button" disabled aria-label="Previous month">&#8249;</button><button class="text-button" type="button" disabled>Today</button><button class="icon-button" type="button" disabled aria-label="Next month">&#8250;</button></div>
+					</div>
+					<div class="calendar-grid" role="grid" aria-label="September 2026">
+						<span class="calendar-weekday" role="columnheader">Sun</span><span class="calendar-weekday" role="columnheader">Mon</span><span class="calendar-weekday" role="columnheader">Tue</span><span class="calendar-weekday" role="columnheader">Wed</span><span class="calendar-weekday" role="columnheader">Thu</span><span class="calendar-weekday" role="columnheader">Fri</span><span class="calendar-weekday" role="columnheader">Sat</span>
+						<div class="calendar-day other-month"><span class="day-number">30</span></div><div class="calendar-day other-month"><span class="day-number">31</span></div><div class="calendar-day"><span class="day-number">1</span></div><div class="calendar-day"><span class="day-number">2</span></div><div class="calendar-day"><span class="day-number">3</span></div><div class="calendar-day"><span class="day-number">4</span></div><div class="calendar-day"><span class="day-number">5</span></div>
+						<div class="calendar-day"><span class="day-number">6</span></div><div class="calendar-day"><span class="day-number">7</span></div><div class="calendar-day"><span class="day-number">8</span></div><div class="calendar-day"><span class="day-number">9</span></div><div class="calendar-day"><span class="day-number">10</span></div><div class="calendar-day"><span class="day-number">11</span></div><div class="calendar-day"><span class="day-number">12</span></div>
+						<div class="calendar-day"><span class="day-number">13</span></div><div class="calendar-day"><span class="day-number">14</span></div><div class="calendar-day"><span class="day-number">15</span></div><div class="calendar-day"><span class="day-number">16</span></div><div class="calendar-day"><span class="day-number">17</span></div><div class="calendar-day"><span class="day-number">18</span></div><div class="calendar-day"><span class="day-number">19</span></div>
+						<div class="calendar-day"><span class="day-number">20</span></div><div class="calendar-day"><span class="day-number">21</span></div><div class="calendar-day"><span class="day-number">22</span></div><div class="calendar-day"><span class="day-number">23</span></div><div class="calendar-day"><span class="day-number">24</span></div><div class="calendar-day"><span class="day-number">25</span></div><div class="calendar-day"><span class="day-number">26</span></div>
+						<div class="calendar-day"><span class="day-number">27</span></div><div class="calendar-day today" aria-current="date"><span class="day-number">28</span><span class="day-booking" title="Wedding Reception">Wedding Reception</span></div><div class="calendar-day"><span class="day-number">29</span></div><div class="calendar-day"><span class="day-number">30</span><span class="day-booking pending" title="Corporate Gala">Corporate Gala</span></div><div class="calendar-day other-month"><span class="day-number">1</span></div><div class="calendar-day other-month"><span class="day-number">2</span></div><div class="calendar-day other-month"><span class="day-number">3</span></div>
+					</div>
+					<div class="calendar-legend"><span><i></i>Confirmed</span><span><i class="pending-dot"></i>Pending</span><span><i class="blocked-dot"></i>Blocked</span></div>
+				</div>
+
+				<aside class="panel panel-pad day-detail" aria-labelledby="selected-date-title">
+					<span class="eyebrow">SELECTED DATE</span>
+					<h2 id="selected-date-title">Monday, September 28</h2>
+					<span class="status confirmed">Confirmed</span>
+					<div class="section">
+						<h3>Wedding Reception</h3>
+						<p><strong>Sarah Khan</strong><br>Grand Ballroom<br>6:00 PM · 420 guests<br>Royal Wedding package</p>
+						<a class="text-button" href="/bookings/">Open booking</a>
+					</div>
+					<div class="availability-summary"><div><strong>1</strong><span>Event</span></div><div><strong>1</strong><span>Hall in use</span></div><div><strong>2</strong><span>Halls free</span></div></div>
+				</aside>
+			</section>
+
+			<section class="section" aria-labelledby="upcoming-title">
+				<div class="section-head"><div><h2 id="upcoming-title">Upcoming events</h2><p>Next scheduled events at Royal Palace Hall</p></div><a class="section-link" href="/bookings/">All bookings</a></div>
+				<div class="panel panel-pad booking-list">
+					<article class="booking-row"><span class="date-tile"><strong>28</strong><span>Sep</span></span><span class="booking-row-copy"><strong>Sarah Khan · Wedding Reception</strong><span>6:00 PM · 420 guests · Grand Ballroom</span></span><span class="status confirmed">Confirmed</span></article>
+					<article class="booking-row"><span class="date-tile"><strong>30</strong><span>Sep</span></span><span class="booking-row-copy"><strong>Ahmed Malik · Corporate Gala</strong><span>7:30 PM · 250 guests · Crystal Hall</span></span><span class="status pending">Pending</span></article>
+					<article class="booking-row"><span class="date-tile"><strong>03</strong><span>Oct</span></span><span class="booking-row-copy"><strong>Ayesha Siddiqui · Mehndi</strong><span>5:00 PM · 360 guests · Grand Ballroom</span></span><span class="status pending">Pending</span></article>
+					<article class="booking-row"><span class="date-tile"><strong>05</strong><span>Oct</span></span><span class="booking-row-copy"><strong>Mariam Ali · Engagement</strong><span>6:30 PM · 180 guests · Garden Pavilion</span></span><span class="status confirmed">Confirmed</span></article>
+				</div>
+			</section>
+{% endblock %}
