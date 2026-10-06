@@ -3,7 +3,7 @@
 {% block page_content %}
 			<header class="page-heading">
 				<div><span class="eyebrow">VENUE SCHEDULE</span><h1>Availability</h1><p>Review confirmed events, pending holds and open dates.</p></div>
-				<div class="heading-actions"><a class="text-button" href="/bookings/">View all bookings</a><a class="primary-button" href="/bookings/">+ Create booking</a></div>
+				<div class="heading-actions"><a class="text-button" href="{% url 'bookings' %}">View all bookings</a><a class="primary-button" href="{% url 'bookingform' %}">+ Create booking</a></div>
 			</header>
 
 			<section class="stats-grid" aria-label="Availability summary">

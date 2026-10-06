@@ -34,15 +34,17 @@
         <h1 id="login-title">Welcome back</h1>
         <p class="login-intro">Sign in to continue to your venue workspace.</p>
 
-        <form class="login-form" id="login-form">
+        <form method="POST" 
+        class="login-form" id="login-form">
+        {% csrf_token %}
           <div class="field-group">
-            <label for="email">Work email</label>
-            <input id="email" name="email" type="email" autocomplete="username" placeholder="name@venue.com" required>
+            <label for="email">User Name</label>
+            {{ form.username }}
           </div>
           <div class="field-group">
             <label for="password">Password</label>
             <div class="password-field">
-              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+              {{ form.password }}
               <button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
               </button>
@@ -58,7 +60,6 @@
 
         <div class="security-note"><span class="security-mark" aria-hidden="true">✓</span><span>Your workspace is protected with secure sign-in.</span></div>
       </div>
-      <footer class="login-footer"><span>© 2026 HallMaster</span><a href="/">Return to dashboard</a></footer>
     </section>
   </main>
   <noscript>HallMaster sign-in requires JavaScript.</noscript>

@@ -16,24 +16,33 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from hall_management.views import hallmaster_login, hallmaster_page, tester, login, invoice_detail
+from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Customers_view, Packages_view,Payments_view, Invoices_view, Reports_view, Expenses_view, Staff_view, Notifications_view, Settings_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('login/', login, name='login'),
-    path('', hallmaster_page, {'page': 'dashboard'}, name='dashboard'),
-    path('bookings/', hallmaster_page, {'page': 'bookings'}, name='bookings'),
-    path('bookingform/', hallmaster_page, {'page': 'bookingform'}, name='bookingform'),
-    path('availability/', hallmaster_page, {'page': 'availability'}, name='availability'),
-    path('customers/', hallmaster_page, {'page': 'customers'}, name='customers'),
-    path('packages/', hallmaster_page, {'page': 'packages'}, name='packages'),
-    path('payments/', hallmaster_page, {'page': 'payments'}, name='payments'),
-    path('invoices/', hallmaster_page, {'page': 'invoices'}, name='invoices'),
-    path('invoices/<str:invoice_id>/', invoice_detail, name='invoice_detail'),
-    path('expenses/', hallmaster_page, {'page': 'expenses'}, name='expenses'),
-    path('reports/', hallmaster_page, {'page': 'reports'}, name='reports'),
-    path('staff/', hallmaster_page, {'page': 'staff'}, name='staff'),
-    path('notifications/', hallmaster_page, {'page': 'notifications'}, name='notifications'),
-    path('settings/', hallmaster_page, {'page': 'settings'}, name='settings'),
-    path('tester/', tester, name='tester'),
+        path('login/', log_in, name='login'),
+        path('logout/', log_out, name='logout'),
+        path('' , dashboard , name ="dashboard"),
+        path('inventory/' , Inventory_view , name ="inventory"),
+        path('availability/' , Availability_view , name ="availability"),
+        path('customers/' , Customers_view , name ="customers"),
+        path('packages/' , Packages_view , name ="packages"),
+        path('payments/' , Payments_view , name ="payments"),
+        path('invoices/' , Invoices_view , name ="invoices"),
+        path('reports/' , Reports_view , name ="reports"),
+        path('expenses/' , Expenses_view , name ="expenses"),
+        path('staff/' , Staff_view , name ="staff"),
+        path('users/', users_page, name='users'),
+        path('adduser/', user_create, name='user_create'),
+        path('notifications/' , Notifications_view , name ="notifications"),
+        path('settings/' , Settings_view , name ="settings"),
+        path('bookings/' , booking_view , name ="bookings"),
+        path('bookingform/' , New_booking , name = "bookingform"),
+        path('addexpense/', Expense_form , name = "expensesform"),
+        path('addstaff/' , New_staff , name = "staffform"),
+        path('addinventory/' , New_inventory , name = "inventoryform"),
+        path('addinventorycategory/' , New_inventory_category , name = "inventorycategoryform"),
+        path('tester/', tester, name='tester'),
+
 ]
+

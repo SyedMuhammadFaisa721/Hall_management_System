@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'hall_management',
     'axes',
 ]
+LOGIN_URL      = '/login'
+LOGIN_REDIRECT = '/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

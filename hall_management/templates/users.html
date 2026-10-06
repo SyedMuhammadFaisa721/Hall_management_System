@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Users | HallMaster{% endblock %}
+{% block page_scripts %}{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/users.css' %}">
+<script defer src="{% static 'javascript/users.js' %}"></script>
+{% endblock %}
+{% block page_content %}
+<div class="users-page">
+	<header class="users-hero">
+		<div class="users-hero-copy">
+			<span class="eyebrow">PEOPLE &amp; ACCESS</span>
+			<h1>Your people,<br><span>in one place.</span></h1>
+			<p>A clear view of every account across your HallMaster workspace.</p>
+			{% if can_add_user %}<a class="primary-button users-add-button" href="{% url 'user_create' %}">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+				Add a user
+			</a>{% endif %}
+		</div>
+		<div class="users-hero-art" aria-hidden="true">
+			<span class="hero-orbit hero-orbit-one"></span>
+			<span class="hero-orbit hero-orbit-two"></span>
+			<span class="hero-spark hero-spark-one"></span>
+			<span class="hero-spark hero-spark-two"></span>
+			<div class="hero-count"><span>WORKSPACE MEMBERS</span><strong>{{ total_users }}</strong><small>accounts and counting</small></div>
+			<div class="hero-avatars"><span>HM</span><span>+</span></div>
+		</div>
+		<span class="users-hero-index" aria-hidden="true">01 / DIRECTORY</span>
+	</header>
+
+	<section class="users-stats" aria-label="User account summary">
+		<article class="user-stat user-stat-total"><span class="user-stat-label">Total accounts</span><strong>{{ total_users }}</strong><span class="user-stat-note">Registered in this workspace</span><span class="user-stat-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 21c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5M17 11a3 3 0 1 0-2-5.2M17 15c2.6.5 4.5 2.9 4.5 6"/></svg></span></article>
+		<article class="user-stat"><span class="user-stat-label">Active</span><strong>{{ active_users }}</strong><span class="user-stat-note"><i class="user-stat-dot is-active"></i>Can sign in</span><span class="user-stat-mark is-green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></span></article>
+		<article class="user-stat"><span class="user-stat-label">Administrators</span><strong>{{ admin_users }}</strong><span class="user-stat-note">Full workspace access</span><span class="user-stat-mark is-blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></span></article>
+		<article class="user-stat"><span class="user-stat-label">Inactive</span><strong>{{ inactive_users }}</strong><span class="user-stat-note">Sign-in disabled</span><span class="user-stat-mark is-quiet" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg></span></article>
+	</section>
+
+	<section class="users-directory" aria-labelledby="directory-title">
+		<div class="directory-heading">
+			<div><span class="eyebrow">THE DIRECTORY</span><h2 id="directory-title">All users <span>{{ total_users }}</span></h2><p>Accounts with access to this workspace.</p></div>
+			<span class="directory-live"><i></i>LIVE DIRECTORY</span>
+		</div>
+		<div class="directory-panel">
+			<div class="directory-toolbar">
+				<label class="users-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><span class="sr-only">Search users</span><input id="user-search" type="search" placeholder="Search name, username or email" autocomplete="off"></label>
+				<div class="directory-filters">
+					<label class="sr-only" for="user-role-filter">Filter by access</label>
+					<select id="user-role-filter"><option value="all">All access levels</option><option value="administrator">Administrator</option><option value="staff">Staff</option><option value="member">Member</option></select>
+					<label class="sr-only" for="user-status-filter">Filter by status</label>
+					<select id="user-status-filter"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
+				</div>
+			</div>
+			<div class="users-table-wrap">
+				<table class="users-table">
+					<thead><tr><th scope="col">USER</th><th scope="col">ACCESS</th><th scope="col">LAST SIGN IN</th><th scope="col">DATE ADDED</th><th scope="col">STATUS</th></tr></thead>
+					<tbody id="users-list">
+						{% for entry in users %}
+						<tr class="user-row" data-role="{{ entry.role_key }}" data-status="{% if entry.account.is_active %}active{% else %}inactive{% endif %}">
+							<td data-label="USER"><div class="user-identity"><span class="user-avatar avatar-{{ forloop.counter0|add:'1'|divisibleby:'4'|yesno:'mint,amber' }}">{{ entry.initials }}</span><span class="user-identity-copy"><strong>{{ entry.name }}</strong><small>@{{ entry.account.username }}</small></span></div></td>
+							<td data-label="ACCESS"><span class="user-role role-{{ entry.role_key }}"><i></i>{{ entry.role }}</span></td>
+							<td data-label="LAST SIGN IN" class="user-date">{% if entry.account.last_login %}{{ entry.account.last_login|date:"d M Y, H:i" }}{% else %}<span class="never-signed-in">Never signed in</span>{% endif %}</td>
+							<td data-label="DATE ADDED" class="user-date">{{ entry.account.date_joined|date:"d M Y" }}</td>
+							<td data-label="STATUS"><span class="user-status {% if entry.account.is_active %}status-active{% else %}status-inactive{% endif %}"><i></i>{% if entry.account.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+						</tr>
+						{% empty %}
+						<tr><td class="users-empty" colspan="5"><span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 21c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5M17 11a3 3 0 1 0-2-5.2M17 15c2.6.5 4.5 2.9 4.5 6"/></svg></span><strong>No user accounts yet</strong><span>Add an account to start building your directory.</span></td></tr>
+						{% endfor %}
+						<tr class="users-no-results" id="users-no-results" hidden><td class="users-empty" colspan="5"><strong>No matching users</strong><span>Try a different search or filter.</span></td></tr>
+					</tbody>
+				</table>
+			</div>
+			<footer class="directory-footer"><span id="user-result-count">Showing {{ total_users }} users</span><span><i class="directory-footer-dot"></i>Account data updates automatically</span></footer>
+		</div>
+	</section>
+	<div class="users-endnote"><span>HALLMASTER <i>·</i> PEOPLE &amp; ACCESS</span><span>Every role. Every account. In sync.</span></div>
+</div>
+{% endblock %}

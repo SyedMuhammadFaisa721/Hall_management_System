@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Staff &amp; Roles | HallMaster{% endblock %}
 {% block page_content %}
-<header class="page-heading"><div><span class="eyebrow">YOUR TEAM</span><h1>Staff &amp; Roles</h1><p>Manage team access and responsibilities.</p></div><div class="heading-actions"><a class="primary-button" href="#team-directory">+ Invite staff</a></div></header>
+<header class="page-heading"><div><span class="eyebrow">YOUR TEAM</span><h1>Staff &amp; Roles</h1><p>Manage team access and responsibilities.</p></div><div class="heading-actions"><a class="primary-button" href="{% url 'staffform' %}">+ Add Staff</a></div></header>
 <section class="stats-grid" aria-label="Staff summary">
 	<article class="stat-card"><div class="stat-top"><span class="stat-label">Total staff</span><span class="stat-icon" aria-hidden="true">ST</span></div><strong class="stat-value">5</strong><div class="stat-foot"><span class="trend">+1</span><span>this month</span></div></article>
 	<article class="stat-card"><div class="stat-top"><span class="stat-label">Active</span><span class="stat-icon" aria-hidden="true">AC</span></div><strong class="stat-value">4</strong><div class="stat-foot">80% of team</div></article>

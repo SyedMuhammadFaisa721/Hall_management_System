@@ -1,39 +1,307 @@
 from django.shortcuts import render , redirect
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import PermissionDenied
+from django.views.decorators.http import require_POST
+from .form import hallmaster_user_creation, new_booking , new_expense ,new_inventory ,new_staff ,new_inventory_category, loginform
+from django.views.generic import ListView, DetailView
+from django.contrib import messages
+from django.http import HttpResponse
+from django.db.models import Q
+from django.core.paginator import Paginator
+from .models import newbooking , staff , expense , Inventory, InventoryCategory
+from django.db.models import Sum ,Max 
+from datetime import date , datetime
 
-def login(request):
-    if request.method == "GET":
-        return render(request, 'login.html')
+def log_in(request):
+        
     if request.method == "POST":
-        form = AuthenticationForm(data= request.data)
+        form = loginform( request = request, data=request.POST)
         if form.is_valid():
-            user = form.get_user
+            user = form.get_user()
             login(request , user)
             return redirect("dashboard")
-        else:
-            form = AuthenticationForm()
-        return render(request , 'login.html', {'form':form})
-HALLMASTER_TEMPLATES = {
-    'dashboard': 'dashboard.html',
-    'bookings': 'bookings.html',
-    'bookingform': 'bookingform.html',
-    'availability': 'availability.html',
-    'customers': 'customers.html',
-    'packages': 'packages.html',
-    'payments': 'payments.html',
-    'invoices': 'invoices.html',
-    'expenses': 'expenses.html',
-    'reports': 'reports.html',
-    'staff': 'staff.html',
-    'notifications': 'notifications.html',
-    'settings': 'settings.html',
-}
+    else:
+        form = loginform(request = request)
+    return render(request , 'login.html' , {'form': form})
+
+@require_POST
+def log_out(request):
+    logout(request)
+    return redirect('login')
 
 
-def hallmaster_page(request, page='dashboard'):
-    return render(request, HALLMASTER_TEMPLATES[page], {'page': page})
+@login_required(login_url='login')
+def dashboard(request):
+    dashboard_booking_list = newbooking.objects.all().order_by('-booking_id')[:5]
+    total_bookings = newbooking.objects.count()
+    context = {
+        'dashboard_booking_list': dashboard_booking_list,
+        'total_bookings': total_bookings,
+    }
+    return render(request ,"dashboard.html" , context)
+
+@login_required(login_url='login')
+def booking_view(request):
+    booking_total = newbooking.objects.all().count()
+
+    booking_confirmed = newbooking.objects.filter(status = 'confirmed').count()
+    booking_pending = newbooking.objects.filter(status = 'pending').count()
+    booking_canceled = newbooking.objects.filter(status = 'canceled').count()
+
+    search = request.GET.get('search', '')
+    if search:
+        booking_obj = newbooking.objects,filter(
+            Q(customer_name__icontains = search)|
+            Q(booking_id__icontains = search)|
+            Q(event_name__icontains = search)|
+            Q(event_hall__icontains = search)|
+            Q(status__icontains = search)
+        )
+        paginator = Paginator(booking_obj ,10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context = {
+            'booking_total': booking_total,
+            'booking_obj': booking_obj,
+            'booking_confirmed': booking_confirmed,
+            'booking_pending': booking_pending,
+            'booking_canceled': booking_canceled,
+            'page_obj': page_obj,
+        }
+        return render(request, 'bookings.html', context)
+    else:
+        booking_list = newbooking.objects.all().order_by('-booking_id')
+        paginator =Paginator(booking_list , 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+
+    context = {
+        'booking_total': booking_total,
+        'booking_confirmed': booking_confirmed,
+        'booking_pending': booking_pending,
+        'booking_canceled': booking_canceled,
+        'page_obj': page_obj,
+    }
+    return render(request, 'bookings.html', context)
+@login_required(login_url='login')
+def Availability_view(request):
+    return render(request , 'availability.html')
+    
+@login_required(login_url='login')
+def Inventory_view(request):
+    return render(request , 'inventory.html')
+
+@login_required(login_url='login')
+def Availability_view(request):
+    return render(request , 'availability.html')
+@login_required(login_url='login')
+def Customers_view(request):
+    return render(request , 'customers.html')
+@login_required(login_url='login')
+def Packages_view(request):
+    return render(request , 'packages.html')
+@login_required(login_url='login')
+def Payments_view(request):
+    return render(request , 'payments.html')
+@login_required(login_url='login')
+def Invoices_view(request):
+    return render(request , 'invoices.html')
+@login_required(login_url='login')
+def Expenses_view(request):
+    total_expenses = expense.objects.aggregate(Sum('amount'))['amount__sum'] or 0
+    current_month = date.today().month
+    current_year = date.today().year
+    previous_year = current_year - 1
+    yearly_expenses = expense.objects.filter(date__year = current_year , status = 'paid').aggregate(Sum('amount'))['amount__sum'] or 0
+    yearly_expenses_previous = expense.objects.filter(date__year = previous_year , status = 'paid').aggregate(Sum('amount'))['amount__sum'] or 0
+    yearly_expenses_per = yearly_expenses / yearly_expenses_previous or 0
+    previous_month = current_month - 1
+    monthly_expenses = expense.objects.filter(date__month = current_month, status ='paid').aggregate(Sum('amount'))['amount__sum'] or 0
+    monthly_expenses_previous = expense.objects.filter(date__month = previous_month, status ='paid').aggregate(Sum('amount'))['amount__sum'] or 0
+    monthly_expenses_per = monthly_expenses / monthly_expenses_previous or 0
+    monthly_expenses_pending = expense.objects.filter(date__month = current_month, status ='pending').aggregate(Sum('amount'))['amount__sum'] or 0
+    largest_expense = expense.objects.all().aggregate(Max('amount'))['amount__max'] or 0
+    search =request.GET.get('search', '')
+    if search:
+        expense_obj = expense.objects.filter(
+            Q(expense_id__icontains = search)|
+            Q(expense_title__icontains =search)|
+            Q(status__icontains = search)|
+            Q(paid_by__icontains = search)|
+            Q(date__icontains=search)
+        )
+        paginator =Paginator(expense_obj , 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context={
+            'expense_obj': expense_obj,
+            'page_obj': page_obj,
+            'total_expenses': total_expenses,
+            'monthly_expenses_pending':monthly_expenses_pending
+        }
+        return render(request , 'expenses.html', context)
+    else:
+        expense_list = expense.objects.all().order_by('-expense_id')[:10]
+        paginator = Paginator(expense_list , 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)   
+    context ={
+        'expense_list': expense_list,
+        'page_obj': page_obj,
+        'total_expenses': total_expenses,
+        'monthly_expenses': monthly_expenses,
+        'monthly_expenses_per': monthly_expenses_per,
+        'monthly_expenses_pending': monthly_expenses_pending,
+        'largest_expense': largest_expense,
+        'yearly_expenses':yearly_expenses,
+        'yearly_expenses_per':yearly_expenses_per,
+        'current_year': current_year,
+        'current_month': current_month,
+    } 
+    return render(request , 'expenses.html' , context)
+@login_required(login_url='login')
+def Reports_view(request):  
+    return render(request , 'reports.html')
+@login_required(login_url='login')
+def Staff_view(request):
+    return render(request , 'staff.html') 
+@login_required(login_url='login')
+def Notifications_view(request):
+    return render(request , 'notifications.html')
+@login_required(login_url='login')
+def Settings_view(request):
+    return render(request , 'settings.html')
+@login_required(login_url='login')
+def New_booking(request):
+    if request.method == 'POST':
+        form = new_booking(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Booking created successfully.")
+            return redirect('bookings')
+        elif form.is_not_valid():
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = new_booking()
+    context  = {'form': form}
+    return render(request , 'bookingform.html', context)
+
+@login_required(login_url='login')
+def Expense_form(request):
+    if request.method =='POST':
+        form = new_expense(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request , "Expense created successfully.")
+            return redirect('expensesform')
+        elif form.is_not_valid():
+            messages.error(request , "Please correct the errors below.")
+    else:
+        form = new_expense()
+    context = {'form': form}
+    return render(request , 'addexpense.html' , context)
+@login_required(login_url='login')
+def New_staff(request):
+    if request.method =='POST':
+        form =new_staff(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request , "Staff created successfully.")
+            return redirect('staffform')
+        elif form.is_not_valid():
+            messages.error(request , "Please correct the errors below.")
+    else:
+        form =new_staff()
+    context = {'form': form}
+    return render (request , 'addstaff.html' , context)
+@login_required(login_url='login')
+def New_inventory(request):
+    if request.method =='POST':
+        form = new_inventory(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request , "Inventory created successfully.")
+            return redirect('inventoryform')
+        elif form.is_not_valid():
+            messages.error(request , "Please correct the errors below.")
+    else:
+        form  = new_inventory()
+    context = {'form' : form}
+    return render(request , 'addinventory.html' , context)
+@login_required(login_url='login')
+def New_inventory_category(request):
+    if request.method =='POST':
+        form = new_inventory_category(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request , "Inventory category created successfully.")
+            return redirect('inventorycategoryform')
+        elif form.is_not_valid():
+            messages.error(request , "Please correct the errors below.")
+    else:
+        form  = new_inventory_category()
+    context = {'form' : form}
+    return render(request , 'addinventorycategory.html' , context) 
+        
+class ViewBooking(ListView):
+    model = newbooking
+    template_name = 'booking.html'
+    context_object_name = 'bookings'
+
+def can_manage_users(user):
+    return user.is_staff or user.has_perm('auth.add_user')
+
+
+@login_required(login_url='login')
+def users_page(request):
+    user_model = get_user_model()
+    accounts = user_model._default_manager.order_by('-date_joined', 'username')
+    user_rows = []
+
+    for account in accounts:
+        name = account.get_full_name().strip() or account.get_username()
+        initials = ''.join(part[0] for part in name.split()[:2]).upper() or 'U'
+        role = 'Administrator' if account.is_superuser else 'Staff' if account.is_staff else 'Member'
+        user_rows.append({
+            'account': account,
+            'name': name,
+            'initials': initials,
+            'role': role,
+            'role_key': role.lower(),
+        })
+
+    return render(request, 'users.html', {
+        'page': 'users',
+        'users': user_rows,
+        'total_users': len(user_rows),
+        'active_users': sum(account['account'].is_active for account in user_rows),
+        'inactive_users': sum(not account['account'].is_active for account in user_rows),
+        'admin_users': sum(account['account'].is_superuser for account in user_rows),
+        'can_add_user': can_manage_users(request.user),
+    })
+
+
+@login_required(login_url='login')
+def user_create(request):
+    if not can_manage_users(request.user):
+        raise PermissionDenied
+
+    form = hallmaster_user_creation(
+        request.POST or None,
+        can_create_admin=request.user.is_superuser,
+    )
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('users')
+
+    return render(request, 'user_create.html', {
+        'page': 'users',
+        'form': form,
+        'can_create_admin': request.user.is_superuser,
+    })
 
 
 INVOICE_DETAILS = {
@@ -83,6 +351,6 @@ def hallmaster_login(request):
 
 
 def tester(request):
-    return render(request, 'inventory.html')
+        return render(request , "testerbase.html")
 
-# Create your views here.
+# Create your views here

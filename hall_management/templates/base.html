@@ -7,7 +7,8 @@
   <meta name="description" content="HallMaster venue management dashboard">
   <title>{% block title %}Dashboard | HallMaster{% endblock %}</title>
   {% load static %}
-  <link rel="stylesheet" href="{% static 'css/hallmaster.css' %}?v=5">
+  <link rel="stylesheet" href="{% static 'css/hallmaster.css' %}?v=7">
+  <link rel="stylesheet" href="{% static 'css/select-picker.css' %}">
   {% block page_scripts %}
   <script defer>
     document.addEventListener('DOMContentLoaded', function () {
@@ -15,12 +16,20 @@
       const overlay = document.querySelector('.sidebar-overlay');
       const toggle = document.querySelector('.menu-toggle');
       const closeButton = document.querySelector('.sidebar-close');
+      const profileButton = document.querySelector('.profile-button');
+      const profileMenu = document.querySelector('.profile-menu');
 
       function closeSidebar() {
         sidebar.classList.remove('open');
         overlay.classList.remove('open');
         document.body.classList.remove('locked');
         toggle.setAttribute('aria-expanded', 'false');
+      }
+
+      function closeProfileMenu() {
+        if (!profileButton || !profileMenu) return;
+        profileMenu.classList.remove('open');
+        profileButton.setAttribute('aria-expanded', 'false');
       }
 
       toggle.addEventListener('click', function () {
@@ -31,11 +40,25 @@
       });
       overlay.addEventListener('click', closeSidebar);
       closeButton.addEventListener('click', closeSidebar);
+      if (profileButton && profileMenu) {
+        profileButton.addEventListener('click', function (event) {
+          event.stopPropagation();
+          const isOpen = profileMenu.classList.toggle('open');
+          profileButton.setAttribute('aria-expanded', String(isOpen));
+        });
+        document.addEventListener('click', function (event) {
+          if (!profileMenu.contains(event.target)) closeProfileMenu();
+        });
+      }
       document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') closeSidebar();
+        if (event.key === 'Escape') {
+          closeSidebar();
+          closeProfileMenu();
+        }
       });
     });
   </script>
+  <script defer src="{% static 'javascript/select-picker.js' %}"></script>
   {% endblock %}
 </head>
 <body data-page="{% block page_key %}{{ page|default:'dashboard' }}{% endblock %}">
@@ -73,7 +96,13 @@
       </div>
       <div class="nav-group">
         <span class="nav-heading">MANAGEMENT</span>
-        <a class="nav-link {% if page == 'staff' %}active{% endif %}" href="{% url 'staff' %}" {% if page == 'staff' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6m1-9a3 3 0 0 0 0-6m1 10c2.2.5 4 2.4 4 5"/></svg></span><span class="nav-label">Staff &amp; Roles</span></a>
+        <a class="nav-link {% if page == 'staff' %}active{% endif %}" href="{% url 'staff' %}" {% if page == 'staff' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6m1-9a3 3 0 0 0 0-6m1 10c2.2.5 4 2.4 4 5"/></svg></span>
+        <span class="nav-label">Staff &amp; Roles</span>
+        </a>
+        <a class="nav-link {% if page == 'inventory' %}active{% endif %}" href="{% url 'inventory' %}" {% if page == 'staff' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3 7 9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10m-9-9 9 4 9-4"/></svg></span>
+        <span class="nav-label">Hall Inventory</span>
+        </a>
+        <a class="nav-link {% if page == 'users' %}active{% endif %}" href="{% url 'users' %}" {% if page == 'users' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 21c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5M17 11a3 3 0 1 0-2-5.2M17 15c2.6.5 4.5 2.9 4.5 6"/></svg></span><span class="nav-label">Users</span></a>
         <a class="nav-link {% if page == 'notifications' %}active{% endif %}" href="{% url 'notifications' %}" {% if page == 'notifications' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12a2 2 0 0 0 4 0"/></svg></span><span class="nav-label">Notifications</span></a>
         <a class="nav-link {% if page == 'settings' %}active{% endif %}" href="{% url 'settings' %}" {% if page == 'settings' %}aria-current="page"{% endif %}><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.5 1.5-2.8 2.8-1.6-1.6a7 7 0 0 1-2 .8V21h-4v-2.4a7 7 0 0 1-2-.8L7 19.4l-2.8-2.8 1.6-1.6a7 7 0 0 1-.8-2H2.5v-4h2.4a7 7 0 0 1 .8-2L4.1 5.4 7 2.6l1.6 1.6a7 7 0 0 1 2-.8V1h4v2.4a7 7 0 0 1 2 .8l1.6-1.6L21 5.4l-1.6 1.6a7 7 0 0 1 .8 2h2.3v4h-2.3a7 7 0 0 1-.8 2Z"/></svg></span><span class="nav-label">Settings</span></a>
       </div>
@@ -85,13 +114,20 @@
     <header class="topbar">
       <div class="topbar-left">
         <button class="icon-button menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">&#9776;</button>
-        <div class="page-context"><span>{% now "l, d F Y" %}</span><strong>Welcome Back, Faisal</strong></div>
+        <div class="page-context"><span>{% now "l, d F Y" %}</span><strong>Welcome Back, {{ user.first_name }}</strong></div>
       </div>
       <div class="topbar-right">
         <label class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><input class="search-input" type="search" placeholder="Search anything..." autocomplete="off"><kbd class="shortcut">/</kbd></label>
         <a class="icon-button notification-button" href="{% url 'notifications' %}" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12a2 2 0 0 0 4 0"/></svg><i class="notification-badge"></i></a>
-        <a class="primary-button topbar-action" href="{% url 'bookings' %}">+ New booking</a>
-        <div class="profile-wrap"><button class="profile-button" type="button" aria-expanded="false" aria-controls="profileDropdown"><span class="avatar">FA</span><span class="profile-copy"><strong>Faisal Ahmed</strong><span>Administrator</span></span><svg class="profile-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button><nav class="dropdown profile-menu" id="profileDropdown" aria-label="Account menu"><a href="{% url 'settings' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.5 1.5-2.8 2.8-1.6-1.6a7 7 0 0 1-2 .8V21h-4v-2.4a7 7 0 0 1-2-.8L7 19.4l-2.8-2.8 1.6-1.6a7 7 0 0 1-.8-2H2.5v-4h2.4a7 7 0 0 1 .8-2L4.1 5.4 7 2.6l1.6 1.6a7 7 0 0 1 2-.8V1h4v2.4a7 7 0 0 1 2 .8l1.6-1.6L21 5.4l-1.6 1.6a7 7 0 0 1 .8 2h2.3v4h-2.3a7 7 0 0 1-.8 2Z"/></svg>Account settings</a><a href="{% url 'login' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>Sign out</a></nav></div>
+        <a class="primary-button topbar-action" href="{% url 'bookingform' %}">+ New booking</a>
+        <div class="profile-wrap"><button class="profile-button" type="button" aria-expanded="false" aria-controls="profileDropdown">
+        <span class="avatar">
+           {% if request.user.is_authenticated %}
+            {{ request.user.first_name|slice:":1"|upper }} {{  request.user.last_name|slice:":1"|upper }}
+          {% endif %}
+
+        </span>
+        <span class="profile-copy"><strong>{{ user.first_name }} {{ user.last_name }}</strong><span>{% if user.is_superuser %}Administrator{% else %}{% with role_groups=user.groups.all %}{% if role_groups %}{% for group in role_groups %}{{ group.name|title }}{% if not forloop.last %}, {% endif %}{% endfor %}{% elif user.is_staff %}Staff{% else %}Member{% endif %}{% endwith %}{% endif %}</span></span><svg class="profile-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button><nav class="dropdown profile-menu" id="profileDropdown" aria-label="Account menu"><a href="{% url 'notifications' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12a2 2 0 0 0 4 0"/></svg>Notifications</a><a href="{% url 'settings' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.5 1.5-2.8 2.8-1.6-1.6a7 7 0 0 1-2 .8V21h-4v-2.4a7 7 0 0 1-2-.8L7 19.4l-2.8-2.8 1.6-1.6a7 7 0 0 1-.8-2H2.5v-4h2.4a7 7 0 0 1 .8-2L4.1 5.4 7 2.6l1.6 1.6a7 7 0 0 1 2-.8V1h4v2.4a7 7 0 0 1 2 .8l1.6-1.6L21 5.4l-1.6 1.6a7 7 0 0 1 .8 2h2.3v4h-2.3a7 7 0 0 1-.8 2Z"/></svg>Account settings</a><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>Log out</button></form></nav></div>
       </div>
     </header>
     <main class="content-wrap">{% block page_content %}{% endblock %}</main>

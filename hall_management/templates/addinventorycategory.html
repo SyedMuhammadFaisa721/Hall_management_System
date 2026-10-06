@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Add Inventory Category | HallMaster{% endblock %}
+{% block page_key %}inventory{% endblock %}
+{% block page_content %}
+<div class="operations-page inventory-category-entry-page">
+	<nav class="operations-breadcrumb" aria-label="Breadcrumb"><a href="/inventory/">Inventory</a><span aria-hidden="true">/</span><span>New category</span></nav>
+	<header class="operations-heading">
+		<div><span class="eyebrow">OPERATIONS <span class="operations-heading-dot"></span> STOCK CONTROL</span><h1>Add inventory category</h1><p>Create a clear label to keep venue stock organized.</p></div>
+		<a class="text-button" href="/inventory/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12"/></svg>Back to inventory</a>
+	</header>
+
+	<div class="operation-create-layout">
+		<form class="operation-form" id="add-inventory-category-form" novalidate>
+			<section class="operation-form-section" aria-labelledby="inventory-category-title">
+				<div class="operation-section-heading"><span class="operation-section-index">01</span><div><h2 id="inventory-category-title">Category details</h2><p>Choose a name your team can recognize at a glance.</p></div></div>
+				<div class="operation-field-grid">
+					<label class="operation-field operation-field-wide" for="category-name"><span>Category name <i>Required</i></span><input class="input" id="category-name" name="category_name" type="text" maxlength="20" placeholder="e.g. Seating" autocomplete="off" required aria-describedby="category-name-help"><small id="category-name-help">Use up to 20 characters. You can choose a common category below.</small></label>
+					<div class="inventory-category-presets operation-field-wide" aria-label="Common category names">
+						<span class="inventory-category-presets-label">Quick picks</span>
+						<div class="inventory-category-chips">
+							<button type="button" class="inventory-category-chip" data-category="Seating">Seating</button>
+							<button type="button" class="inventory-category-chip" data-category="Tables">Tables</button>
+							<button type="button" class="inventory-category-chip" data-category="Linens">Linens</button>
+							<button type="button" class="inventory-category-chip" data-category="Glassware">Glassware</button>
+							<button type="button" class="inventory-category-chip" data-category="Audio &amp; visual">Audio &amp; visual</button>
+							<button type="button" class="inventory-category-chip" data-category="Lighting">Lighting</button>
+							<button type="button" class="inventory-category-chip" data-category="Kitchen">Kitchen</button>
+							<button type="button" class="inventory-category-chip" data-category="Other">Other</button>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<div class="operation-form-footer"><p><span class="operation-required-mark">*</span> Required fields</p><div class="operation-form-actions"><a class="text-button" href="/inventory/">Cancel</a><button class="primary-button" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Preview category</button></div></div>
+			<p class="operation-form-feedback" id="category-feedback" role="status" aria-live="polite"></p>
+		</form>
+
+		<aside class="operation-summary-panel inventory-category-summary" aria-label="Category preview">
+			<div class="operation-summary-kicker"><span class="operation-live-dot"></span> CATEGORY PREVIEW</div>
+			<div class="inventory-category-preview-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1"/></svg></div>
+			<span class="operation-summary-label">New category</span>
+			<strong class="inventory-category-preview-name" id="category-preview-name">Category name</strong>
+			<div class="operation-summary-divider"></div>
+			<div class="operation-summary-row"><span>Characters</span><strong id="category-name-count">0 / 20</strong></div>
+			<div class="operation-preview-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><p>Frontend preview only. This category is not saved.</p></div>
+		</aside>
+	</div>
+</div>
+{% endblock %}
+{% block page_scripts %}
+<link rel="stylesheet" href="{% static 'css/operations.css' %}">
+<link rel="stylesheet" href="{% static 'css/addinventorycategory.css' %}">
+{{ block.super }}
+<script defer src="{% static 'javascript/addinventorycategory.js' %}"></script>
+{% endblock %}

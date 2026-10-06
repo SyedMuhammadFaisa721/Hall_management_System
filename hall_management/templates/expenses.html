@@ -1,24 +1,134 @@
 {% extends "base.html" %}
 {% block title %}Expenses | HallMaster{% endblock %}
 {% block page_content %}
-<header class="page-heading"><div><span class="eyebrow">OPERATIONS</span><h1>Expenses</h1><p>Keep day-to-day venue spending organised.</p></div><div class="heading-actions"><a class="text-button" href="#expense-ledger">Export list</a><a class="primary-button" href="#expense-ledger">+ Add expense</a></div></header>
-<section class="stats-grid" aria-label="Expense summary">
-	<article class="stat-card"><div class="stat-top"><span class="stat-label">Total expenses</span><span class="stat-icon" aria-hidden="true">EX</span></div><strong class="stat-value">Rs 514,500</strong><div class="stat-foot">September 2026</div></article>
-	<article class="stat-card"><div class="stat-top"><span class="stat-label">This month</span><span class="stat-icon" aria-hidden="true">MO</span></div><strong class="stat-value">Rs 514,500</strong><div class="stat-foot"><span class="trend">-4.1%</span><span>vs. last month</span></div></article>
-	<article class="stat-card"><div class="stat-top"><span class="stat-label">Pending</span><span class="stat-icon" aria-hidden="true">PE</span></div><strong class="stat-value">Rs 110,500</strong><div class="stat-foot">2 expenses to review</div></article>
-	<article class="stat-card"><div class="stat-top"><span class="stat-label">Largest expense</span><span class="stat-icon" aria-hidden="true">HI</span></div><strong class="stat-value">Rs 148,000</strong><div class="stat-foot">Seasonal decoration</div></article>
-</section>
-<section class="section" id="expense-ledger">
-	<div class="section-head"><div><h2>Expense ledger</h2><p>Recent venue purchases and operating costs</p></div></div>
-	<div class="panel"><div class="table-toolbar"><div class="toolbar-left"><label class="sr-only" for="expense-search">Search expenses</label><input class="input search-field" id="expense-search" type="search" placeholder="Search title or expense ID"><label class="sr-only" for="expense-category">Expense category</label><select class="select select-compact" id="expense-category"><option>All categories</option><option>Food</option><option>Decoration</option><option>Maintenance</option><option>Staff</option><option>Electricity</option><option>Marketing</option></select></div><div class="toolbar-right"><span class="cell-sub">Updated 28 Sep 2026</span></div></div>
-		<div class="table-scroll"><table class="data-table"><thead><tr><th>EXPENSE ID</th><th>TITLE</th><th>CATEGORY</th><th>DATE</th><th>AMOUNT</th><th>PAID BY</th><th>STATUS</th></tr></thead><tbody>
-			<tr><td class="cell-primary">EXP-481</td><td class="cell-primary">Seasonal floral arrangements</td><td>Decoration</td><td>20 Sep 2026</td><td class="cell-primary">Rs 148,000</td><td>M. Aslam</td><td><span class="status paid">Paid</span></td></tr>
-			<tr><td class="cell-primary">EXP-480</td><td class="cell-primary">Fresh produce and pantry stock</td><td>Food</td><td>19 Sep 2026</td><td class="cell-primary">Rs 92,500</td><td>Faisal Ahmed</td><td><span class="status paid">Paid</span></td></tr>
-			<tr><td class="cell-primary">EXP-479</td><td class="cell-primary">HVAC quarterly servicing</td><td>Maintenance</td><td>17 Sep 2026</td><td class="cell-primary">Rs 78,500</td><td>M. Aslam</td><td><span class="status pending">Pending</span></td></tr>
-			<tr><td class="cell-primary">EXP-478</td><td class="cell-primary">Staff payroll advance</td><td>Staff</td><td>16 Sep 2026</td><td class="cell-primary">Rs 120,000</td><td>Faisal Ahmed</td><td><span class="status paid">Paid</span></td></tr>
-			<tr><td class="cell-primary">EXP-477</td><td class="cell-primary">Generator fuel reserve</td><td>Electricity</td><td>13 Sep 2026</td><td class="cell-primary">Rs 43,500</td><td>A. Qureshi</td><td><span class="status paid">Paid</span></td></tr>
-			<tr><td class="cell-primary">EXP-476</td><td class="cell-primary">Local event listings</td><td>Marketing</td><td>11 Sep 2026</td><td class="cell-primary">Rs 32,000</td><td>Faisal Ahmed</td><td><span class="status pending">Pending</span></td></tr>
-		</tbody></table></div><div class="table-footer"><span>Showing 6 expenses</span><nav class="pagination" aria-label="Expense pages"><button type="button" disabled aria-label="Previous page">&#8249;</button><button class="active" type="button" aria-current="page">1</button><button type="button">2</button><button type="button" aria-label="Next page">&#8250;</button></nav></div>
-	</div>
-</section>
+    <header class="page-heading">
+        <div>
+            <span class="eyebrow">OPERATIONS</span>
+            <h1>Expenses</h1>
+            <p>Keep day-to-day venue spending organised.</p>
+        </div>
+        <div class="heading-actions">
+            <a class="text-button" href="#expense-ledger">Export list</a>
+            <a class="primary-button" href="{% url 'expensesform' %}">+ Add expense</a>
+        </div>
+    </header>
+
+    <section class="stats-grid" aria-label="Expense summary">
+        <article class="stat-card">
+            <div class="stat-top">
+                <span class="stat-label">Total Expenses in Year {{ current_year }}</span>
+                <span class="stat-icon" aria-hidden="true">EX</span>
+            </div>
+            <strong class="stat-value">Rs {{ yearly_expenses }}</strong>
+            <div class="stat-foot">
+                <span class="trend">{{ yearly_expenses_per|floatformat:2 }} %</span>
+                <span>vs. last year</span>
+            </div>
+        </article>
+        <article class="stat-card">
+            <div class="stat-top">
+                <span class="stat-label">Total Expenses in Month {{ current_month }}</span>
+                <span class="stat-icon" aria-hidden="true">MO</span>
+            </div>
+            <strong class="stat-value">Rs {{ monthly_expenses }}</strong>
+            <div class="stat-foot">
+                <span class="trend">{{ monthly_expenses_per|floatformat:2 }} %</span>
+                <span>vs. last month</span>
+            </div>
+        </article>
+        <article class="stat-card">
+            <div class="stat-top">
+                <span class="stat-label">Pending</span>
+                <span class="stat-icon" aria-hidden="true">PE</span>
+            </div>
+            <strong class="stat-value">Rs {{ monthly_expenses_pending }}</strong>
+            <div class="stat-foot">2 expenses to review</div>
+        </article>
+        <article class="stat-card">
+            <div class="stat-top">
+                <span class="stat-label">Largest expense</span>
+                <span class="stat-icon" aria-hidden="true">HI</span>
+            </div>
+            <strong class="stat-value">Rs {{ largest_expense }}</strong>
+            <div class="stat-foot">{{ largest_expense.expense_title }}</div>
+        </article>
+    </section>
+
+    <section class="section" id="expense-ledger">
+        <div class="section-head">
+            <div>
+                <h2>Expense ledger</h2>
+                <p>Recent venue purchases and operating costs</p>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="table-toolbar">
+                <div class="toolbar-left">
+                    <label class="sr-only" for="expense-search">Search expenses</label>
+					<form method="GET">
+                    <input
+                        type="text"
+					    class="input search-field"
+						name="search"
+						value="{{ search }}"
+                        id="expense-search"
+                        
+                        placeholder="Search title or expense ID"
+                    >
+                </div>
+				</form>
+                <div class="toolbar-right">
+                    <span class="cell-sub">Updated 28 Sep 2026</span>
+                </div>
+            </div>
+
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>EXPENSE ID</th>
+                            <th>TITLE</th>
+                            <th>CATEGORY</th>
+                            <th>DATE</th>
+                            <th>AMOUNT</th>
+                            <th>PAID BY</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+						{% for expense in page_obj %}
+                        <tr>
+                            <td class="cell-primary">{{ expense.expense_id }}</td>
+                            <td class="cell-primary">{{ expense.expense_title }}</td>
+                            <td>{{ expense.expense_category }}</td>
+                            <td>{{ expense.date }}</td>
+                            <td class="cell-primary">Rs {{ expense.amount }}</td>
+                            <td>{{ expense.paid_by }}</td>
+                            <td><span class="status paid">{{ expense.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+				{% for num in page_obj.paginator.page_range %}
+					{% if page_obj.number == num %}
+                 <span>Showing {{page_obj.number}} of {{page_obj.paginator.num_pages}}</span>
+                <nav class="pagination" aria-label="Expense pages">
+					{% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}"><button type="button" aria-label="Previous page">&#8249;</button></a>
+					{% endif %}
+					
+                    <button class="active" type="button" aria-current="page">{{ num }}</button>
+                       {% endif %}
+					{% endfor %}
+					{% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}"><button type="button" aria-label="Next page">&#8250;</button></a>
+					{% endif %}
+                </nav>
+            </div>
+        </div>
+    </section>
 {% endblock %}

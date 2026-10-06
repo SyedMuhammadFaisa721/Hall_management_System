@@ -15,6 +15,8 @@ class newbooking(models.Model):
     special_req    = models.CharField(max_length=500 , null= True)
     hall_price     = models.IntegerField(null=False)
     status         = models.CharField(max_length=20)
+    event_time     = models.TimeField(null = True , default = "00:00:00")
+    payment_status = models.CharField(max_length=20 , default="Pending")
     def save(self , *args ,**kwargs):
         if not self.booking_id:
             current_year = datetime.now().year
