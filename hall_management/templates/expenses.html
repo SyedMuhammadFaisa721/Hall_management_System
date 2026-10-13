@@ -115,7 +115,7 @@
             <div class="table-footer">
 				{% for num in page_obj.paginator.page_range %}
 					{% if page_obj.number == num %}
-                 <span>Showing {{page_obj.number}} of {{page_obj.paginator.num_pages}}</span>
+                 <span>Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                 <nav class="pagination" aria-label="Expense pages">
 					{% if page_obj.has_previous %}
                     <a href="?page={{ page_obj.previous_page_number }}"><button type="button" aria-label="Previous page">&#8249;</button></a>

@@ -89,6 +89,7 @@ class staff(models.Model):
     staff_role      = models.CharField(max_length=30)
     staff_nic_num   = models.CharField(max_length=16 , unique=True , null=False)
     staff_status    = models.CharField(max_length=10)
+    staff_join_date = models.DateField(default=datetime.now)
     def __str__(self):
          return self.staff_id
 class InventoryCategory(models.Model):
@@ -103,6 +104,33 @@ class Inventory(models.Model):
     damage_quantity     = models.IntegerField()
     def __str__(self):
          return self.inventory_name
+class payment(models.Model):
+     payment_id = models.CharField(max_length= 40)
+     booking = models.ForeignKey(newbooking , on_delete=models.CASCADE , related_name='payments')
+     payment_date =  models.DateField(default=datetime.now)
+     method = models.CharField(max_length=20)
+     amount = models.DecimalField(max_digits=12 , decimal_places=2)
+     refference_num = models.CharField(max_length=40)
+     payment_status = models.CharField(max_length=30)
+     
+     def save(self , *args ,**kwargs):
+                     if not self.payment_id:
+                         last_booking = payment.objects.filter(
+                             staff_id__startswith = f'PAY-'
+                         ).order_by("-payment_id").first()
+                         if last_booking:
+                             last_number = int(
+                                 last_booking.payment_id.split("-")[-1]
+                             )
+                             new_number = last_number + 1
+                         else:
+                             new_number = 1
+                         self.payment_id = (
+                             f"PAY-{new_number:04d}"
+                         )
+                     super().save(*args , **kwargs)
+    
+
 
 
     

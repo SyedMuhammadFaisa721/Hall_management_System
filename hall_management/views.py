@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.db.models import Q
 from django.core.paginator import Paginator
-from .models import newbooking , staff , expense , Inventory, InventoryCategory
+from .models import newbooking , staff , expense , Inventory, InventoryCategory , payment
 from django.db.models import Sum ,Max 
 from datetime import date , datetime
 
@@ -49,10 +49,24 @@ def booking_view(request):
     booking_confirmed = newbooking.objects.filter(status = 'confirmed').count()
     booking_pending = newbooking.objects.filter(status = 'pending').count()
     booking_canceled = newbooking.objects.filter(status = 'canceled').count()
+    current_month = date.today().month
+    previous_month = current_month -1
+    confirmed_booking= newbooking.objects.filter(event_date__month = current_month , status = 'confirmed').count() 
+    confirmed_booking_previous= newbooking.objects.filter(event_date__month = previous_month , status = 'confirmed').count()
+    percentage = confirmed_booking / confirmed_booking_previous
+    pending_booking = newbooking.objects.filter(status = 'pending' , event_date__month = current_month).count() 
+    pending_booking = newbooking.objects.filter(status = 'pending' , event_date__month = current_month).count()
+    pending_booking_pre = newbooking.objects.filter(event_date__month = previous_month , status = 'pending').count()
+    pending_booking_percentage = pending_booking / pending_booking_pre
+    booking_cancelled = newbooking.objects.filter(event_date__month = current_month , status = 'cancelled').count()
+    booking_cancelled_pre = newbooking.objects.filter(event_date__month = previous_month , status = 'cancelled').count()
+    booking_cancelled_percentage = booking_cancelled/booking_cancelled_pre
+
+
 
     search = request.GET.get('search', '')
     if search:
-        booking_obj = newbooking.objects,filter(
+        booking_obj = newbooking.objects.filter(
             Q(customer_name__icontains = search)|
             Q(booking_id__icontains = search)|
             Q(event_name__icontains = search)|
@@ -69,22 +83,36 @@ def booking_view(request):
             'booking_pending': booking_pending,
             'booking_canceled': booking_canceled,
             'page_obj': page_obj,
+            'confirmed_booking':confirmed_booking,
+            'percentage':percentage,
+            'pending_booking':pending_booking,
+            'pending_booking_percentage':pending_booking_percentage,
+            'booking_cancelled':booking_cancelled,
+            'booking_cancelled_percentage': booking_cancelled_percentage,
+            'search':search
         }
         return render(request, 'bookings.html', context)
     else:
         booking_list = newbooking.objects.all().order_by('-booking_id')
-        paginator =Paginator(booking_list , 10)
+        paginator =Paginator(booking_list , 1)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
 
     context = {
-        'booking_total': booking_total,
-        'booking_confirmed': booking_confirmed,
-        'booking_pending': booking_pending,
-        'booking_canceled': booking_canceled,
-        'page_obj': page_obj,
-    }
+                'booking_total': booking_total,
+                'booking_confirmed': booking_confirmed,
+                'booking_pending': booking_pending,
+                'booking_canceled': booking_canceled,
+                'page_obj': page_obj,
+                'confirmed_booking':confirmed_booking,
+                'percentage':percentage,
+                'pending_booking':pending_booking,
+                'pending_booking_percentage':pending_booking_percentage,
+                'booking_cancelled':booking_cancelled,
+                'booking_cancelled_percentage': booking_cancelled_percentage,
+                'search':search
+            }
     return render(request, 'bookings.html', context)
 @login_required(login_url='login')
 def Availability_view(request):
@@ -92,7 +120,52 @@ def Availability_view(request):
     
 @login_required(login_url='login')
 def Inventory_view(request):
-    return render(request , 'inventory.html')
+    total_inventory = Inventory.objects.all()
+    total_inventory_num = Inventory.objects.all().count()
+    available_inventory = Inventory.objects.aggregate(Sum('available_quantity'))['available_quantity__sum'] or 0
+    total_category = InventoryCategory.objects.all().count()
+    damage_inventory = Inventory.objects.aggregate(Sum('damage_quantity'))['damage_quantity__sum'] or 0
+    available_percentage = available_inventory / damage_inventory
+    search = request.GET.get('search' , "")
+    if search:
+        inventory_obj = Inventory.objects.filter(
+            Q(inventory_name__icontains = search)|
+            Q(category__category_name__icontains = search)
+        )
+        paginator = Paginator(inventory_obj , 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context={
+            'total_inventory':total_inventory,
+            'total_inventory_num':total_inventory_num,
+            'available_inventory':available_inventory,
+            'damage_inventory':damage_inventory,
+            'total_category':total_category,
+            'available_percentage':available_percentage,
+            'search':search,
+            'page_obj':page_obj
+        }
+        return render(request , 'inventory.html', context)
+    else:
+        total_inventory = Inventory.objects.all()
+        total_inventory_num = Inventory.objects.all().count()
+        available_inventory = Inventory.objects.aggregate(Sum('available_quantity'))['available_quantity__sum'] or 0
+        total_category = Inventory.objects.aggregate(Sum('category'))['category__sum'] or 0
+        damage_inventory = Inventory.objects.aggregate(Sum('damage_quantity'))['damage_quantity__sum'] or 0
+        available_percentage = available_inventory / damage_inventory
+        paginator = Paginator(total_inventory , 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+    context={
+                'total_inventory':total_inventory,
+                'total_inventory_num':total_inventory_num,
+                'available_inventory':available_inventory,
+                'damage_inventory':damage_inventory,
+                'total_category':total_category,
+                'available_percentage':available_percentage,
+                'page_obj':page_obj
+            }
+    return render(request , 'inventory.html' , context)
 
 @login_required(login_url='login')
 def Availability_view(request):
@@ -105,7 +178,11 @@ def Packages_view(request):
     return render(request , 'packages.html')
 @login_required(login_url='login')
 def Payments_view(request):
-    return render(request , 'payments.html')
+    payment_details = payment.objects.all()
+    context = {
+        'payment_details': payment_details
+    }
+    return render(request , 'payments.html' , context)
 @login_required(login_url='login')
 def Invoices_view(request):
     return render(request , 'invoices.html')
@@ -124,6 +201,10 @@ def Expenses_view(request):
     monthly_expenses_per = monthly_expenses / monthly_expenses_previous or 0
     monthly_expenses_pending = expense.objects.filter(date__month = current_month, status ='pending').aggregate(Sum('amount'))['amount__sum'] or 0
     largest_expense = expense.objects.all().aggregate(Max('amount'))['amount__max'] or 0
+    expense_list = expense.objects.all().order_by('-expense_id')[:10]
+    paginator = Paginator(expense_list , 1)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number) 
     search =request.GET.get('search', '')
     if search:
         expense_obj = expense.objects.filter(
@@ -133,19 +214,27 @@ def Expenses_view(request):
             Q(paid_by__icontains = search)|
             Q(date__icontains=search)
         )
-        paginator =Paginator(expense_obj , 10)
+        paginator =Paginator(expense_obj , 1)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        context={
-            'expense_obj': expense_obj,
-            'page_obj': page_obj,
-            'total_expenses': total_expenses,
-            'monthly_expenses_pending':monthly_expenses_pending
-        }
+        context ={
+                'expense_list': expense_list,
+                'page_obj': page_obj,
+                'total_expenses': total_expenses,
+                'monthly_expenses': monthly_expenses,
+                'monthly_expenses_per': monthly_expenses_per,
+                'monthly_expenses_pending': monthly_expenses_pending,
+                'largest_expense': largest_expense,
+                'yearly_expenses':yearly_expenses,
+                'yearly_expenses_per':yearly_expenses_per,
+                'current_year': current_year,
+                'current_month': current_month,
+                'search':search
+            } 
         return render(request , 'expenses.html', context)
     else:
         expense_list = expense.objects.all().order_by('-expense_id')[:10]
-        paginator = Paginator(expense_list , 10)
+        paginator = Paginator(expense_list , 1)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)   
     context ={
@@ -167,7 +256,49 @@ def Reports_view(request):
     return render(request , 'reports.html')
 @login_required(login_url='login')
 def Staff_view(request):
-    return render(request , 'staff.html') 
+    total_staff = staff.objects.all().count()
+    active_staff = staff.objects.filter(staff_status = 'active').count()
+    manager_count = staff.objects.filter(staff_role = 'manager').count()
+    staff_list = staff.objects.all().order_by('-staff_id')[:10]
+    search = request.GET.get('search' , '')
+    if search:
+        staff_obj = staff.objects.filter(
+            Q(staff_id__icontains = search)|
+            Q(staff_name__icontains = search)|
+            Q(staff_email__icontains = search)|
+            Q(staff_number__icontains = search)|
+            Q(staff_role__icontains = search)|
+            Q(staff_status__icontains = search)|
+            Q(staff_join_date__icontains = search)|
+            Q(staff_nic_num__icontains = search)
+        )
+        paginator = Paginator(staff_obj , 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context={
+            'staff_list': staff_list,
+            'page_obj': page_obj,
+            'total_staff': total_staff,
+            'active_staff': active_staff,
+            'manager_count': manager_count,
+            'search':search, 
+        }
+        return render(request , 'staff.html' , context)
+    else:
+        staff_list = staff.objects.all().order_by('-staff_id')[:10]
+        paginator = Paginator(staff_list , 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+    context={
+        'staff_list': staff_list,
+        'page_obj': page_obj,
+        'total_staff': total_staff,
+        'active_staff': active_staff,
+        'manager_count': manager_count,
+        'search':search
+    }
+
+    return render(request , 'staff.html' , context) 
 @login_required(login_url='login')
 def Notifications_view(request):
     return render(request , 'notifications.html')

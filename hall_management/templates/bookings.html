@@ -51,9 +51,9 @@
                 </svg>
             </span>
         </div>
-        <strong class="stat-value">238</strong>
+        <strong class="stat-value">{{ booking_confirmed }}</strong>
         <div class="stat-foot">
-            <span class="trend">+5.6%</span>
+            <span class="trend">{{ percentage }} %</span>
             <span>vs. last month</span>
         </div>
     </article>
@@ -68,9 +68,9 @@
                 </svg>
             </span>
         </div>
-        <strong class="stat-value">32</strong>
+        <strong class="stat-value">{{ pending_booking }}</strong>
         <div class="stat-foot">
-            <span class="trend">+2.1%</span>
+            <span class="trend">{{ pending_booking_percentage }}%</span>
             <span>vs. last month</span>
         </div>
     </article>
@@ -84,9 +84,9 @@
                 </svg>
             </span>
         </div>
-        <strong class="stat-value">14</strong>
+        <strong class="stat-value">{{ booking_cancelled }}</strong>
         <div class="stat-foot">
-            <span class="trend">-1.4%</span>
+            <span class="trend">{{ booking_cancelled_percentage }}%</span>
             <span>vs. last month</span>
         </div>
     </article>
@@ -174,14 +174,22 @@
         </div>
 
         <div class="table-footer">
-            <span>Showing 6 of 284 bookings</span>
-            <nav class="pagination" aria-label="Booking pages">
-                <button type="button" disabled aria-label="Previous page">&#8249;</button>
-                <button class="active" type="button" aria-current="page">1</button>
-                <button type="button">2</button>
-                <button type="button">3</button>
-                <button type="button" aria-label="Next page">&#8250;</button>
-            </nav>
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                
+             <span>Showing {{ page_obj.number }} of {{page_obj.paginator.num_pages}} bookings</span>
+             <nav class="pagination" aria-label="Booking pages">
+                
+                {% if pae_obj.has_previous %}
+                 <a href="?page={{ page_obj.previous_page_number }}"><button type="button" disabled aria-label="Previous page">&#8249;</button></a>
+                {% endif %}
+                 <button class="active" type="button" aria-current="page">{{ num }}</button>
+                 {% if page_obj.has_next %}
+                 <a href="?page={{ page_obj.next_page_number }}"><button type="button" aria-label="Next page">&#8250;</button></a>
+                 {% endif %}
+             </nav>
+                {% endif %}
+            {% endfor %}
         </div>
     </div>
 </section>

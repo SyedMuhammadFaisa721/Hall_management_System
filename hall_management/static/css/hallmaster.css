@@ -209,10 +209,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .status.pending, .status.partial, .status.reserved, .status.invited, .status.unread { border-color: rgba(229,169,92,.15); background: rgba(229,169,92,.08); color: var(--orange); }
 .status.cancelled, .status.overdue, .status.blocked, .status.inactive { border-color: rgba(229,107,111,.15); background: rgba(229,107,111,.08); color: var(--red); }
 .status.information { border-color: rgba(110,168,254,.15); background: rgba(110,168,254,.08); color: var(--blue); }
-.table-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px; border-top: 1px solid var(--border); color: var(--quiet); font-size: 9px; }
+.table-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px; border-top: 1px solid var(--border); color: var(--gold-light); font-size: 9px; }
 .pagination { display: flex; align-items: center; gap: 4px; }
-.pagination button { display: grid; min-width: 27px; height: 27px; place-items: center; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--muted); font-size: 9px; }
-.pagination button:hover, .pagination button.active { border-color: var(--border); background: rgba(255,255,255,.04); color: var(--gold-light); }
+.pagination button, .pagination a, .pagination span { display: grid; min-width: 27px; height: 27px; place-items: center; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--muted); font-size: 9px; }
+.pagination a { text-decoration: none; }
+.pagination button:hover, .pagination a:hover, .pagination button.active, .pagination span.active { border-color: var(--border); background: rgba(255,255,255,.04); color: var(--gold-light); }
 
 .booking-list { display: flex; flex-direction: column; }
 .booking-row { display: grid; grid-template-columns: 41px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
