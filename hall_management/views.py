@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
-from .form import hallmaster_user_creation, new_booking , new_expense ,new_inventory ,new_staff ,new_inventory_category, loginform
+from .form import hallmaster_user_creation, new_booking , new_expense ,new_inventory ,new_staff ,new_inventory_category, loginform , new_payment
 from django.views.generic import ListView, DetailView
 from django.contrib import messages
 from django.http import HttpResponse
@@ -36,6 +36,8 @@ def log_out(request):
 def dashboard(request):
     dashboard_booking_list = newbooking.objects.all().order_by('-booking_id')[:5]
     total_bookings = newbooking.objects.count()
+    
+    
     context = {
         'dashboard_booking_list': dashboard_booking_list,
         'total_bookings': total_bookings,
@@ -178,9 +180,94 @@ def Packages_view(request):
     return render(request , 'packages.html')
 @login_required(login_url='login')
 def Payments_view(request):
-    payment_details = payment.objects.all()
+    payment_details = payment.objects.all().order_by('-payment_id')
+    search = request.GET.get('search' , '')
+    payment_method = request.GET.get('method')
+    today = datetime.now()
+    current_month = today.strftime('%b')
+    current__month = date.today().month
+    previous_month = current__month - 1
+    current_year = date.today().year
+    previous_year = current_year - 1
+    today_collection = payment.objects.filter(payment_date = today , payment_status = 'paid').aggregate(Sum('amount'))['amount__sum'] or 0
+    status=['paid' ,'Paid','advance', 'Advance']
+    month_collection = payment.objects.filter(payment_date__month = current__month ,payment_date__year = current_year , payment_status__in = status ).aggregate(Sum('amount'))['amount__sum'] or 0
+    previous_month_collection = payment.objects.filter(payment_date__month = previous_month ,payment_date__year = current_year , payment_status__in = status ).aggregate(Sum('amount'))['amount__sum'] or 0
+    pending_status = ['Pending' , 'pending']
+    pending_collection = payment.objects.filter(payment_date__month = current__month , payment_status__in = pending_status).aggregate(Sum('amount'))['amount__sum'] or 0
+    pending_count = payment.objects.filter(payment_status__in = pending_status).count()
+    total_collection = payment.objects.filter(payment_date__year = current_year).aggregate(Sum('amount'))['amount__sum'] or 0
+    pre_total_collection = payment.objects.filter(payment_date__year = previous_year).aggregate(Sum('amount'))['amount__sum'] or 0
+    year_colloection_in_precentage = ((total_collection-pre_total_collection) / pre_total_collection ) * 100
+    monthly_colloection_in_precentage = ((month_collection-previous_month_collection) / previous_month_collection ) * 100
+
+    
+    if search:
+        payment_obj = payment.objects.filter(
+            Q(payment_id__icontains = search)|
+            Q(refference_num__icontains = search)|
+            Q(payment_status__icontains = search)|
+            Q(amount__icontains = search)|
+            Q(booking__customer_name__icontains = search)|
+            Q(payment_date__icontains = search)
+        )
+        paginator = Paginator(payment_obj , 1)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context = {
+            'page_obj':page_obj,
+            'current_month': current_month,
+            'previous_month':previous_month,
+            'today_collection':today_collection,
+            'month_collection':month_collection,
+            'pending_collection':pending_collection,
+            'total_collection':total_collection,
+            'pending_count':pending_count,
+            'year_colloection_in_precentage':year_colloection_in_precentage,
+            'monthly_colloection_in_precentage':monthly_colloection_in_precentage,
+            'search':search,
+            'selected_method':payment_method,
+        }
+        return render(request , 'payments.html' , context)
+    elif payment_method:
+        payment_obj = payment.objects.filter(method = payment_method)
+        paginator = Paginator(payment_obj , 1)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context = {
+                    'page_obj':page_obj,
+                    'search':search,
+                    'selected_method':payment_method,
+                    'current_month':current_month,
+                    'today_collection':today_collection,
+                    'month_collection':month_collection,
+                    'pending_collection':pending_collection,
+                    'total_collection':total_collection,
+                    'pending_count':pending_count,
+                    'year_colloection_in_precentage':year_colloection_in_precentage,
+                    'monthly_colloection_in_precentage':monthly_colloection_in_precentage,
+                }
+        return render(request , 'payments.html' , context)
+
+    else:
+        page_content = payment_details
+    paginator = Paginator(payment_details , 1)
+    page_number = request.GET.get('page')
+    page_obj  = paginator.get_page(page_number)
     context = {
-        'payment_details': payment_details
+        'page_obj':page_obj,
+        'payment_details': payment_details,
+        'selected_method':payment_method,
+        'current_month':current_month,
+        "previous_month":previous_month,
+        'page_content':page_content,
+        'today_collection':today_collection,
+        'month_collection':month_collection,
+        'pending_collection':pending_collection,
+        'total_collection':total_collection,
+        'pending_count':pending_count,
+        'year_colloection_in_precentage':year_colloection_in_precentage,
+        'monthly_colloection_in_precentage':monthly_colloection_in_precentage,
     }
     return render(request , 'payments.html' , context)
 @login_required(login_url='login')
@@ -189,20 +276,25 @@ def Invoices_view(request):
 @login_required(login_url='login')
 def Expenses_view(request):
     total_expenses = expense.objects.aggregate(Sum('amount'))['amount__sum'] or 0
+    today = datetime.now()
+    current__month = today.strftime('%B')
     current_month = date.today().month
     current_year = date.today().year
     previous_year = current_year - 1
-    yearly_expenses = expense.objects.filter(date__year = current_year , status = 'paid').aggregate(Sum('amount'))['amount__sum'] or 0
-    yearly_expenses_previous = expense.objects.filter(date__year = previous_year , status = 'paid').aggregate(Sum('amount'))['amount__sum'] or 0
-    yearly_expenses_per = yearly_expenses / yearly_expenses_previous or 0
+    confirm_status = ['Paid' ,'paid']
+    pending_status = ['pending','Pending']
+    yearly_expenses = expense.objects.filter(date__year = current_year , status__in = confirm_status).aggregate(Sum('amount'))['amount__sum'] or 0
+    yearly_expenses_previous = expense.objects.filter(date__year = previous_year , status__in = confirm_status).aggregate(Sum('amount'))['amount__sum'] or 0
+    yearly_expenses_per = ((yearly_expenses-yearly_expenses_previous) / yearly_expenses_previous) * 100 or 0
     previous_month = current_month - 1
-    monthly_expenses = expense.objects.filter(date__month = current_month, status ='paid').aggregate(Sum('amount'))['amount__sum'] or 0
-    monthly_expenses_previous = expense.objects.filter(date__month = previous_month, status ='paid').aggregate(Sum('amount'))['amount__sum'] or 0
-    monthly_expenses_per = monthly_expenses / monthly_expenses_previous or 0
+    monthly_expenses = expense.objects.filter(date__month = current_month, date__year = current_year, status ='paid').aggregate(Sum('amount'))['amount__sum'] or 0
+    monthly_expenses_previous = expense.objects.filter(date__month = previous_month,date__year = current_year, status__in =confirm_status).aggregate(Sum('amount'))['amount__sum'] or 0
+    monthly_expenses_per =(( monthly_expenses - monthly_expenses_previous) / monthly_expenses_previous) * 100 or 0
     monthly_expenses_pending = expense.objects.filter(date__month = current_month, status ='pending').aggregate(Sum('amount'))['amount__sum'] or 0
+    calculate_pending = expense.objects.filter(status__in = pending_status ).count()
     largest_expense = expense.objects.all().aggregate(Max('amount'))['amount__max'] or 0
     expense_list = expense.objects.all().order_by('-expense_id')[:10]
-    paginator = Paginator(expense_list , 1)
+    paginator = Paginator(expense_list , 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number) 
     search =request.GET.get('search', '')
@@ -214,7 +306,7 @@ def Expenses_view(request):
             Q(paid_by__icontains = search)|
             Q(date__icontains=search)
         )
-        paginator =Paginator(expense_obj , 1)
+        paginator =Paginator(expense_obj , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         context ={
@@ -229,12 +321,14 @@ def Expenses_view(request):
                 'yearly_expenses_per':yearly_expenses_per,
                 'current_year': current_year,
                 'current_month': current_month,
+                'current__month':current__month,
+                'calculate_pending':calculate_pending,
                 'search':search
             } 
         return render(request , 'expenses.html', context)
     else:
         expense_list = expense.objects.all().order_by('-expense_id')[:10]
-        paginator = Paginator(expense_list , 1)
+        paginator = Paginator(expense_list , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)   
     context ={
@@ -249,6 +343,8 @@ def Expenses_view(request):
         'yearly_expenses_per':yearly_expenses_per,
         'current_year': current_year,
         'current_month': current_month,
+        'current__month':current__month,
+        'calculate_pending':calculate_pending,
     } 
     return render(request , 'expenses.html' , context)
 @login_required(login_url='login')

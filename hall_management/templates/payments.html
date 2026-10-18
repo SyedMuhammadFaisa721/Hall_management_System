@@ -3,8 +3,9 @@
 {% block title %}Payments | HallMaster{% endblock %}
 
 {% block page_content %}
+{% load humanize %}
 
-<header class="page-heading">
+<header class="page-heading payments-heading">
 	<div>
 		<span class="eyebrow">COLLECTIONS</span>
 		<h1>Payments</h1>
@@ -16,45 +17,65 @@
 	</div>
 </header>
 
-<section class="stats-grid" aria-label="Payment summary">
-	<article class="stat-card">
-		<div class="stat-top">
-			<span class="stat-label">Total received</span>
-			<span class="stat-icon" aria-hidden="true">Rs</span>
-		</div>
-		<strong class="stat-value">Rs 2.05M</strong>
-		<div class="stat-foot">
-			<span class="trend">+9.3%</span>
-			<span>vs. last month</span>
-		</div>
-	</article>
-	<article class="stat-card">
-		<div class="stat-top">
-			<span class="stat-label">Pending</span>
-			<span class="stat-icon" aria-hidden="true">PE</span>
-		</div>
-		<strong class="stat-value">Rs 1.25M</strong>
-		<div class="stat-foot">12 invoices awaiting payment</div>
-	</article>
+<section class="stats-grid payments-stats" aria-label="Payment summary">
 	<article class="stat-card">
 		<div class="stat-top">
 			<span class="stat-label">Today's collection</span>
 			<span class="stat-icon" aria-hidden="true">TD</span>
 		</div>
-		<strong class="stat-value">Rs 0</strong>
+		<strong class="stat-value">Rs {{ today_collection|intword|intcomma }}</strong>
 		<div class="stat-foot">No new payments recorded</div>
 	</article>
 	<article class="stat-card">
 		<div class="stat-top">
-			<span class="stat-label">This month</span>
+			<span class="stat-label">Revenue of Month {{ current_month }}</span>
 			<span class="stat-icon" aria-hidden="true">MO</span>
 		</div>
-		<strong class="stat-value">Rs 2.05M</strong>
+		<strong class="stat-value">Rs {{ month_collection|intword|intcomma }}</strong>
 		<div class="stat-foot">
-			<span class="trend">+11.8%</span>
+			{% if monthly_colloection_in_precentage > 0 %}
+			<span class="trend">&uarr; {{ monthly_colloection_in_precentage|floatformat:2 }}%</span>
 			<span>vs. last month</span>
+			{% elif monthly_colloection_in_precentage < 0 %}
+			<span class="trend" style="color:#F87171;">&darr; {{ monthly_colloection_in_precentage|floatformat:2 }}%</span>
+			<span>vs. last month</span>
+
+			{% endif %}
 		</div>
 	</article>
+	
+	<article class="stat-card">
+		<div class="stat-top">
+			<span class="stat-label">Pending</span>
+			<span class="stat-icon" aria-hidden="true">PE</span>
+		</div>
+		<strong class="stat-value">Rs {{ pending_collection|intcomma|intword }}</strong>
+		<div class="stat-foot">{{ pending_count }} invoices awaiting payment</div>
+	</article>
+	<article class="stat-card">
+		<div class="stat-top">
+			<span class="stat-label">Total received</span>
+			<span class="stat-icon" aria-hidden="true">Rs</span>
+		</div>
+		<strong class="stat-value">Rs {{ total_collection|intword|intcomma }}</strong>
+		<div class="stat-foot">
+			{% if year_colloection_in_precentage > 0 %}
+			   <span class="trend">&uarr; {{ year_colloection_in_precentage| floatformat:2 }} %</span>
+			   <span>vs. last Year</span>
+			{% endif %}
+			{% if year_colloection_in_precentage < 0 %}
+			  <span class="trend" style="color:#F87171">&darr; {{ year_colloection_in_precentage|floatformat:2 }} %</span>
+			  <span>vs. last Year</span>
+			
+
+			{% endif %}
+			
+
+			
+
+		</div>
+	</article>
+	
 </section>
 
 <section class="section" id="payment-ledger">
@@ -64,24 +85,46 @@
 			<p>Recorded deposits, balances and receipts</p>
 		</div>
 	</div>
-	<div class="panel">
-		<div class="table-toolbar">
+	<div class="panel payments-ledger">
+		<div class="table-toolbar payments-toolbar">
 			<div class="toolbar-left">
+				<form method="GET" action="#payment-ledger">
 				<label class="sr-only" for="payment-search">Search payments</label>
+				
 				<input
 					class="input search-field"
+					name="search"
+					value="{{ search }}"
 					id="payment-search"
-					type="search"
+					type="text"
 					placeholder="Search payment, booking or customer"
 				>
-				<label class="sr-only" for="payment-method">Payment method</label>
-				<select class="select select-compact" id="payment-method">
-					<option>All methods</option>
-					<option>Cash</option>
-					<option>Bank Transfer</option>
-					<option>Card</option>
-					<option>Online</option>
-				</select>
+			    </form>
+				<div class="payment-method-control">
+					<label for="payment-method">Payment method</label>
+					<form method="GET" action="#payment-ledger">
+					<select name="method" onchange="this.form.submit()" class="select select-compact" id="payment-method">
+						<option value="" {% if not selected_method %}selected{% endif %}>All methods</option>
+						<option value="cash"
+                         {% if selected_method == 'cash' %}selected{% endif %}>
+                          cash
+                        </option>
+						<option value="Bank Transfer"
+                         {% if selected_method == 'Bank Transfer' %}selected{% endif %}>
+                          Bank Transfer
+                        </option>
+						<option value="card"
+                         {% if selected_method == 'card' %}selected{% endif %}>
+                          Card
+                        </option>
+						<option value="Online"
+                         {% if selected_method == 'Online' %}selected{% endif %}>
+                          Online
+                        </option>
+					</select>
+					</form>
+				 
+				</div>
 			</div>
 			<div class="toolbar-right">
 				<span class="cell-sub">Updated 28 Sep 2026</span>
@@ -103,72 +146,59 @@
 					</tr>
 				</thead>
 				<tbody>
-					{% for payment in payment_details %}
+					{% for payment in page_obj %}
 					<tr>
 						<td class="cell-primary">{{ payment.payment_id }}</td>
-						<td>BK-2026-084</td>
-						<td class="cell-primary">Sarah Khan</td>
-						<td>19 Sep 2026</td>
-						<td>Bank Transfer</td>
-						<td class="cell-primary">Rs 350,000</td>
-						<td>HBL-884120</td>
-						<td><span class="status paid">Completed</span></td>
+						<td>{{ payment.booking_id }}</td>
+						<td class="cell-primary">{{ payment.booking.customer_name }}</td>
+						<td>{{ payment.payment_date }}</td>
+						<td>{{ payment.method }}</td>
+						<td class="cell-primary">Rs {{ payment.amount|intword|intcomma }}</td>
+						<td>{{ payment.refference_num }}</td>
+						<td><span class="status paid">{{ payment.payment_status }}</span></td>
+					</tr>
+					{% empty %}
+					<tr>
+						<td class="payment-empty-state" colspan="8">
+							<strong>No payments recorded yet</strong>
+							<span>Payments will appear here once they have been added.</span>
+						</td>
 					</tr>
 					{% endfor %}
-					<tr>
-						<td class="cell-primary">PAY-8061</td>
-						<td>BK-2026-083</td>
-						<td class="cell-primary">Ahmed Malik</td>
-						<td>18 Sep 2026</td>
-						<td>Card</td>
-						<td class="cell-primary">Rs 960,000</td>
-						<td>VISA-126485</td>
-						<td><span class="status paid">Completed</span></td>
-					</tr>
-					<tr>
-						<td class="cell-primary">PAY-8060</td>
-						<td>BK-2026-082</td>
-						<td class="cell-primary">Ayesha Siddiqui</td>
-						<td>16 Sep 2026</td>
-						<td>Cash</td>
-						<td class="cell-primary">Rs 200,000</td>
-						<td>RCPT-0682</td>
-						<td><span class="status paid">Completed</span></td>
-					</tr>
-					<tr>
-						<td class="cell-primary">PAY-8059</td>
-						<td>BK-2026-081</td>
-						<td class="cell-primary">Mariam Ali</td>
-						<td>15 Sep 2026</td>
-						<td>Online</td>
-						<td class="cell-primary">Rs 150,000</td>
-						<td>EASY-005921</td>
-						<td><span class="status paid">Completed</span></td>
-					</tr>
-					<tr>
-						<td class="cell-primary">PAY-8058</td>
-						<td>BK-2026-080</td>
-						<td class="cell-primary">Usman Raza</td>
-						<td>13 Sep 2026</td>
-						<td>Bank Transfer</td>
-						<td class="cell-primary">Rs 385,000</td>
-						<td>HBL-883912</td>
-						<td><span class="status paid">Completed</span></td>
-					</tr>
 				</tbody>
 			</table>
 		</div>
 
 		<div class="table-footer">
-			<span>Showing 5 recent payments</span>
+			<span>
+				{% if page_obj.paginator.count %}
+				Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }} of {{ page_obj.paginator.count }} payment{{ page_obj.paginator.count|pluralize }}
+				{% else %}
+				No payments
+				{% endif %}
+			</span>
+			{% if page_obj.paginator.num_pages > 1 %}
 			<nav class="pagination" aria-label="Payment pages">
-				<button type="button" disabled aria-label="Previous page">&#8249;</button>
-				<button class="active" type="button" aria-current="page">1</button>
-				<button type="button">2</button>
-				<button type="button" aria-label="Next page">&#8250;</button>
+				{% if page_obj.has_previous %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#payment-ledger" aria-label="Previous page">&#8249;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
+				{% endif %}
+				{% for num in page_obj.paginator.page_range %}
+					{% if page_obj.number == num %}
+					<span class="active" aria-current="page">{{ num }}</span>
+					{% else %}
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ num }}#payment-ledger">{{ num }}</a>
+					{% endif %}
+				{% endfor %}
+				{% if page_obj.has_next %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#payment-ledger" aria-label="Next page">&#8250;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
+				{% endif %}
 			</nav>
+			{% endif %}
 		</div>
 	</div>
 </section>
-
 {% endblock %}

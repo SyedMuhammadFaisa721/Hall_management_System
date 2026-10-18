@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Expenses | HallMaster{% endblock %}
 {% block page_content %}
+{% load humanize %}
     <header class="page-heading">
         <div>
             <span class="eyebrow">OPERATIONS</span>
@@ -19,21 +20,32 @@
                 <span class="stat-label">Total Expenses in Year {{ current_year }}</span>
                 <span class="stat-icon" aria-hidden="true">EX</span>
             </div>
-            <strong class="stat-value">Rs {{ yearly_expenses }}</strong>
+            <strong class="stat-value">Rs {{ yearly_expenses|intword|intcomma }}</strong>
             <div class="stat-foot">
-                <span class="trend">{{ yearly_expenses_per|floatformat:2 }} %</span>
-                <span>vs. last year</span>
+                {% if yearly_expenses_per > 0 %}
+                 <span class="trend">&uarr; {{ yearly_expenses_per|floatformat:2 }} %</span>
+                 <span>vs. last year</span>
+                {%elif yearly_expenses_per < 0 %}
+                 <span class="trend" style="color: #F87171;" >&darr; {{ yearly_expenses_per|floatformat:2 }} %</span>
+                 <span>vs. last year</span>
+                {% endif %}
+
             </div>
         </article>
         <article class="stat-card">
             <div class="stat-top">
-                <span class="stat-label">Total Expenses in Month {{ current_month }}</span>
+                <span class="stat-label">Total Expenses in Month {{ current__month }}</span>
                 <span class="stat-icon" aria-hidden="true">MO</span>
             </div>
-            <strong class="stat-value">Rs {{ monthly_expenses }}</strong>
+            <strong class="stat-value">Rs {{ monthly_expenses|intword|intcomma }}</strong>
             <div class="stat-foot">
-                <span class="trend">{{ monthly_expenses_per|floatformat:2 }} %</span>
-                <span>vs. last month</span>
+                {% if monthly_expenses_per > 0 %}
+                 <span class="trend">&uarr; {{ monthly_expenses_per|floatformat:2 }} %</span>
+                 <span>vs. last month</span>
+                {% elif monthly_expenses_per < 0%}
+                 <span class="trend" style="color:#F87171">&darr; {{ monthly_expenses_per|floatformat:2 }} %</span>
+                 <span>vs. last month</span>
+                {% endif %}
             </div>
         </article>
         <article class="stat-card">
@@ -41,15 +53,15 @@
                 <span class="stat-label">Pending</span>
                 <span class="stat-icon" aria-hidden="true">PE</span>
             </div>
-            <strong class="stat-value">Rs {{ monthly_expenses_pending }}</strong>
-            <div class="stat-foot">2 expenses to review</div>
+            <strong class="stat-value">Rs {{ monthly_expenses_pending|intword|intcomma|upper }}</strong>
+            <div class="stat-foot">{{ calculate_pending }} expenses to review</div>
         </article>
         <article class="stat-card">
             <div class="stat-top">
                 <span class="stat-label">Largest expense</span>
                 <span class="stat-icon" aria-hidden="true">HI</span>
             </div>
-            <strong class="stat-value">Rs {{ largest_expense }}</strong>
+            <strong class="stat-value">Rs {{ largest_expense|intcomma|intword }}</strong>
             <div class="stat-foot">{{ largest_expense.expense_title }}</div>
         </article>
     </section>
@@ -103,7 +115,7 @@
                             <td class="cell-primary">{{ expense.expense_title }}</td>
                             <td>{{ expense.expense_category }}</td>
                             <td>{{ expense.date }}</td>
-                            <td class="cell-primary">Rs {{ expense.amount }}</td>
+                            <td class="cell-primary">Rs {{ expense.amount|intword|intcomma }}</td>
                             <td>{{ expense.paid_by }}</td>
                             <td><span class="status paid">{{ expense.status }}</span></td>
                         </tr>

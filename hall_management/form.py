@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import Group
-from .models import newbooking , staff , expense , Inventory, InventoryCategory
+from .models import newbooking , staff , expense , Inventory, InventoryCategory , payment
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
@@ -69,6 +69,10 @@ class new_expense(forms.ModelForm):
     class Meta:
         model   = expense
         exclude = ["expense_id"]
+class new_payment(forms.ModelForm):
+    class Meta:
+        model   = payment
+        exclude = ["payment_id"]
 class new_inventory(forms.ModelForm) :
     class Meta:
         model = Inventory

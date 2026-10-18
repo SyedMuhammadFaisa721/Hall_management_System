@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const enhancedSelects = Array.from(document.querySelectorAll('select')).filter(function (select) {
     return !select.multiple && select.size <= 1 && !select.disabled &&
       !select.classList.contains('expense-category-native') &&
+      !select.classList.contains('native-select') &&
       !select.closest('.booking-form-field');
   });
   let activePicker = null;
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const bounds = picker.trigger.getBoundingClientRect();
     const gap = 6;
     const viewportPadding = 10;
-    picker.menu.style.width = Math.min(bounds.width, window.innerWidth - viewportPadding * 2) + 'px';
+    picker.menu.style.width = Math.min(Math.max(bounds.width, 190), window.innerWidth - viewportPadding * 2) + 'px';
     picker.menu.style.maxHeight = Math.max(120, window.innerHeight - viewportPadding * 2) + 'px';
     const menuHeight = picker.menu.getBoundingClientRect().height;
     const spaceBelow = window.innerHeight - bounds.bottom - gap - viewportPadding;
@@ -183,8 +184,8 @@ document.addEventListener('DOMContentLoaded', function () {
     menu.append(heading, optionsContainer);
 
     const picker = { select, wrapper, trigger, value, menu, options, label: labelText, activeIndex: -1 };
-    wrapper.append(select, trigger);
     select.parentNode.insertBefore(wrapper, select);
+    wrapper.append(select, trigger);
     select.classList.add('hm-select-native');
     select.setAttribute('aria-hidden', 'true');
     select.tabIndex = -1;

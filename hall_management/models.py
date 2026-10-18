@@ -105,34 +105,33 @@ class Inventory(models.Model):
     def __str__(self):
          return self.inventory_name
 class payment(models.Model):
-     payment_id = models.CharField(max_length= 40)
+     payment_id = models.CharField(max_length= 40 ,primary_key=True , editable=False)
+     def save(self , *args ,**kwargs):
+                          
+                          if not self.payment_id:
+                              current_year = datetime.now().year
+                              current_day = datetime.today()
+                              month_name = current_day.strftime('%b')
+                              last_booking = payment.objects.filter(
+                                  payment_id__startswith = f'PAY-{month_name}-{current_year}'
+                              ).order_by("-payment_id").first()
+                              if last_booking:
+                                  last_number = int(
+                                      last_booking.payment_id.split("-")[-1]
+                                  )
+                                  new_number = last_number + 1
+                              else:
+                                  new_number = 1
+                              self.payment_id = (
+                                  f"PAY-{month_name}-{current_year}-{new_number:03d}"
+                              )
+                          super().save(*args , **kwargs)
      booking = models.ForeignKey(newbooking , on_delete=models.CASCADE , related_name='payments')
      payment_date =  models.DateField(default=datetime.now)
      method = models.CharField(max_length=20)
      amount = models.DecimalField(max_digits=12 , decimal_places=2)
      refference_num = models.CharField(max_length=40)
      payment_status = models.CharField(max_length=30)
-     
-     def save(self , *args ,**kwargs):
-                     if not self.payment_id:
-                         last_booking = payment.objects.filter(
-                             staff_id__startswith = f'PAY-'
-                         ).order_by("-payment_id").first()
-                         if last_booking:
-                             last_number = int(
-                                 last_booking.payment_id.split("-")[-1]
-                             )
-                             new_number = last_number + 1
-                         else:
-                             new_number = 1
-                         self.payment_id = (
-                             f"PAY-{new_number:04d}"
-                         )
-                     super().save(*args , **kwargs)
-    
-
-
-
-    
-
+     def __str__(self):
+          return self.payment_id    
 # Create your models here.

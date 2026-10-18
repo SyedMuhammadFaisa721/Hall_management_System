@@ -7,8 +7,8 @@
   <meta name="description" content="HallMaster venue management dashboard">
   <title>{% block title %}Dashboard | HallMaster{% endblock %}</title>
   {% load static %}
-  <link rel="stylesheet" href="{% static 'css/hallmaster.css' %}?v=7">
-  <link rel="stylesheet" href="{% static 'css/select-picker.css' %}">
+  <link rel="stylesheet" href="{% static 'css/hallmaster.css' %}?v=10">
+  <link rel="stylesheet" href="{% static 'css/select-picker.css' %}?v=2">
   {% block page_scripts %}
   <script defer>
     document.addEventListener('DOMContentLoaded', function () {
@@ -103,7 +103,7 @@
       });
     });
   </script>
-  <script defer src="{% static 'javascript/select-picker.js' %}"></script>
+  <script defer src="{% static 'javascript/select-picker.js' %}?v=3"></script>
   {% endblock %}
 </head>
 <body data-page="{% block page_key %}{{ page|default:'dashboard' }}{% endblock %}">
@@ -176,7 +176,8 @@
       </div>
     </header>
     <main class="content-wrap">{% block page_content %}{% endblock %}</main>
-    <footer class="app-footer"><span>HallMaster &copy; 2026 · Secure Venue Management System</span><span class="footer-right"><i class="sync-dot"></i>All changes saved</span></footer>
+    <footer class="app-footer"><span>HallMaster &copy; 2026 · Secure Venue Management System. Design and Develope by   <strong style="color: gold;">Syed Muhammad Faisal</strong></span>
+    </footer>
   </div>
 </div>
 {% endblock %}

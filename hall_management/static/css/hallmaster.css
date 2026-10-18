@@ -210,6 +210,24 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .status.cancelled, .status.overdue, .status.blocked, .status.inactive { border-color: rgba(229,107,111,.15); background: rgba(229,107,111,.08); color: var(--red); }
 .status.information { border-color: rgba(110,168,254,.15); background: rgba(110,168,254,.08); color: var(--blue); }
 .table-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px; border-top: 1px solid var(--border); color: var(--gold-light); font-size: 9px; }
+.payments-stats .stat-card { min-height: 126px; padding: 17px; border-color: rgba(201,169,110,.14); background: radial-gradient(ellipse at 100% 0%, rgba(201,169,110,.12), transparent 58%), linear-gradient(145deg, #151a1d, #0c1013 78%); transition: transform var(--ease), border-color var(--ease), box-shadow var(--ease); }
+.payments-stats .stat-card:hover { transform: translateY(-2px); border-color: rgba(201,169,110,.34); box-shadow: 0 12px 28px rgba(0,0,0,.2); }
+.payments-stats .stat-card:nth-child(2) .stat-icon { background: rgba(229,169,92,.11); color: var(--orange); }
+.payments-stats .stat-card:nth-child(3) .stat-icon { background: rgba(85,197,138,.1); color: var(--green); }
+.payments-stats .stat-card:nth-child(4) .stat-icon { background: rgba(110,168,254,.1); color: var(--blue); }
+.payments-stats .stat-value { letter-spacing: -.025em; }
+.payments-ledger { overflow: visible; }
+.payments-toolbar { min-height: 62px; padding: 12px 14px; }
+.payments-toolbar .toolbar-left { flex: 1; gap: 14px; }
+.payments-toolbar .search-field { width: min(270px, 42vw); }
+.payment-method-control { display: flex; align-items: center; gap: 10px; }
+.payment-method-control > label { color: var(--muted); font-size: 10px; font-weight: 600; white-space: nowrap; }
+.payments-ledger .payment-method-control .hm-select-wrap { width: 155px; flex: 0 1 auto; }
+.payment-empty-state { padding: 42px 16px !important; text-align: center; white-space: normal !important; }
+.payment-empty-state strong, .payment-empty-state span { display: block; }
+.payment-empty-state strong { color: var(--text); font-size: 12px; font-weight: 600; }
+.payment-empty-state span { margin-top: 6px; color: var(--quiet); font-size: 10px; }
+.payments-ledger .table-footer { min-height: 48px; padding: 11px 14px; color: var(--quiet); }
 .pagination { display: flex; align-items: center; gap: 4px; }
 .pagination button, .pagination a, .pagination span { display: grid; min-width: 27px; height: 27px; place-items: center; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--muted); font-size: 9px; }
 .pagination a { text-decoration: none; }
@@ -436,7 +454,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .toast strong { display: block; font-size: 10px; }
 .toast span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.4; }
 
-.app-footer { display: flex; min-height: 54px; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 28px; border-top: 1px solid var(--border); color: var(--quiet); font-size: 9px; }
+.app-footer { display: flex; min-height: 54px; align-items: center; justify-content: center; gap: 12px; padding: 12px 28px; border-top: 1px solid var(--border); color: white; font-size: 9px; }
+.app-footer strong { white-space: nowrap; }
 .footer-right { display: flex; align-items: center; gap: 7px; }
 
 @keyframes rise-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -527,7 +546,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .table-toolbar { align-items: stretch; }
   .toolbar-left, .toolbar-right { width: 100%; }
   .toolbar-right { justify-content: flex-start; }
-  .app-footer { align-items: flex-start; flex-direction: column; padding: 14px 13px; }
+  .payments-toolbar .toolbar-left { align-items: stretch; flex-direction: column; gap: 10px; }
+  .payments-toolbar .search-field { width: 100%; }
+  .payment-method-control { justify-content: space-between; }
+  .payments-ledger .payment-method-control .hm-select-wrap { width: min(190px, 58vw); flex: 0 1 auto; }
+  .payments-ledger .table-footer { align-items: flex-start; flex-direction: column; }
+  .app-footer { align-items: center; flex-direction: column; padding: 12px 16px; text-align: center; font-size: 8px; line-height: 1.5; }
 }
 @media (max-width: 460px) {
   .stats-grid { gap: 8px; }
