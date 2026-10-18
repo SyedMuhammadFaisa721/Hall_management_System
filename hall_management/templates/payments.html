@@ -170,9 +170,9 @@
 		</div>
 
 		<div class="table-footer">
-			<span>
+			<span style="color: var(--gold-light)">
 				{% if page_obj.paginator.count %}
-				Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }} of {{ page_obj.paginator.count }} payment{{ page_obj.paginator.count|pluralize }}
+				Showing {{ page_obj.start_index }} of {{ page_obj.paginator.count }} payment{{ page_obj.paginator.count|pluralize }}
 				{% else %}
 				No payments
 				{% endif %}

@@ -51,7 +51,7 @@
                 </svg>
             </span>
         </div>
-        <strong class="stat-value">{{ booking_confirmed }}</strong>
+        <strong class="stat-value">{{ confirmed_booking }}</strong>
         <div class="stat-foot">
             <span class="trend">{{ percentage }} %</span>
             <span>vs. last month</span>
@@ -174,91 +174,36 @@
         </div>
 
         <div class="table-footer">
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                
-             <span>Showing {{ page_obj.number }} of {{page_obj.paginator.num_pages}} bookings</span>
-             <nav class="pagination" aria-label="Booking pages">
-                
-                {% if pae_obj.has_previous %}
-                 <a href="?page={{ page_obj.previous_page_number }}"><button type="button" disabled aria-label="Previous page">&#8249;</button></a>
-                {% endif %}
-                 <button class="active" type="button" aria-current="page">{{ num }}</button>
-                 {% if page_obj.has_next %}
-                 <a href="?page={{ page_obj.next_page_number }}"><button type="button" aria-label="Next page">&#8250;</button></a>
-                 {% endif %}
-             </nav>
-                {% endif %}
-            {% endfor %}
-        </div>
+			<span style="color: var(--gold-light)">
+				{% if page_obj.paginator.count %}
+				Showing {{ page_obj.start_index }} of {{ page_obj.paginator.count }} payment{{ page_obj.paginator.count|pluralize }}
+				{% else %}
+				No Booking
+				{% endif %}
+			</span>
+			{% if page_obj.paginator.num_pages > 1 %}
+			<nav class="pagination" aria-label="booking pages">
+				{% if page_obj.has_previous %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#booking-list" aria-label="Previous page">&#8249;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
+				{% endif %}
+				{% for num in page_obj.paginator.page_range %}
+					{% if page_obj.number == num %}
+					<span class="active" aria-current="page">{{ num }}</span>
+					{% else %}
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ num }}#booking-list">{{ num }}</a>
+					{% endif %}
+				{% endfor %}
+				{% if page_obj.has_next %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#booking-list" aria-label="Next page">&#8250;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
+				{% endif %}
+			</nav>
+			{% endif %}
+		</div>
     </div>
 </section>
 
-<section class="section" id="new-booking">
-    <details class="panel panel-pad">
-        <summary class="section-head">
-            <strong>New booking details</strong>
-        </summary>
-        <form method="post" action="{% url 'bookings' %}">
-            {% csrf_token %}
-            <div class="form-grid">
-                <div class="form-field">
-                    <label for="new-customer">Customer name</label>
-                    <input class="input" id="new-customer" name="customer" required>
-                </div>
-                <div class="form-field">
-                    <label for="new-phone">Phone</label>
-                    <input class="input" id="new-phone" name="phone" type="tel" required>
-                </div>
-                <div class="form-field">
-                    <label for="new-event">Event type</label>
-                    <select class="select" id="new-event" name="event">
-                        <option>Wedding Reception</option>
-                        <option>Mehndi</option>
-                        <option>Corporate Gala</option>
-                        <option>Birthday Celebration</option>
-                        <option>Engagement</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label for="new-date">Event date</label>
-                    <input class="input" id="new-date" name="date" type="date" required>
-                </div>
-                <div class="form-field">
-                    <label for="new-time">Start time</label>
-                    <input class="input" id="new-time" name="time" type="time" value="18:00">
-                </div>
-                <div class="form-field">
-                    <label for="new-guests">Guest count</label>
-                    <input class="input" id="new-guests" name="guests" type="number" min="1" required>
-                </div>
-                <div class="form-field">
-                    <label for="new-hall">Hall</label>
-                    <select class="select" id="new-hall" name="hall">
-                        <option>Grand Ballroom</option>
-                        <option>Crystal Hall</option>
-                        <option>Garden Pavilion</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label for="new-package">Package</label>
-                    <select class="select" id="new-package" name="package">
-                        <option>Royal Wedding</option>
-                        <option>Premium Wedding</option>
-                        <option>Corporate Event</option>
-                        <option>Birthday Celebration</option>
-                        <option>Engagement</option>
-                    </select>
-                </div>
-                <div class="form-field">
-                    <label for="new-amount">Total amount (PKR)</label>
-                    <input class="input" id="new-amount" name="amount" type="number" min="0" required>
-                </div>
-            </div>
-            <div class="heading-actions" style="margin-top:16px">
-                <button class="primary-button" type="submit">Save booking</button>
-            </div>
-        </form>
-    </details>
-</section>
 {% endblock %}

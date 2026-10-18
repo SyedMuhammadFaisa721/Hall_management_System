@@ -46,23 +46,24 @@ def dashboard(request):
 
 @login_required(login_url='login')
 def booking_view(request):
-    booking_total = newbooking.objects.all().count()
-
-    booking_confirmed = newbooking.objects.filter(status = 'confirmed').count()
-    booking_pending = newbooking.objects.filter(status = 'pending').count()
-    booking_canceled = newbooking.objects.filter(status = 'canceled').count()
-    current_month = date.today().month
+    
+    current_month = datetime.today().month
     previous_month = current_month -1
-    confirmed_booking= newbooking.objects.filter(event_date__month = current_month , status = 'confirmed').count() 
-    confirmed_booking_previous= newbooking.objects.filter(event_date__month = previous_month , status = 'confirmed').count()
-    percentage = confirmed_booking / confirmed_booking_previous
-    pending_booking = newbooking.objects.filter(status = 'pending' , event_date__month = current_month).count() 
-    pending_booking = newbooking.objects.filter(status = 'pending' , event_date__month = current_month).count()
-    pending_booking_pre = newbooking.objects.filter(event_date__month = previous_month , status = 'pending').count()
-    pending_booking_percentage = pending_booking / pending_booking_pre
+    current_year = datetime.today().year
+    previous_year = current_year - 1
+    booking_status = ['confirmed','confirm', 'Confirmed','Confirm']
+    booking_status_pending = ['pending','Pending', 'notconfirmed','NotConfirm']
+    booking_total = newbooking.objects.filter(event_date__month = current_month , event_date__year  = current_year).count()
+    confirmed_booking= newbooking.objects.filter(event_date__month = current_month , event_date__year = current_year ,status__in = booking_status).count() 
+    confirmed_booking_previous= newbooking.objects.filter(event_date__month = previous_month , event_date__year = current_year , status__in = booking_status).count()
+    percentage = ((confirmed_booking - confirmed_booking_previous) / confirmed_booking_previous) * 100 or 0
+    pending_booking = newbooking.objects.filter(status__in = booking_status_pending , event_date__month = current_month , event_date__year = current_year).count() 
+    
+    pending_booking_previous = newbooking.objects.filter(event_date__month = previous_month , event_date__year = current_year ,status__in = booking_status_pending).count()
+    pending_booking_percentage = ((pending_booking - pending_booking_previous) / pending_booking_previous) * 100 or 0
     booking_cancelled = newbooking.objects.filter(event_date__month = current_month , status = 'cancelled').count()
-    booking_cancelled_pre = newbooking.objects.filter(event_date__month = previous_month , status = 'cancelled').count()
-    booking_cancelled_percentage = booking_cancelled/booking_cancelled_pre
+    booking_cancelled_previous = newbooking.objects.filter(event_date__month = previous_month , status = 'cancelled').count()
+    booking_cancelled_percentage = ((booking_cancelled - booking_cancelled_previous) /booking_cancelled_previous) * 100 or 0
 
 
 
@@ -78,12 +79,13 @@ def booking_view(request):
         paginator = Paginator(booking_obj ,10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
+        
         context = {
             'booking_total': booking_total,
             'booking_obj': booking_obj,
-            'booking_confirmed': booking_confirmed,
-            'booking_pending': booking_pending,
-            'booking_canceled': booking_canceled,
+            'confirmed_booking': confirmed_booking,
+            'pending_booking': pending_booking,
+            'booking_cancelled': booking_cancelled,
             'page_obj': page_obj,
             'confirmed_booking':confirmed_booking,
             'percentage':percentage,
@@ -96,24 +98,24 @@ def booking_view(request):
         return render(request, 'bookings.html', context)
     else:
         booking_list = newbooking.objects.all().order_by('-booking_id')
-        paginator =Paginator(booking_list , 1)
+        paginator =Paginator(booking_list , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
 
+
+
     context = {
-                'booking_total': booking_total,
-                'booking_confirmed': booking_confirmed,
-                'booking_pending': booking_pending,
-                'booking_canceled': booking_canceled,
+                'booking_total':booking_total,
                 'page_obj': page_obj,
                 'confirmed_booking':confirmed_booking,
                 'percentage':percentage,
                 'pending_booking':pending_booking,
-                'pending_booking_percentage':pending_booking_percentage,
+               'pending_booking_percentage':pending_booking_percentage,
                 'booking_cancelled':booking_cancelled,
                 'booking_cancelled_percentage': booking_cancelled_percentage,
-                'search':search
+                'search':search,
+                'pending_booking_previous':pending_booking_previous
             }
     return render(request, 'bookings.html', context)
 @login_required(login_url='login')
@@ -306,7 +308,7 @@ def Expenses_view(request):
             Q(paid_by__icontains = search)|
             Q(date__icontains=search)
         )
-        paginator =Paginator(expense_obj , 10)
+        paginator =Paginator(expense_obj , 1)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         context ={
@@ -328,7 +330,7 @@ def Expenses_view(request):
         return render(request , 'expenses.html', context)
     else:
         expense_list = expense.objects.all().order_by('-expense_id')[:10]
-        paginator = Paginator(expense_list , 10)
+        paginator = Paginator(expense_list , 1)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)   
     context ={
