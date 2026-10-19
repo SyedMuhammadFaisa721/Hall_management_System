@@ -9,7 +9,7 @@
         <p>Manage all venue reservations and events.</p>
     </div>
     <div class="heading-actions">
-        <a class="icon-button" href="#booking-list" aria-label="Export bookings" title="Export bookings">
+        <a class="icon-button" href="{% url 'export_booking' %}" aria-label="Export bookings" title="Export bookings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M12 3v12m-5-5 5 5 5-5M4 20h16"/>
             </svg>
@@ -36,8 +36,13 @@
         </div>
         <strong class="stat-value">{{ booking_total }}</strong>
         <div class="stat-foot">
-            <span class="trend">+8.2%</span>
+            {% if total_booking_percentage > 0 %}
+            <span class="trend">&uarr; {{ total_booking_percentage }} %</span>
             <span>vs. last month</span>
+            {% elif total_booking_percentage < 0 %}
+            <span class="trend" style="color:#F87171">&darr; {{ total_booking_percentage }} %</span>
+            <span>vs. last month</span>
+            {% endif %}
         </div>
     </article>
 
@@ -53,8 +58,13 @@
         </div>
         <strong class="stat-value">{{ confirmed_booking }}</strong>
         <div class="stat-foot">
-            <span class="trend">{{ percentage }} %</span>
-            <span>vs. last month</span>
+            {% if percentage >= 0 %}
+             <span class="trend">&uarr; {{ percentage }} %</span>
+             <span>vs. last month</span>
+             {% elif percentage < 0  %}
+             <span class="trend" style="color: #F87171;">&darr; {{ percentage }} %</span>
+             <span>vs. last month</span>
+            {% endif %}
         </div>
     </article>
 
@@ -70,8 +80,13 @@
         </div>
         <strong class="stat-value">{{ pending_booking }}</strong>
         <div class="stat-foot">
-            <span class="trend">{{ pending_booking_percentage }}%</span>
-            <span>vs. last month</span>
+            {% if pending_booking_percentage >= 0 %}
+             <span class="trend">&uarr; {{ pending_booking_percentage }}%</span>
+             <span>vs. last month</span>
+             {% elif pending_booking_percentage < 0 %}
+             <span class="trend" style="color:#F87171;" > &darr; {{ pending_booking_percentage }}%</span>
+             <span>vs. last month</span>
+            {% endif %}
         </div>
     </article>
 
@@ -86,8 +101,14 @@
         </div>
         <strong class="stat-value">{{ booking_cancelled }}</strong>
         <div class="stat-foot">
-            <span class="trend">{{ booking_cancelled_percentage }}%</span>
-            <span>vs. last month</span>
+            {% if booking_cancelled_percentage >= 0 %}
+             <span class="trend">&uarr; {{ booking_cancelled_percentage }}%</span>
+             <span>vs. last month</span>
+            {% elif booking_cancelled_percentage < 0 %}
+             <span class="trend" style="color: #F87171;">&darr; {{ booking_cancelled_percentage }}%</span>
+             <span>vs. last month</span>
+             
+            {% endif %}
         </div>
     </article>
 </section>
@@ -101,7 +122,7 @@
     </div>
 
     <div class="panel">
-        <form class="table-toolbar" id="booking-filters" method="GET" action="{% url 'bookings' %}">
+        <form class="table-toolbar" id="booking-filters" method="GET" action="{% url 'bookings' %}#booking-list">
             <div class="toolbar-left">
                 <label class="sr-only" for="booking-search">Search bookings</label>
                 <input class="input search-field" id="booking-search" name="search" type="search"
@@ -109,15 +130,15 @@
 
                 <label class="sr-only" for="booking-status">Booking status</label>
                 <select class="select select-compact" id="booking-status" name="status">
-                    <option value="">All statuses</option>
-                    <option>Confirmed</option>
-                    <option>Pending</option>
-                    <option>Completed</option>
-                    <option>Cancelled</option>
+                    <option value="" {% if not booking_status_filter %}selected{% endif %}>All statuses</option>
+                    <option value="confirmed" {% if booking_status_filter|lower == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                    <option value="pending" {% if booking_status_filter|lower == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="completed" {% if booking_status_filter|lower == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="cancelled" {% if booking_status_filter|lower == 'cancelled' %}selected{% endif %}>Cancelled</option>
                 </select>
 
                 <label class="sr-only" for="booking-date">Event date</label>
-                <input class="input select-compact" id="booking-date" name="date" type="date" aria-label="Filter by event date">
+                <input class="input select-compact" id="booking-date" name="event_date" type="date" value="{{ booking_date }}" aria-label="Filter by event date">
             </div>
             <div class="toolbar-right">
                 <button class="text-button" type="submit">Apply filters</button>
@@ -176,27 +197,35 @@
         <div class="table-footer">
 			<span style="color: var(--gold-light)">
 				{% if page_obj.paginator.count %}
-				Showing {{ page_obj.start_index }} of {{ page_obj.paginator.count }} payment{{ page_obj.paginator.count|pluralize }}
+				Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} pages
 				{% else %}
-				No Booking
+				No Records
 				{% endif %}
 			</span>
 			{% if page_obj.paginator.num_pages > 1 %}
-			<nav class="pagination" aria-label="booking pages">
+			<nav class="pagination" aria-label="Booking pages">
 				{% if page_obj.has_previous %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#booking-list" aria-label="Previous page">&#8249;</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#booking-list" aria-label="Previous page">&#8249;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
 				{% endif %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page=1#booking-list" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
+				{% if page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
 				{% for num in page_obj.paginator.page_range %}
-					{% if page_obj.number == num %}
+					{% if num != 1 and num != page_obj.paginator.num_pages and num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"1" %}
+						{% if page_obj.number == num %}
 					<span class="active" aria-current="page">{{ num }}</span>
-					{% else %}
-					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ num }}#booking-list">{{ num }}</a>
+						{% else %}
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ num }}#booking-list">{{ num }}</a>
+						{% endif %}
 					{% endif %}
 				{% endfor %}
+				{% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% if page_obj.paginator.num_pages > 1 %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}#booking-list" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
+				{% endif %}
 				{% if page_obj.has_next %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#booking-list" aria-label="Next page">&#8250;</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#booking-list" aria-label="Next page">&#8250;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
 				{% endif %}

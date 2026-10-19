@@ -159,18 +159,44 @@
 					No matching stock items.
 				</div>
 			</div>
-			<div class="table-footer inventory-table-footer">
-				<span>Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-				<nav class="pagination" aria-label="Inventory pages">
-					{% if page_obj.has_previous %}
-						<a href="?page={{ page_obj.previous_page_number }}{% if search %}&amp;search={{ search|urlencode }}{% endif %}#inventory-list" aria-label="Previous page">&#8249;</a>
+			<div class="table-footer">
+			<span style="color: var(--gold-light)">
+				{% if page_obj.paginator.count %}
+				Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} pages
+				{% else %}
+				No Records
+				{% endif %}
+			</span>
+			{% if page_obj.paginator.num_pages > 1 %}
+			<nav class="pagination" aria-label="Inventory pages">
+				{% if page_obj.has_previous %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous page">&#8249;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
+				{% endif %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page=1" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
+				{% if page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% for num in page_obj.paginator.page_range %}
+					{% if num != 1 and num != page_obj.paginator.num_pages and num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+						{% if page_obj.number == num %}
+					<span class="active" aria-current="page">{{ num }}</span>
+						{% else %}
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ num }}">{{ num }}</a>
+						{% endif %}
 					{% endif %}
-					<span class="active" aria-current="page">{{ page_obj.number }}</span>
-					{% if page_obj.has_next %}
-						<a href="?page={{ page_obj.next_page_number }}{% if search %}&amp;search={{ search|urlencode }}{% endif %}#inventory-list" aria-label="Next page">&#8250;</a>
-					{% endif %}
-				</nav>
-			</div>
+				{% endfor %}
+				{% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% if page_obj.paginator.num_pages > 1 %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
+				{% endif %}
+				{% if page_obj.has_next %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page">&#8250;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
+				{% endif %}
+			</nav>
+			{% endif %}
+		</div>
 		</div>
 	</section>
 </div>

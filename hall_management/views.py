@@ -13,6 +13,7 @@ from django.core.paginator import Paginator
 from .models import newbooking , staff , expense , Inventory, InventoryCategory , payment
 from django.db.models import Sum ,Max 
 from datetime import date , datetime
+import csv
 
 def log_in(request):
         
@@ -46,7 +47,6 @@ def dashboard(request):
 
 @login_required(login_url='login')
 def booking_view(request):
-    
     current_month = datetime.today().month
     previous_month = current_month -1
     current_year = datetime.today().year
@@ -54,6 +54,8 @@ def booking_view(request):
     booking_status = ['confirmed','confirm', 'Confirmed','Confirm']
     booking_status_pending = ['pending','Pending', 'notconfirmed','NotConfirm']
     booking_total = newbooking.objects.filter(event_date__month = current_month , event_date__year  = current_year).count()
+    total_booking_previous = newbooking.objects.filter(event_date__month = previous_month , event_date__year = current_year).count()
+    total_booking_percentage = ((booking_total - total_booking_previous)/ total_booking_previous)* 100 
     confirmed_booking= newbooking.objects.filter(event_date__month = current_month , event_date__year = current_year ,status__in = booking_status).count() 
     confirmed_booking_previous= newbooking.objects.filter(event_date__month = previous_month , event_date__year = current_year , status__in = booking_status).count()
     percentage = ((confirmed_booking - confirmed_booking_previous) / confirmed_booking_previous) * 100 or 0
@@ -65,48 +67,34 @@ def booking_view(request):
     booking_cancelled_previous = newbooking.objects.filter(event_date__month = previous_month , status = 'cancelled').count()
     booking_cancelled_percentage = ((booking_cancelled - booking_cancelled_previous) /booking_cancelled_previous) * 100 or 0
 
-
-
     search = request.GET.get('search', '')
+    booking_status_filter = request.GET.get('status', '')
+    booking_date = request.GET.get('event_date', '')
+
+    booking_list = newbooking.objects.all().order_by('-booking_id')
     if search:
-        booking_obj = newbooking.objects.filter(
+        booking_list = booking_list.filter(
             Q(customer_name__icontains = search)|
             Q(booking_id__icontains = search)|
             Q(event_name__icontains = search)|
             Q(event_hall__icontains = search)|
             Q(status__icontains = search)
         )
-        paginator = Paginator(booking_obj ,10)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        
-        context = {
-            'booking_total': booking_total,
-            'booking_obj': booking_obj,
-            'confirmed_booking': confirmed_booking,
-            'pending_booking': pending_booking,
-            'booking_cancelled': booking_cancelled,
-            'page_obj': page_obj,
-            'confirmed_booking':confirmed_booking,
-            'percentage':percentage,
-            'pending_booking':pending_booking,
-            'pending_booking_percentage':pending_booking_percentage,
-            'booking_cancelled':booking_cancelled,
-            'booking_cancelled_percentage': booking_cancelled_percentage,
-            'search':search
-        }
-        return render(request, 'bookings.html', context)
-    else:
-        booking_list = newbooking.objects.all().order_by('-booking_id')
-        paginator =Paginator(booking_list , 10)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
+    if booking_status_filter.lower() == 'confirmed':
+        booking_list = booking_list.filter(status__in=booking_status)
+    elif booking_status_filter.lower() == 'pending':
+        booking_list = booking_list.filter(status__in=booking_status_pending)
+    elif booking_status_filter:
+        booking_list = booking_list.filter(status__iexact=booking_status_filter)
+    if booking_date:
+        booking_list = booking_list.filter(event_date=booking_date)
 
-
-
+    paginator = Paginator(booking_list, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
 
     context = {
                 'booking_total':booking_total,
+                'total_booking_percentage':total_booking_percentage,
                 'page_obj': page_obj,
                 'confirmed_booking':confirmed_booking,
                 'percentage':percentage,
@@ -115,9 +103,50 @@ def booking_view(request):
                 'booking_cancelled':booking_cancelled,
                 'booking_cancelled_percentage': booking_cancelled_percentage,
                 'search':search,
-                'pending_booking_previous':pending_booking_previous
+                'booking_status_filter':booking_status_filter,
+                'booking_date':booking_date,
+                'pending_booking_previous':pending_booking_previous,
             }
     return render(request, 'bookings.html', context)
+def export_booking_data(request):
+    today = datetime.now()
+    current_time = today.strftime("%I:%M %p")
+    currrent_date = today.strftime('%d %b %Y')
+    #used in booking data download
+    bookings = newbooking.objects.all().order_by('-event_date')
+    response = HttpResponse(content_type = 'text/csv')
+    response['content-Disposition'] = f' attachment; filename=Booking Records {current_time} {currrent_date}.csv'
+    writer = csv.writer(response)
+    
+    #Write row heading
+
+    writer.writerow([
+        'Booking ID'.upper(),
+        'Customer'.upper(),
+        'Event'.upper(),
+        'Date'.upper(),
+        'Time'.upper(),
+        'Guest'.upper(),
+        'Hall portion'.upper(),
+        'Amount'.upper(),
+        'payment'.upper(),
+        'status'.upper()
+    ])
+
+    for booking in bookings:
+        writer.writerow([
+            booking.booking_id,
+            booking.customer_name,
+            booking.event_name,
+            booking.event_date,
+            booking.event_time,
+            booking.event_guest,
+            booking.event_hall,
+            booking.hall_price,
+            booking.payment_status,
+            booking.status
+        ])
+    return response
 @login_required(login_url='login')
 def Availability_view(request):
     return render(request , 'availability.html')
@@ -157,7 +186,7 @@ def Inventory_view(request):
         total_category = Inventory.objects.aggregate(Sum('category'))['category__sum'] or 0
         damage_inventory = Inventory.objects.aggregate(Sum('damage_quantity'))['damage_quantity__sum'] or 0
         available_percentage = available_inventory / damage_inventory
-        paginator = Paginator(total_inventory , 10)
+        paginator = Paginator(total_inventory , 1)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
     context={
@@ -200,8 +229,8 @@ def Payments_view(request):
     pending_count = payment.objects.filter(payment_status__in = pending_status).count()
     total_collection = payment.objects.filter(payment_date__year = current_year).aggregate(Sum('amount'))['amount__sum'] or 0
     pre_total_collection = payment.objects.filter(payment_date__year = previous_year).aggregate(Sum('amount'))['amount__sum'] or 0
-    year_colloection_in_precentage = ((total_collection-pre_total_collection) / pre_total_collection ) * 100
-    monthly_colloection_in_precentage = ((month_collection-previous_month_collection) / previous_month_collection ) * 100
+    year_colloection_in_precentage = ((total_collection-pre_total_collection) / pre_total_collection ) * 100 if pre_total_collection else 0
+    monthly_colloection_in_precentage = ((month_collection-previous_month_collection) / previous_month_collection ) * 100 if previous_month_collection else 0
 
     
     if search:

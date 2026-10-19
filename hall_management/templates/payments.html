@@ -172,9 +172,9 @@
 		<div class="table-footer">
 			<span style="color: var(--gold-light)">
 				{% if page_obj.paginator.count %}
-				Showing {{ page_obj.start_index }} of {{ page_obj.paginator.count }} payment{{ page_obj.paginator.count|pluralize }}
+				Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} pages
 				{% else %}
-				No payments
+				No Payment
 				{% endif %}
 			</span>
 			{% if page_obj.paginator.num_pages > 1 %}
@@ -184,13 +184,21 @@
 				{% else %}
 				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
 				{% endif %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page=1#payment-ledger" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
+				{% if page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
 				{% for num in page_obj.paginator.page_range %}
-					{% if page_obj.number == num %}
-					<span class="active" aria-current="page">{{ num }}</span>
-					{% else %}
-					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ num }}#payment-ledger">{{ num }}</a>
+					{% if num != 1 and num != page_obj.paginator.num_pages and num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+						{% if page_obj.number == num %}
+				<span class="active" aria-current="page">{{ num }}</span>
+						{% else %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ num }}#payment-ledger">{{ num }}</a>
+						{% endif %}
 					{% endif %}
 				{% endfor %}
+				{% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% if page_obj.paginator.num_pages > 1 %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}#payment-ledger" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
+				{% endif %}
 				{% if page_obj.has_next %}
 				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if selected_method %}method={{ selected_method|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#payment-ledger" aria-label="Next page">&#8250;</a>
 				{% else %}

@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Customers_view, Packages_view,Payments_view, Invoices_view, Reports_view, Expenses_view, Staff_view, Notifications_view, Settings_view
+from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Customers_view, Packages_view,Payments_view, Invoices_view, Reports_view, Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,6 +37,7 @@ urlpatterns = [
         path('notifications/' , Notifications_view , name ="notifications"),
         path('settings/' , Settings_view , name ="settings"),
         path('bookings/' , booking_view , name ="bookings"),
+        path('bookings/export/' , export_booking_data , name ="export_booking"),
         path('bookingform/' , New_booking , name = "bookingform"),
         path('addexpense/', Expense_form , name = "expensesform"),
         path('addstaff/' , New_staff , name = "staffform"),

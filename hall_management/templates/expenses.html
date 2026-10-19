@@ -127,15 +127,15 @@
             <div class="table-footer">
 			<span style="color: var(--gold-light)">
 				{% if page_obj.paginator.count %}
-				Showing {{ page_obj.start_index }} of {{ page_obj.paginator.count }} payment{{ page_obj.paginator.count|pluralize }}
+				Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} pages
 				{% else %}
-				No payments
+				No Booking
 				{% endif %}
 			</span>
 			{% if page_obj.paginator.num_pages > 1 %}
 			<nav class="pagination" aria-label="Payment pages">
 				{% if page_obj.has_previous %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#expense-ledger" aria-label="Previous page">&#8249;</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous page">&#8249;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
 				{% endif %}
@@ -143,11 +143,11 @@
 					{% if page_obj.number == num %}
 					<span class="active" aria-current="page">{{ num }}</span>
 					{% else %}
-					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ num }}#expense-ledger">{{ num }}</a>
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ num }}">{{ num }}</a>
 					{% endif %}
 				{% endfor %}
 				{% if page_obj.has_next %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#expense-ledger" aria-label="Next page">&#8250;</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page">&#8250;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
 				{% endif %}
