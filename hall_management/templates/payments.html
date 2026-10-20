@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Payments | HallMaster{% endblock %}
 
@@ -12,10 +13,16 @@
 		<p>Track deposits, balances and completed collections.</p>
 	</div>
 	<div class="heading-actions">
-		<a class="text-button" href="#payment-ledger">Export list</a>
-		<a class="primary-button" href="#payment-ledger">+ Record payment</a>
+		<a class="text-button" href="{% url 'download_payments_records' %}">Export list</a>
+		<a class="primary-button" href="{% url 'paymentform' %}">+ Record payment</a>
 	</div>
 </header>
+
+{% if messages %}
+<div class="payment-alerts" aria-live="polite">
+	{% for message in messages %}<p class="payment-alert {{ message.tags }}">{{ message }}</p>{% endfor %}
+</div>
+{% endif %}
 
 <section class="stats-grid payments-stats" aria-label="Payment summary">
 	<article class="stat-card">
@@ -69,15 +76,9 @@
 			
 
 			{% endif %}
-			
-
-			
-
 		</div>
 	</article>
-	
 </section>
-
 <section class="section" id="payment-ledger">
 	<div class="section-head">
 		<div>
@@ -155,7 +156,7 @@
 						<td>{{ payment.method }}</td>
 						<td class="cell-primary">Rs {{ payment.amount|intword|intcomma }}</td>
 						<td>{{ payment.refference_num }}</td>
-						<td><span class="status paid">{{ payment.payment_status }}</span></td>
+						<td><span class="status {{ payment.payment_status|lower }}">{{ payment.payment_status }}</span></td>
 					</tr>
 					{% empty %}
 					<tr>
@@ -209,4 +210,7 @@
 		</div>
 	</div>
 </section>
+{% endblock %}
+{% block page_scripts %}{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/addpaymentform.css' %}">
 {% endblock %}

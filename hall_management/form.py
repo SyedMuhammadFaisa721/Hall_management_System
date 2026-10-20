@@ -70,9 +70,48 @@ class new_expense(forms.ModelForm):
         model   = expense
         exclude = ["expense_id"]
 class new_payment(forms.ModelForm):
+    booking = forms.ModelChoiceField(
+        queryset=newbooking.objects.none(),
+        label='Booking',
+        empty_label='Choose a booking',
+    )
+    method = forms.ChoiceField(
+        choices=[
+            ('cash', 'Cash'),
+            ('Bank Transfer', 'Bank transfer'),
+            ('card', 'Card'),
+            ('Online', 'Online'),
+        ],
+        label='Payment method',
+    )
+    payment_status = forms.ChoiceField(
+        choices=[
+            ('paid', 'Paid'),
+            ('advance', 'Advance'),
+            ('pending', 'Pending'),
+        ],
+        initial='paid',
+        label='Payment status',
+    )
+
     class Meta:
-        model   = payment
-        exclude = ["payment_id"]
+        model = payment
+        fields = ('booking', 'payment_date', 'method', 'amount', 'refference_num', 'payment_status')
+        widgets = {
+            'payment_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'amount': forms.NumberInput(attrs={'min': '0.01', 'step': '0.01', 'inputmode': 'decimal'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['booking'].queryset = newbooking.objects.all().order_by('-event_date')
+        self.fields['booking'].label_from_instance = (
+            lambda booking: f'{booking.booking_id} · {booking.customer_name} · {booking.event_date:%d %b %Y}'
+        )
+        self.fields['refference_num'].label = 'Reference number'
+        self.fields['refference_num'].widget.attrs['maxlength'] = 40
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'payment-form-control'
 class new_inventory(forms.ModelForm) :
     class Meta:
         model = Inventory

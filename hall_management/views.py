@@ -108,6 +108,7 @@ def booking_view(request):
                 'pending_booking_previous':pending_booking_previous,
             }
     return render(request, 'bookings.html', context)
+@login_required(login_url='login')
 def export_booking_data(request):
     today = datetime.now()
     current_time = today.strftime("%I:%M %p")
@@ -231,8 +232,6 @@ def Payments_view(request):
     pre_total_collection = payment.objects.filter(payment_date__year = previous_year).aggregate(Sum('amount'))['amount__sum'] or 0
     year_colloection_in_precentage = ((total_collection-pre_total_collection) / pre_total_collection ) * 100 if pre_total_collection else 0
     monthly_colloection_in_precentage = ((month_collection-previous_month_collection) / previous_month_collection ) * 100 if previous_month_collection else 0
-
-    
     if search:
         payment_obj = payment.objects.filter(
             Q(payment_id__icontains = search)|
@@ -301,6 +300,57 @@ def Payments_view(request):
         'monthly_colloection_in_precentage':monthly_colloection_in_precentage,
     }
     return render(request , 'payments.html' , context)
+
+
+@login_required(login_url='login')
+def Payment_form(request):
+    if request.method == 'POST':
+        form = new_payment(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Payment recorded successfully.')
+            return redirect('payments')
+    else:
+        form = new_payment()
+    return render(request, 'addpaymentform.html', {'form': form, 'page': 'payments'})
+
+
+#used for download payments records
+@login_required(login_url='login')
+def download_payments_records(request):
+    today = datetime.now()
+    current_date = today.strftime('%d %b %Y')
+    current_time = today.strftime('%I %M %p')
+    #payments = payment.objects.all().order_by('-payment_id')
+    payment_details = payment.objects.all().order_by('-payment_id')
+    response  = HttpResponse(content_type = 'text/csv')
+    response['content-Disposition'] = f'attachment; filename = Payment Records {current_time} {current_date}.csv'
+    #write row heading
+    writer = csv.writer(response)
+    writer.writerow([
+        'PAYMENT ID',
+        'BOOKING ID',
+        'CUSTOMER',
+        'DATE',
+        'METHOD',
+        'AMOUNT',
+        'REFERENCE',
+        'STATUS'
+
+    ])
+    for payments in payment_details:
+        writer.writerow([
+            payments.payment_id,
+            payments.booking.booking_id,
+            payments.booking.customer_name,
+            payments.payment_date,
+            payments.method,
+            payments.amount,
+            payments.refference_num,
+            payments.payment_status
+        ])
+    return response
+
 @login_required(login_url='login')
 def Invoices_view(request):
     return render(request , 'invoices.html')

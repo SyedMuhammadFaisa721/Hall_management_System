@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Record Payment | HallMaster{% endblock %}
+{% block page_key %}payments{% endblock %}
+{% block page_content %}
+<div class="payment-create-page">
+	<nav class="payment-breadcrumb" aria-label="Breadcrumb"><a href="{% url 'payments' %}">Payments</a><span aria-hidden="true">/</span><span>Record payment</span></nav>
+
+	<header class="payment-create-heading">
+		<div>
+			<span class="eyebrow">FINANCE <i></i> PAYMENT LEDGER</span>
+			<h1>Record a payment</h1>
+			<p>Link a payment to a booking and keep your collection records up to date.</p>
+		</div>
+		<a class="payment-create-back" href="{% url 'payments' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12"/></svg>Back to payments</a>
+	</header>
+
+	<div class="payment-create-layout">
+		<form class="payment-create-form" method="post">
+			{% csrf_token %}
+			{% if form.non_field_errors %}<div class="payment-form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+
+			<section class="payment-form-section" aria-labelledby="payment-booking-title">
+				<div class="payment-section-heading"><span class="payment-section-index">01</span><div><h2 id="payment-booking-title">Booking information</h2><p>Choose the booking this payment belongs to.</p></div></div>
+				<div class="payment-form-grid">
+					<div class="payment-form-field payment-form-field-wide">
+						<label for="{{ form.booking.id_for_label }}">Booking <i>Required</i></label>
+						{{ form.booking }}
+						{% for error in form.booking.errors %}<span class="payment-field-error">{{ error }}</span>{% endfor %}
+					</div>
+				</div>
+			</section>
+
+			<section class="payment-form-section" aria-labelledby="payment-details-title">
+				<div class="payment-section-heading"><span class="payment-section-index">02</span><div><h2 id="payment-details-title">Payment details</h2><p>Enter the date, amount and method received.</p></div></div>
+				<div class="payment-form-grid">
+					<div class="payment-form-field">
+						<label for="{{ form.payment_date.id_for_label }}">Payment date <i>Required</i></label>
+						{{ form.payment_date }}
+						{% for error in form.payment_date.errors %}<span class="payment-field-error">{{ error }}</span>{% endfor %}
+					</div>
+					<div class="payment-form-field">
+						<label for="{{ form.amount.id_for_label }}">Amount (PKR) <i>Required</i></label>
+						{{ form.amount }}
+						{% for error in form.amount.errors %}<span class="payment-field-error">{{ error }}</span>{% endfor %}
+					</div>
+					<div class="payment-form-field">
+						<label for="{{ form.method.id_for_label }}">Payment method <i>Required</i></label>
+						{{ form.method }}
+						{% for error in form.method.errors %}<span class="payment-field-error">{{ error }}</span>{% endfor %}
+					</div>
+					<div class="payment-form-field">
+						<label for="{{ form.payment_status.id_for_label }}">Payment status <i>Required</i></label>
+						{{ form.payment_status }}
+						{% for error in form.payment_status.errors %}<span class="payment-field-error">{{ error }}</span>{% endfor %}
+					</div>
+					<div class="payment-form-field payment-form-field-wide">
+						<label for="{{ form.refference_num.id_for_label }}">Reference number <i>Required</i></label>
+						{{ form.refference_num }}
+						<small>Enter the transaction, receipt or bank reference.</small>
+						{% for error in form.refference_num.errors %}<span class="payment-field-error">{{ error }}</span>{% endfor %}
+					</div>
+				</div>
+			</section>
+
+			<footer class="payment-form-footer">
+				<p><i>*</i> Required fields</p>
+				<div><a href="{% url 'payments' %}">Cancel</a><button class="primary-button" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Save payment</button></div>
+			</footer>
+		</form>
+
+		<aside class="payment-create-aside" aria-label="Payment record information">
+			<span class="payment-aside-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18m-13 5h3"/></svg></span>
+			<span class="payment-aside-kicker">COLLECTION RECORD</span>
+			<h2>Every payment,<br>accounted for.</h2>
+			<p>Saved payments are added to the ledger and linked to the selected booking.</p>
+			<div class="payment-aside-note"><span class="payment-aside-dot"></span><span><strong>Secure record</strong><small>A unique payment ID is assigned automatically when saved.</small></span></div>
+		</aside>
+	</div>
+</div>
+{% endblock %}
+{% block page_scripts %}{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/addpaymentform.css' %}">
+{% endblock %}

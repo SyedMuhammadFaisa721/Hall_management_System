@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Customers_view, Packages_view,Payments_view, Invoices_view, Reports_view, Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data
+from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Customers_view, Packages_view,Payments_view, Payment_form, Invoices_view, Reports_view, Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data ,download_payments_records
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,6 +28,8 @@ urlpatterns = [
         path('customers/' , Customers_view , name ="customers"),
         path('packages/' , Packages_view , name ="packages"),
         path('payments/' , Payments_view , name ="payments"),
+        path('payments/add/' , Payment_form , name ="paymentform"),
+        path('payments/export/' , download_payments_records , name ="download_payments_records"),
         path('invoices/' , Invoices_view , name ="invoices"),
         path('reports/' , Reports_view , name ="reports"),
         path('expenses/' , Expenses_view , name ="expenses"),
@@ -46,4 +48,3 @@ urlpatterns = [
         path('tester/', tester, name='tester'),
 
 ]
-
