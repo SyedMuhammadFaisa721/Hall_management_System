@@ -160,7 +160,7 @@
     <header class="topbar">
       <div class="topbar-left">
         <button class="icon-button menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">&#9776;</button>
-        <div class="page-context"><span>{% now "l, d F Y" %}</span><strong>Welcome Back, {{ user.first_name }}</strong></div>
+        <div class="page-context"><span>{% now "l, d F Y" %}</span><strong>{{ greeting }} , {{ user.first_name }}</strong></div>
       </div>
       <div class="topbar-right">
         <label class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><input class="search-input" type="search" placeholder="Search anything..." autocomplete="off"><kbd class="shortcut">/</kbd></label>

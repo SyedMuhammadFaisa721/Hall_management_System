@@ -206,7 +206,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .status { display: inline-flex; min-height: 21px; align-items: center; gap: 5px; padding: 2px 8px; border: 1px solid transparent; border-radius: 20px; font-size: 9px; font-weight: 600; }
 .status::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
 .status.confirmed, .status.paid, .status.active, .status.available, .status.completed, .status.read { border-color: rgba(85,197,138,.15); background: rgba(85,197,138,.08); color: var(--green); }
-.status.pending, .status.partial, .status.reserved, .status.invited, .status.unread { border-color: rgba(229,169,92,.15); background: rgba(229,169,92,.08); color: var(--orange); }
+.status.pending, .status.advance, .status.partial, .status.reserved, .status.invited, .status.unread { border-color: rgba(229,169,92,.15); background: rgba(229,169,92,.08); color: var(--orange); }
 .status.cancelled, .status.overdue, .status.blocked, .status.inactive { border-color: rgba(229,107,111,.15); background: rgba(229,107,111,.08); color: var(--red); }
 .status.information { border-color: rgba(110,168,254,.15); background: rgba(110,168,254,.08); color: var(--blue); }
 .table-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px; border-top: 1px solid var(--border); color: var(--gold-light); font-size: 9px; }

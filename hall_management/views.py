@@ -32,7 +32,20 @@ def log_out(request):
     logout(request)
     return redirect('login')
 
-
+def base_view(request):
+    today = datetime.now().hour
+    if 5<= today < 12:
+        greeting = 'GOOD MORNING'
+    elif 12<= today < 18:
+        greeting = 'GOOD AFTERNOON'
+    elif 18<= today < 21 :
+        greeting = 'GOOD EVENING'
+    else:
+        greeting = 'GOOD NNIGHT'
+    context={
+        'greeting':greeting
+    }
+    return render(request , 'dashboard.html', context)
 @login_required(login_url='login')
 def dashboard(request):
     dashboard_booking_list = newbooking.objects.all().order_by('-booking_id')[:5]
@@ -221,8 +234,9 @@ def Payments_view(request):
     previous_month = current__month - 1
     current_year = date.today().year
     previous_year = current_year - 1
-    today_collection = payment.objects.filter(payment_date = today , payment_status = 'paid').aggregate(Sum('amount'))['amount__sum'] or 0
-    status=['paid' ,'Paid','advance', 'Advance']
+    
+    status=['paid' ,'Paid','advance', 'Advance','advance']
+    today_collection = payment.objects.filter(payment_date = today , payment_status__in = status).aggregate(Sum('amount'))['amount__sum'] or 0
     month_collection = payment.objects.filter(payment_date__month = current__month ,payment_date__year = current_year , payment_status__in = status ).aggregate(Sum('amount'))['amount__sum'] or 0
     previous_month_collection = payment.objects.filter(payment_date__month = previous_month ,payment_date__year = current_year , payment_status__in = status ).aggregate(Sum('amount'))['amount__sum'] or 0
     pending_status = ['Pending' , 'pending']
@@ -241,7 +255,7 @@ def Payments_view(request):
             Q(booking__customer_name__icontains = search)|
             Q(payment_date__icontains = search)
         )
-        paginator = Paginator(payment_obj , 1)
+        paginator = Paginator(payment_obj , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         context = {
@@ -281,7 +295,7 @@ def Payments_view(request):
 
     else:
         page_content = payment_details
-    paginator = Paginator(payment_details , 1)
+    paginator = Paginator(payment_details , 10)
     page_number = request.GET.get('page')
     page_obj  = paginator.get_page(page_number)
     context = {
@@ -362,7 +376,7 @@ def Expenses_view(request):
     current_month = date.today().month
     current_year = date.today().year
     previous_year = current_year - 1
-    confirm_status = ['Paid' ,'paid']
+    confirm_status = ['Paid' ,'paid', 'advance']
     pending_status = ['pending','Pending']
     yearly_expenses = expense.objects.filter(date__year = current_year , status__in = confirm_status).aggregate(Sum('amount'))['amount__sum'] or 0
     yearly_expenses_previous = expense.objects.filter(date__year = previous_year , status__in = confirm_status).aggregate(Sum('amount'))['amount__sum'] or 0
@@ -428,6 +442,39 @@ def Expenses_view(request):
         'calculate_pending':calculate_pending,
     } 
     return render(request , 'expenses.html' , context)
+@login_required(login_url='login')
+def expense_data_download(request):
+    data = expense.objects.all().order_by('-expense_id')
+    today = datetime.now()
+    current_date = today.strftime('%d %b %Y')
+    current_time = today.strftime('%I:%M %p')
+    response = HttpResponse(content_type = 'text/csv')
+    response['content-Disposition'] = f'attachment; filename = Expense Records {current_time} {current_date}.csv'
+    writer = csv.writer(response)
+    #write row heading
+
+    writer.writerow([
+        'EXPENSE_ID',
+        'TITLE',
+        'CATEGORY',
+        'DATE',
+        'AMOUNT',
+        'PAID BY',
+        'STATUS'
+    ])
+    for download in data:
+        writer.writerow([
+            download.expense_id,
+            download.expense_title,
+            download.expense_category,
+            download.date,
+            download.amount,
+            download.paid_by,
+            download.status
+        ])
+    return response
+        
+
 @login_required(login_url='login')
 def Reports_view(request):  
     return render(request , 'reports.html')
@@ -659,6 +706,7 @@ def hallmaster_login(request):
 
 
 def tester(request):
-        return render(request , "testerbase.html")
+        today = datetime.now().hour
+        return render(request , "testerbase.html" ,{'today':today})
 
 # Create your views here

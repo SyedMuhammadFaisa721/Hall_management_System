@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Customers_view, Packages_view,Payments_view, Payment_form, Invoices_view, Reports_view, Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data ,download_payments_records
+from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Customers_view, Packages_view,Payments_view, Payment_form, Invoices_view, Reports_view, Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data ,download_payments_records,expense_data_download
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,6 +33,8 @@ urlpatterns = [
         path('invoices/' , Invoices_view , name ="invoices"),
         path('reports/' , Reports_view , name ="reports"),
         path('expenses/' , Expenses_view , name ="expenses"),
+        path('expenses/export/' , expense_data_download , name ="expense_data_download"),
+
         path('staff/' , Staff_view , name ="staff"),
         path('users/', users_page, name='users'),
         path('adduser/', user_create, name='user_create'),

@@ -9,7 +9,7 @@
             <p>Keep day-to-day venue spending organised.</p>
         </div>
         <div class="heading-actions">
-            <a class="text-button" href="#expense-ledger">Export list</a>
+            <a class="text-button" href="{% url 'expense_data_download' %}">Export list</a>
             <a class="primary-button" href="{% url 'expensesform' %}">+ Add expense</a>
         </div>
     </header>
@@ -117,19 +117,18 @@
                             <td>{{ expense.date }}</td>
                             <td class="cell-primary">Rs {{ expense.amount|intword|intcomma }}</td>
                             <td>{{ expense.paid_by }}</td>
-                            <td><span class="status paid">{{ expense.status }}</span></td>
+                            <td><span class="status {{ expense.status }} ">{{ expense.status }}</span></td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
-
-            <div class="table-footer">
+            </div> 
+        <div class="table-footer">
 			<span style="color: var(--gold-light)">
 				{% if page_obj.paginator.count %}
 				Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} pages
 				{% else %}
-				No Booking
+				No Expense
 				{% endif %}
 			</span>
 			{% if page_obj.paginator.num_pages > 1 %}
@@ -139,13 +138,21 @@
 				{% else %}
 				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
 				{% endif %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page=1" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
+				{% if page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
 				{% for num in page_obj.paginator.page_range %}
-					{% if page_obj.number == num %}
-					<span class="active" aria-current="page">{{ num }}</span>
-					{% else %}
-					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ num }}">{{ num }}</a>
+					{% if num != 1 and num != page_obj.paginator.num_pages and num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+						{% if page_obj.number == num %}
+				<span class="active" aria-current="page">{{ num }}</span>
+						{% else %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ num }}">{{ num }}</a>
+						{% endif %}
 					{% endif %}
 				{% endfor %}
+				{% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% if page_obj.paginator.num_pages > 1 %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
+				{% endif %}
 				{% if page_obj.has_next %}
 				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page">&#8250;</a>
 				{% else %}
