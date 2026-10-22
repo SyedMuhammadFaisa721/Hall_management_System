@@ -168,6 +168,7 @@ def Availability_view(request):
 @login_required(login_url='login')
 def Inventory_view(request):
     total_inventory = Inventory.objects.all()
+    inventory_categories = InventoryCategory.objects.all()
     total_inventory_num = Inventory.objects.all().count()
     available_inventory = Inventory.objects.aggregate(Sum('available_quantity'))['available_quantity__sum'] or 0
     total_category = InventoryCategory.objects.all().count()
@@ -190,7 +191,8 @@ def Inventory_view(request):
             'total_category':total_category,
             'available_percentage':available_percentage,
             'search':search,
-            'page_obj':page_obj
+            'page_obj':page_obj,
+            'inventory_categories':inventory_categories
         }
         return render(request , 'inventory.html', context)
     else:
@@ -199,8 +201,8 @@ def Inventory_view(request):
         available_inventory = Inventory.objects.aggregate(Sum('available_quantity'))['available_quantity__sum'] or 0
         total_category = Inventory.objects.aggregate(Sum('category'))['category__sum'] or 0
         damage_inventory = Inventory.objects.aggregate(Sum('damage_quantity'))['damage_quantity__sum'] or 0
-        available_percentage = available_inventory / damage_inventory
-        paginator = Paginator(total_inventory , 1)
+        available_percentage = (available_inventory / damage_inventory)
+        paginator = Paginator(total_inventory , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
     context={
@@ -210,7 +212,8 @@ def Inventory_view(request):
                 'damage_inventory':damage_inventory,
                 'total_category':total_category,
                 'available_percentage':available_percentage,
-                'page_obj':page_obj
+                'page_obj':page_obj,
+                'inventory_categories':inventory_categories
             }
     return render(request , 'inventory.html' , context)
 
@@ -295,7 +298,7 @@ def Payments_view(request):
 
     else:
         page_content = payment_details
-    paginator = Paginator(payment_details , 10)
+    paginator = Paginator(payment_details , 1)
     page_number = request.GET.get('page')
     page_obj  = paginator.get_page(page_number)
     context = {
@@ -388,7 +391,7 @@ def Expenses_view(request):
     monthly_expenses_pending = expense.objects.filter(date__month = current_month, status ='pending').aggregate(Sum('amount'))['amount__sum'] or 0
     calculate_pending = expense.objects.filter(status__in = pending_status ).count()
     largest_expense = expense.objects.all().aggregate(Max('amount'))['amount__max'] or 0
-    expense_list = expense.objects.all().order_by('-expense_id')[:10]
+    expense_list = expense.objects.all().order_by('-expense_id')
     paginator = Paginator(expense_list , 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number) 
@@ -401,7 +404,7 @@ def Expenses_view(request):
             Q(paid_by__icontains = search)|
             Q(date__icontains=search)
         )
-        paginator =Paginator(expense_obj , 1)
+        paginator =Paginator(expense_obj , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         context ={
@@ -422,7 +425,7 @@ def Expenses_view(request):
             } 
         return render(request , 'expenses.html', context)
     else:
-        expense_list = expense.objects.all().order_by('-expense_id')[:10]
+        expense_list = expense.objects.all().order_by('-expense_id')
         paginator = Paginator(expense_list , 1)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)   
@@ -483,43 +486,31 @@ def Staff_view(request):
     total_staff = staff.objects.all().count()
     active_staff = staff.objects.filter(staff_status = 'active').count()
     manager_count = staff.objects.filter(staff_role = 'manager').count()
-    staff_list = staff.objects.all().order_by('-staff_id')[:10]
     search = request.GET.get('search' , '')
+    status_filter = request.GET.get('status', '')
+    staff_list = staff.objects.all().order_by('-staff_id')
     if search:
-        staff_obj = staff.objects.filter(
+        staff_list = staff_list.filter(
             Q(staff_id__icontains = search)|
             Q(staff_name__icontains = search)|
             Q(staff_email__icontains = search)|
             Q(staff_number__icontains = search)|
             Q(staff_role__icontains = search)|
-            Q(staff_status__icontains = search)|
             Q(staff_join_date__icontains = search)|
             Q(staff_nic_num__icontains = search)
         )
-        paginator = Paginator(staff_obj , 10)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        context={
-            'staff_list': staff_list,
-            'page_obj': page_obj,
-            'total_staff': total_staff,
-            'active_staff': active_staff,
-            'manager_count': manager_count,
-            'search':search, 
-        }
-        return render(request , 'staff.html' , context)
-    else:
-        staff_list = staff.objects.all().order_by('-staff_id')[:10]
-        paginator = Paginator(staff_list , 10)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
+    if status_filter:
+        staff_list = staff_list.filter(staff_status__iexact=status_filter)
+    paginator = Paginator(staff_list, 1)
+    page_obj = paginator.get_page(request.GET.get('page'))
     context={
         'staff_list': staff_list,
         'page_obj': page_obj,
         'total_staff': total_staff,
         'active_staff': active_staff,
         'manager_count': manager_count,
-        'search':search
+        'search': search,
+        'status_filter': status_filter,
     }
 
     return render(request , 'staff.html' , context) 
@@ -574,6 +565,8 @@ def New_staff(request):
     return render (request , 'addstaff.html' , context)
 @login_required(login_url='login')
 def New_inventory(request):
+    inventory_categories = InventoryCategory.objects.all()
+
     if request.method =='POST':
         form = new_inventory(request.POST)
         if form.is_valid():
@@ -584,7 +577,9 @@ def New_inventory(request):
             messages.error(request , "Please correct the errors below.")
     else:
         form  = new_inventory()
-    context = {'form' : form}
+    context = {'form' : form,
+               'inventory_categories':inventory_categories
+               }
     return render(request , 'addinventory.html' , context)
 @login_required(login_url='login')
 def New_inventory_category(request):

@@ -63,8 +63,8 @@
             
              <div class="toolbar-left">
                 <div class="toolbar-left">
+                    <form method="GET">
                     <label class="sr-only" for="staff-search">Search staff</label>
-					<form method="GET">
                     <input
                         type="text"
 					    class="input search-field"
@@ -74,8 +74,15 @@
                         
                         placeholder="Search name, email or role"
                     >
+                    <label class="sr-only" for="staff-status-filter">Filter by staff status</label>
+                    <select class="select select-compact" id="staff-status-filter" name="status">
+                        <option value="" {% if not status_filter %}selected{% endif %}>All statuses</option>
+                        <option value="Active" {% if status_filter|lower == 'active' %}selected{% endif %}>Active</option>
+                        <option value="Invited" {% if status_filter|lower == 'invited' %}selected{% endif %}>Invited</option>
+                        <option value="Inactive" {% if status_filter|lower == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                    </form>
                 </div>
-				</form>
              </div>
         </div>
         <div class="table-scroll">
@@ -99,7 +106,7 @@
                         <td>{{ staff.staff_number }}</td>
                         <td>{{ staff.staff_role }}</td>
                         <td>{{ staff.staff_join_date }}</td>
-                        <td><span class="status active">{{ staff.staff_status }}</span></td>
+                        <td><span class="status {{ staff.staff_status }}">{{ staff.staff_status|title }}</span></td>
                         <td>Now</td>
                     </tr>
                     {% endfor %}
@@ -107,9 +114,43 @@
             </table>
         </div>
         <div class="table-footer">
-            <span>Showing 5 team members</span>
-            <span>Invite new members to expand your team</span>
-        </div>
+			<span style="color: var(--gold-light)">
+				{% if page_obj.paginator.count %}
+				Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} pages
+				{% else %}
+				<strong style="align-items: center; justify-content: center;">No Records</strong>
+				{% endif %}
+			</span>
+			{% if page_obj.paginator.num_pages > 1 %}
+			<nav class="pagination" aria-label="Staff pages">
+				{% if page_obj.has_previous %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if status_filter %}status={{ status_filter|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous page">&#8249;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
+				{% endif %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if status_filter %}status={{ status_filter|urlencode }}&amp;{% endif %}page=1" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
+				{% if page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% for num in page_obj.paginator.page_range %}
+					{% if num != 1 and num != page_obj.paginator.num_pages and num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+						{% if page_obj.number == num %}
+					<span class="active" aria-current="page">{{ num }}</span>
+						{% else %}
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if status_filter %}status={{ status_filter|urlencode }}&amp;{% endif %}page={{ num }}">{{ num }}</a>
+						{% endif %}
+					{% endif %}
+				{% endfor %}
+				{% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% if page_obj.paginator.num_pages > 1 %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if status_filter %}status={{ status_filter|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
+				{% endif %}
+				{% if page_obj.has_next %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if status_filter %}status={{ status_filter|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page">&#8250;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
+				{% endif %}
+			</nav>
+			{% endif %}
+		</div>
     </div>
 </section>
 
@@ -196,4 +237,41 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block page_scripts %}
+{{ block.super }}
+<script defer>
+    document.addEventListener('DOMContentLoaded', function () {
+        const scrollPositionKey = 'staff-page-scroll-position';
+        const savedScrollPosition = sessionStorage.getItem(scrollPositionKey);
+
+        if (savedScrollPosition !== null) {
+            sessionStorage.removeItem(scrollPositionKey);
+            window.scrollTo(0, Number(savedScrollPosition));
+        }
+
+        function saveScrollPosition() {
+            sessionStorage.setItem(scrollPositionKey, String(window.scrollY));
+        }
+
+        document.querySelector('#team-directory form').addEventListener('submit', saveScrollPosition);
+        document.getElementById('staff-status-filter').addEventListener('change', function () {
+            this.form.requestSubmit();
+        });
+        document.querySelectorAll('.pagination a').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                if (
+                    event.button === 0 &&
+                    !event.metaKey &&
+                    !event.ctrlKey &&
+                    !event.shiftKey &&
+                    !event.altKey
+                ) {
+                    saveScrollPosition();
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

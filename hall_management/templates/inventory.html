@@ -79,7 +79,7 @@
 
 		<div class="panel inventory-panel">
 			<div class="table-toolbar inventory-toolbar">
-				<form method="GET">
+				<form method="GET" action="#inventory-list">
 				<div class="toolbar-left">
 					<label class="sr-only" for="inventory-search">Search inventory</label>
 					<span class="inventory-search-wrap">
@@ -94,11 +94,9 @@
 					<label class="sr-only" for="inventory-category-filter">Filter by category</label>
 					<select class="select select-compact" id="inventory-category-filter">
 						<option value="all">All categories</option>
-						<option value="seating">Seating</option>
-						<option value="tables">Tables</option>
-						<option value="linens">Linens</option>
-						<option value="glassware">Glassware</option>
-						<option value="lighting">Lighting</option>
+						{% for categories in inventory_categories %}
+						<option value="{{ categories.category_name }}">{{ categories.category_name }}</option>
+						{% endfor %}
 					</select>
 				</div>
 				</form>
@@ -127,7 +125,7 @@
 					</thead>
 					<tbody id="inventory-rows">
 						{% for inventory in page_obj %}
-						<tr data-category="seating" data-stock="healthy">
+						<tr data-category="{{ inventory.category.category_name }}" data-stock="healthy">
 							<td data-label="Item">
 								<span class="inventory-item-copy">
 									<span class="cell-primary">{{ inventory.inventory_name }}</span>
@@ -147,7 +145,7 @@
 
 							 <td data-label="Condition"><span class="status available">Healthy</span></td>
 							{% else %}
-							 <td data-label="Condition"><span class="status available" style="color:red;">Need to Restock</span></td>
+							 <td data-label="Condition"><span class="status available" style="color:red;">Needs restock</span></td>
 							{% endif %}
 
 						</tr>
@@ -170,27 +168,27 @@
 			{% if page_obj.paginator.num_pages > 1 %}
 			<nav class="pagination" aria-label="Inventory pages">
 				{% if page_obj.has_previous %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous page">&#8249;</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#inventory-list" aria-label="Previous page">&#8249;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
 				{% endif %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page=1" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page=1#inventory-list" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
 				{% if page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
 				{% for num in page_obj.paginator.page_range %}
 					{% if num != 1 and num != page_obj.paginator.num_pages and num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
 						{% if page_obj.number == num %}
 					<span class="active" aria-current="page">{{ num }}</span>
 						{% else %}
-					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ num }}">{{ num }}</a>
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ num }}#inventory-list">{{ num }}</a>
 						{% endif %}
 					{% endif %}
 				{% endfor %}
 				{% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
 				{% if page_obj.paginator.num_pages > 1 %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}#inventory-list" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
 				{% endif %}
 				{% if page_obj.has_next %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page">&#8250;</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#inventory-list" aria-label="Next page">&#8250;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
 				{% endif %}
