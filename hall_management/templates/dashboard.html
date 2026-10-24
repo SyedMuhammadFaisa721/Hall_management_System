@@ -5,7 +5,7 @@
 <main class="content-wrap">
     <header class="page-heading">
         <div>
-            <span class="eyebrow">MONDAY · 28 SEPTEMBER 2026</span>
+            <span class="eyebrow">{% now "l . d F Y" %}</span>
             <h1>Welcome back, {{ user.first_name }}.</h1>
             <p>Here is what is happening at Royal Palace Hall today.</p>
         </div>
@@ -24,7 +24,18 @@
             <strong class="stat-value">Rs 7.76M</strong>
             <div class="stat-foot">
                 <span class="trend">+12.8%</span>
-                <span>vs. last month</span>
+                <span>vs. last Year</span>
+            </div>
+        </article>
+        <article class="stat-card">
+            <div class="stat-top">
+                <span class="stat-label">Today`s bookings</span>
+                <span class="stat-icon" aria-hidden="true">TK</span>
+            </div>
+            <strong class="stat-value">{{ today_event_count }}</strong>
+            <div class="stat-foot">
+                <span class="trend">+8.2%</span>
+                <span>vs. Yesterday</span>
             </div>
         </article>
         <article class="stat-card">
@@ -126,26 +137,16 @@
                 <a class="section-link" href="/bookings/">View all</a>
             </div>
             <div class="booking-list">
+                {% for event in upcoming_event %}
                 <article class="booking-row">
-                    <span class="date-tile"><strong>28</strong><span>Sep</span></span>
-                    <span class="booking-row-copy"><strong>Sarah Khan</strong><span>Wedding Reception · 420 guests</span></span>
-                    <span class="status confirmed">Confirmed</span>
+                    <span class="date-tile"><strong>{{ event.event_date|date:"d" }}</strong>
+                    <span>{{ event.event_date|date:"b" }}</span>
+                </span>
+                    <span class="booking-row-copy"><strong>{{ event.customer_name }}</strong><span>{{ event.event_name }} · {{ event.event_guest }} guests</span>
+                </span>
+                    <span class="status {{ event.status|lower }}">{% if event.status|lower == 'confrimed' %}Confirmed{% else %}{{ event.status|title }}{% endif %}</span>
                 </article>
-                <article class="booking-row">
-                    <span class="date-tile"><strong>30</strong><span>Sep</span></span>
-                    <span class="booking-row-copy"><strong>Ahmed Malik</strong><span>Corporate Gala · 250 guests</span></span>
-                    <span class="status confirmed">Confirmed</span>
-                </article>
-                <article class="booking-row">
-                    <span class="date-tile"><strong>03</strong><span>Oct</span></span>
-                    <span class="booking-row-copy"><strong>Ayesha Siddiqui</strong><span>Mehndi · 360 guests</span></span>
-                    <span class="status pending">Pending</span>
-                </article>
-                <article class="booking-row">
-                    <span class="date-tile"><strong>05</strong><span>Oct</span></span>
-                    <span class="booking-row-copy"><strong>Mariam Ali</strong><span>Engagement · 180 guests</span></span>
-                    <span class="status confirmed">Confirmed</span>
-                </article>
+                {% endfor %}
             </div>
         </section>
     </section>
@@ -178,7 +179,7 @@
                             </td>
                             <td>{{ dashboard_booking.event_date }}</td>
                             <td class="cell-primary">Rs {{ dashboard_booking.hall_price }}</td>
-                            <td><span class="status paid">{{ dashboard_booking.status }}</span></td>
+                            <td><span class="status {{ dashboard_booking.status|lower }}">{% if dashboard_booking.status|lower == 'confrimed' %}Confirmed{% else %}{{ dashboard_booking.status|title }}{% endif %}</span></td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -217,7 +218,7 @@
                         <span class="stat-icon" aria-hidden="true">+</span>
                         <span class="quick-action-copy"><strong>Add customer</strong><span>Save a new profile</span></span>
                     </a>
-                    <a class="quick-action" href="/payments/">
+                    <a class="quick-action" href="/payments/add/">
                         <span class="stat-icon" aria-hidden="true">Rs</span>
                         <span class="quick-action-copy"><strong>Record payment</strong><span>Log a collection</span></span>
                     </a>

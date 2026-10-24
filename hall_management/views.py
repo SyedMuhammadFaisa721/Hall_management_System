@@ -12,8 +12,9 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from .models import newbooking , staff , expense , Inventory, InventoryCategory , payment
 from django.db.models import Sum ,Max 
-from datetime import date , datetime
+from datetime import date , datetime , timedelta
 import csv
+from django.utils import timezone
 
 def log_in(request):
         
@@ -32,22 +33,16 @@ def log_out(request):
     logout(request)
     return redirect('login')
 
-def base_view(request):
-    today = datetime.now().hour
-    if 5<= today < 12:
-        greeting = 'GOOD MORNING'
-    elif 12<= today < 18:
-        greeting = 'GOOD AFTERNOON'
-    elif 18<= today < 21 :
-        greeting = 'GOOD EVENING'
-    else:
-        greeting = 'GOOD NNIGHT'
-    context={
-        'greeting':greeting
-    }
-    return render(request , 'dashboard.html', context)
 @login_required(login_url='login')
 def dashboard(request):
+    today = timezone.now().date()
+    previous_day = today - timedelta(days = 1)
+    current_month = datetime.now().month
+    previous_month = current_month - 1
+    current_year = datetime.now().year
+    previous_year = current_year - 1
+    upcoming_event = newbooking.objects.filter(event_date__gte = today).order_by('event_date')[:4]
+    today_event_count = newbooking.objects.filter(created_at = today).count()
     dashboard_booking_list = newbooking.objects.all().order_by('-booking_id')[:5]
     total_bookings = newbooking.objects.count()
     
@@ -55,6 +50,8 @@ def dashboard(request):
     context = {
         'dashboard_booking_list': dashboard_booking_list,
         'total_bookings': total_bookings,
+        'upcoming_event':upcoming_event,
+        'today_event_count':today_event_count,
     }
     return render(request ,"dashboard.html" , context)
 
@@ -701,7 +698,15 @@ def hallmaster_login(request):
 
 
 def tester(request):
-        today = datetime.now().hour
-        return render(request , "testerbase.html" ,{'today':today})
+        today = timezone.now()
+        month = today.month
+        pre = today.strftime('%b')
+        next = month + 1
+        context = {
+            'pre':pre,
+            'next':next,
+            'today':today,
+        }
+        return render(request , "testerbase.html" ,context)
 
 # Create your views here

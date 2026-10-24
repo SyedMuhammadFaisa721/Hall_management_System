@@ -3,6 +3,7 @@ from datetime import datetime
 
 class newbooking(models.Model):
     booking_id     = models.CharField(max_length=40 , primary_key=True, editable=False)
+    created_at     = models.DateField(auto_now_add=True)
     customer_name  = models.CharField(max_length=100)
     phone_number   = models.CharField(max_length=12)
     nic_number     = models.CharField(max_length=15 , unique=True , null=False)
