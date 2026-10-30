@@ -175,11 +175,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .chart-total span { color: var(--green); font-size: 9px; }
 .chart-box { position: relative; height: 210px; margin-top: 11px; }
 .chart-box svg { width: 100%; height: 100%; overflow: visible; }
+/* Dashboard graph styling starts here */
 .chart-gridline { stroke: rgba(255,255,255,.075); stroke-dasharray: 3 5; }
-.chart-line { fill: none; stroke: var(--gold); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
-.chart-area { fill: url(#revenue-fill); }
-.chart-point { fill: var(--gold-light); stroke: #11161a; stroke-width: 2; }
-.chart-label { fill: #777e84; font-family: "DM Sans",sans-serif; font-size: 9px; }
+.chart-line { fill: none; stroke: url(#revenue-line); stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; filter: url(#revenue-glow); }
+.chart-area { fill: url(#revenue-fill); pointer-events: none; }
+.chart-point { fill: #e6cf9b; stroke: #11161a; stroke-width: 2; cursor: pointer; transition: r .18s ease, fill .18s ease; }
+.chart-point:hover { r: 5.5; fill: #fff1c8; }
+.chart-label { fill: #858d93; font-family: "DM Sans",sans-serif; font-size: 8px; }
 .chart-tooltip { position: absolute; display: none; padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; background: #171c20; color: var(--text); font-size: 10px; pointer-events: none; }
 .chart-box:hover .chart-tooltip { display: block; }
 .legend { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 9px; }
@@ -260,6 +262,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .availability-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--border); }
 .availability-summary strong { display: block; font-family: "Playfair Display",serif; font-size: 17px; }
 .availability-summary span { display: block; margin-top: 3px; color: var(--quiet); font-size: 8px; }
+
+/* Today's bookings UI styling starts here */
+.today-bookings-block { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--border); }
+.today-bookings-head { margin-bottom: 10px; }
+.today-count { display: grid; min-width: 28px; height: 28px; place-items: center; border: 1px solid rgba(201,169,110,.22); border-radius: 8px; background: rgba(201,169,110,.09); color: var(--gold-light); font-family: "Playfair Display",serif; font-size: 15px; }
+.today-bookings-list { display: grid; gap: 7px; }
+.today-booking-row { display: grid; grid-template-columns: 68px minmax(0,1fr) auto; align-items: center; gap: 9px; min-height: 55px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.055); border-radius: 8px; background: linear-gradient(90deg, rgba(201,169,110,.055), rgba(255,255,255,.012)); transition: transform var(--ease), border-color var(--ease); }
+.today-booking-row:hover { transform: translateX(2px); border-color: rgba(201,169,110,.22); }
+.today-booking-time { color: var(--gold-light); font-size: 9px; font-weight: 700; }
+.today-booking-copy { min-width: 0; }
+.today-booking-copy strong, .today-booking-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.today-booking-copy strong { font-size: 10px; }
+.today-booking-copy span { margin-top: 4px; color: var(--quiet); font-size: 9px; }
+.today-bookings-empty { display: grid; justify-items: center; gap: 5px; padding: 18px 10px; border: 1px dashed var(--border); border-radius: 8px; color: var(--quiet); text-align: center; }
+.today-bookings-empty span { color: var(--gold); font-size: 18px; }
+.today-bookings-empty strong { font-size: 10px; font-weight: 500; }
 
 .filter-tabs { display: flex; max-width: 100%; gap: 3px; overflow: auto; padding: 3px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,.018); }
 .filter-tab { min-height: 28px; padding: 0 10px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: 9px; white-space: nowrap; }

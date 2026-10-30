@@ -6,7 +6,7 @@ class newbooking(models.Model):
     created_at     = models.DateField(auto_now_add=True)
     customer_name  = models.CharField(max_length=100)
     phone_number   = models.CharField(max_length=12)
-    nic_number     = models.CharField(max_length=15 , unique=True , null=False)
+    nic_number     = models.CharField(max_length=15 , null=True)
     customer_email = models.EmailField()
     event_name     = models.CharField(max_length=100)
     event_type     = models.CharField(max_length=100)

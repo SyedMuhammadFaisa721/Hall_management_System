@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
 from .form import hallmaster_user_creation, new_booking , new_expense ,new_inventory ,new_staff ,new_inventory_category, loginform , new_payment
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView
 from django.contrib import messages
 from django.http import HttpResponse
 from django.db.models import Q
@@ -35,16 +35,68 @@ def log_out(request):
 
 @login_required(login_url='login')
 def dashboard(request):
+    # Dashboard backend code starts here: prepare monthly revenue for the dashboard graph.
     today = timezone.now().date()
     previous_day = today - timedelta(days = 1)
     current_month = datetime.now().month
-    previous_month = current_month - 1
     current_year = datetime.now().year
-    previous_year = current_year - 1
+    if current_month == 1:
+        previous_month = 12
+        previous_year = current_year - 1
+    else:
+        previous_month = current_month -1
+        previous_year =  current_year
+    previous__year = current_year - 1
     upcoming_event = newbooking.objects.filter(event_date__gte = today).order_by('event_date')[:4]
     today_event_count = newbooking.objects.filter(created_at = today).count()
-    dashboard_booking_list = newbooking.objects.all().order_by('-booking_id')[:5]
+    today_event_record = newbooking.objects.filter(created_at = today).order_by('-booking_id')[:5]
+    dashboard_booking_list = newbooking.objects.all().order_by('-booking_id')[:6]
     total_bookings = newbooking.objects.count()
+    yesterday_booking = newbooking.objects.filter(created_at = previous_day).count()
+    if today_event_count == 0 :
+        today_booking_percentage = 0
+    elif yesterday_booking <= 0 :
+        today_booking_percentage = 100
+    else:
+        today_booking_percentage = ((today_event_count - yesterday_booking) / yesterday_booking)* 100 
+    total_booking = newbooking.objects.filter(created_at__month = current_month , created_at__year = current_year ).count()
+    total_booking_previous = newbooking.objects.filter(created_at__month = previous_month , created_at__year = previous_year ).count()
+    if total_booking_previous <= 0 :
+        total_booking_percentage = 100
+    else:
+        total_booking_percentage= ((total_booking - total_booking_previous) / total_booking_previous) * 100
+    status_confirmed = ['confirmed', 'Confirmed', 'confirm', 'Confirm' , 'Comfirmed' , 'Advance' , 'advance']
+    total_revenue = newbooking.objects.filter(status__in = status_confirmed , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    total_revenue_previous = newbooking.objects.filter(status__in = status_confirmed , event_date__year = previous__year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    if total_revenue == 0:
+        total_revenue_percentage = 0
+    elif total_revenue_previous < 0 :
+        total_revenue_percentage = 100
+    else:
+        total_revenue_percentage = ((total_revenue -  total_revenue_previous)/ total_revenue_previous) * 100
+    booking_created_confirm = newbooking.objects.filter(status__in = status_confirmed , created_at__month = current_month , created_at__year = current_year).count()
+    booking_created_confirm_previous = newbooking.objects.filter(status__in = status_confirmed , created_at__month = previous_month , created_at__year = previous__year).count()
+    if booking_created_confirm == 0:
+        booking_created_confirm_percentage = 0
+    elif booking_created_confirm_previous <= 0:
+        booking_created_confirm_percentage = 100
+    else:
+        booking_created_confirm_percentage = ((booking_created_confirm - booking_created_confirm_previous) / booking_created_confirm_previous) * 100
+    status_pending = ['Pending', 'pending','unpaid','not paid' , 'Unpaid','Notpaid']
+    pending_payment = newbooking.objects.filter(status__in=status_pending , created_at__month = current_month , created_at__year =current_year ).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    pending_payment_count = newbooking.objects.filter(status__in = status_pending , created_at__month = current_month , created_at__year = current_year).count()
+
+    # Dashboard graph backend code starts here: calculate confirmed revenue for each month.
+    monthly_revenue = []
+    for month in range(1, 13):
+        month_revenue = newbooking.objects.filter(
+            status__in=status_confirmed,
+            event_date__year=current_year,
+            event_date__month=month,
+        ).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+        monthly_revenue.append(float(month_revenue))
+
+    
     
     
     context = {
@@ -52,11 +104,26 @@ def dashboard(request):
         'total_bookings': total_bookings,
         'upcoming_event':upcoming_event,
         'today_event_count':today_event_count,
+        'today_booking_percentage':today_booking_percentage,
+        'total_booking':total_booking,
+        "total_booking_percentage":total_booking_percentage,
+        'total_revenue_percentage':total_revenue_percentage,
+        'total_revenue':total_revenue,
+        'booking_created_confirm':booking_created_confirm,
+        'booking_created_confirm_percentage':booking_created_confirm_percentage,
+        'pending_payment':pending_payment,
+        'current_year':current_year,
+        'pending_payment_count':pending_payment_count,
+        'today_event_record':today_event_record,
+        # Dashboard graph context starts here: send the monthly values to the template.
+        'monthly_revenue': monthly_revenue,
+        'revenue_chart_months': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     }
     return render(request ,"dashboard.html" , context)
 
 @login_required(login_url='login')
 def booking_view(request):
+    today = timezone.now().date()
     current_month = datetime.today().month
     previous_month = current_month -1
     current_year = datetime.today().year
@@ -82,6 +149,7 @@ def booking_view(request):
     booking_date = request.GET.get('event_date', '')
 
     booking_list = newbooking.objects.all().order_by('-booking_id')
+    today_event_count = newbooking.objects.filter(created_at = today).order_by('-booking_id')[:10]
     if search:
         booking_list = booking_list.filter(
             Q(customer_name__icontains = search)|
@@ -116,6 +184,7 @@ def booking_view(request):
                 'booking_status_filter':booking_status_filter,
                 'booking_date':booking_date,
                 'pending_booking_previous':pending_booking_previous,
+                'today_event_count':today_event_count
             }
     return render(request, 'bookings.html', context)
 @login_required(login_url='login')
@@ -140,6 +209,7 @@ def export_booking_data(request):
         'Guest'.upper(),
         'Hall portion'.upper(),
         'Amount'.upper(),
+        'CREATED AT'
         'payment'.upper(),
         'status'.upper()
     ])
@@ -154,6 +224,7 @@ def export_booking_data(request):
             booking.event_guest,
             booking.event_hall,
             booking.hall_price,
+            booking.created_at,
             booking.payment_status,
             booking.status
         ])
@@ -275,7 +346,7 @@ def Payments_view(request):
         return render(request , 'payments.html' , context)
     elif payment_method:
         payment_obj = payment.objects.filter(method = payment_method)
-        paginator = Paginator(payment_obj , 1)
+        paginator = Paginator(payment_obj , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         context = {
@@ -295,7 +366,7 @@ def Payments_view(request):
 
     else:
         page_content = payment_details
-    paginator = Paginator(payment_details , 1)
+    paginator = Paginator(payment_details , 10)
     page_number = request.GET.get('page')
     page_obj  = paginator.get_page(page_number)
     context = {

@@ -157,6 +157,7 @@
                         <th>GUESTS</th>
                         <th>PACKAGE</th>
                         <th>AMOUNT</th>
+                        <th>CREATED AT</th>
                         <th>PAYMENT</th>
                         <th>STATUS</th>
                         <th>ACTIONS</th>
@@ -174,6 +175,130 @@
                         <td>{{ booking.event_guest }}</td>
                         <td>{{ booking.event_hall }}</td>
                         <td class="cell-primary">RS {{ booking.hall_price }}</td>
+                        <td>{{ booking.created_at }}</td>
+                        <td><span class="status {{ booking.payment_status|lower }}">{{ booking.payment_status }}</span></td>
+                        <td><span class="status {{ booking.status|lower }}">{{ booking.status }}</span></td>
+                        <td>
+                            <div class="table-actions">
+                                <a class="icon-button" href="#booking-list" aria-label="View BK-2026-084">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/>
+                                        <circle cx="12" cy="12" r="2.5"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
+						
+                    </tr>
+					{% endfor %}
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+			<span style="color: var(--gold-light)">
+				{% if page_obj.paginator.count %}
+				Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} pages
+				{% else %}
+				No Records
+				{% endif %}
+			</span>
+			{% if page_obj.paginator.num_pages > 1 %}
+			<nav class="pagination" aria-label="Booking pages">
+				{% if page_obj.has_previous %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#booking-list" aria-label="Previous page">&#8249;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
+				{% endif %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page=1#booking-list" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
+				{% if page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% for num in page_obj.paginator.page_range %}
+					{% if num != 1 and num != page_obj.paginator.num_pages and num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"1" %}
+						{% if page_obj.number == num %}
+					<span class="active" aria-current="page">{{ num }}</span>
+						{% else %}
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ num }}#booking-list">{{ num }}</a>
+						{% endif %}
+					{% endif %}
+				{% endfor %}
+				{% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% if page_obj.paginator.num_pages > 1 %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}#booking-list" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
+				{% endif %}
+				{% if page_obj.has_next %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#booking-list" aria-label="Next page">&#8250;</a>
+				{% else %}
+				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
+				{% endif %}
+			</nav>
+			{% endif %}
+		</div>
+    </div>
+</section>
+<section class="section" id="today_booking-list">
+    <div class="section-head">
+        <div>
+            <h2>Today's New Bookings</h2>
+            <p>Bookings created today</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <form class="table-toolbar" id="booking-filters" method="GET" action="{% url 'bookings' %}#booking-list">
+            <div class="toolbar-left">
+                <label class="sr-only" for="booking-search">Search bookings</label>
+                <input class="input search-field" id="booking-search" name="search" type="search"
+                value="{{ search }}" placeholder="Search ID, customer or event">
+
+                <label class="sr-only" for="booking-status">Booking status</label>
+                <select class="select select-compact" id="booking-status" name="status">
+                    <option value="" {% if not booking_status_filter %}selected{% endif %}>All statuses</option>
+                    <option value="confirmed" {% if booking_status_filter|lower == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                    <option value="pending" {% if booking_status_filter|lower == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="completed" {% if booking_status_filter|lower == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="cancelled" {% if booking_status_filter|lower == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+
+                <label class="sr-only" for="booking-date">Event date</label>
+                <input class="input select-compact" id="booking-date" name="event_date" type="date" value="{{ booking_date }}" aria-label="Filter by event date">
+            </div>
+            <div class="toolbar-right">
+                <button class="text-button" type="submit">Apply filters</button>
+            </div>
+        </form>
+
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>BOOKING ID</th>
+                        <th>CUSTOMER</th>
+                        <th>EVENT</th>
+                        <th>DATE</th>
+                        <th>TIME</th>
+                        <th>GUESTS</th>
+                        <th>PACKAGE</th>
+                        <th>AMOUNT</th>
+                        <th>CREATED AT</th>
+                        <th>PAYMENT</th>
+                        <th>STATUS</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+					{% for booking in today_event_count %}
+                    <tr>
+						
+                        <td class="cell-primary">{{ booking.booking_id }}</td>
+                        <td class="cell-primary">{{ booking.customer_name }}</td>
+                        <td>{{ booking.event_name }}</td>
+                        <td>{{ booking.event_date }}</td>
+                        <td>{{ booking.event_time }}</td>
+                        <td>{{ booking.event_guest }}</td>
+                        <td>{{ booking.event_hall }}</td>
+                        <td class="cell-primary">RS {{ booking.hall_price }}</td>
+                        <td>{{ booking.created_at }}</td>
                         <td><span class="status {{ booking.payment_status|lower }}">{{ booking.payment_status }}</span></td>
                         <td><span class="status {{ booking.status|lower }}">{{ booking.status }}</span></td>
                         <td>

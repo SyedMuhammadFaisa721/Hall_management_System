@@ -22,7 +22,7 @@
             </div>
             <strong class="stat-value">Rs {{ yearly_expenses|intword|intcomma }}</strong>
             <div class="stat-foot">
-                {% if yearly_expenses_per > 0 %}
+                {% if yearly_expenses_per >= 0 %}
                  <span class="trend">&uarr; {{ yearly_expenses_per|floatformat:2 }} %</span>
                  <span>vs. last year</span>
                 {%elif yearly_expenses_per < 0 %}
