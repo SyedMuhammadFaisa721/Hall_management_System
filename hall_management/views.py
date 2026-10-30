@@ -547,7 +547,8 @@ def expense_data_download(request):
         
 
 @login_required(login_url='login')
-def Reports_view(request):  
+def Reports_view(request):
+    today = timezone.now().today()  
     return render(request , 'reports.html')
 @login_required(login_url='login')
 def Staff_view(request):
