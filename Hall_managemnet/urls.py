@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Customers_view, Packages_view,Payments_view, Payment_form, Invoices_view, Reports_view, Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data ,download_payments_records,expense_data_download
+from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Customers_view, Packages_view,Payments_view, Payment_form, Invoices_view, Reports_view, Report_detail_view, Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data ,download_payments_records,expense_data_download
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,6 +32,15 @@ urlpatterns = [
         path('payments/export/' , download_payments_records , name ="download_payments_records"),
         path('invoices/' , Invoices_view , name ="invoices"),
         path('reports/' , Reports_view , name ="reports"),
+        path('reports/bookings/', Report_detail_view, {'report_type': 'bookings'}, name='booking_reports'),
+        path('reports/financial/', Report_detail_view, {'report_type': 'financial'}, name='financial_reports'),
+        path('reports/payments/', Report_detail_view, {'report_type': 'payments'}, name='payment_reports'),
+        path('reports/inventory/', Report_detail_view, {'report_type': 'inventory'}, name='inventory_reports'),
+        path('reports/staff/', Report_detail_view, {'report_type': 'staff'}, name='staff_reports'),
+        path('reports/customers/', Report_detail_view, {'report_type': 'customers'}, name='customer_reports'),
+        path('reports/hall-performance/', Report_detail_view, {'report_type': 'hall-performance'}, name='hall_performance_reports'),
+        path('reports/maintenance/', Report_detail_view, {'report_type': 'maintenance'}, name='maintenance_reports'),
+        path('reports/expenses/', Report_detail_view, {'report_type': 'expenses'}, name='expense_reports'),
         path('expenses/' , Expenses_view , name ="expenses"),
         path('expenses/export/' , expense_data_download , name ="expense_data_download"),
 

@@ -1,5 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %}Bookings | HallMaster{% endblock %}
+
+{% block page_scripts %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/bookings.css' %}?v=1">
+{% endblock %}
 
 {% block page_content %}
 <header class="page-heading">
@@ -37,10 +44,10 @@
         <strong class="stat-value">{{ booking_total }}</strong>
         <div class="stat-foot">
             {% if total_booking_percentage > 0 %}
-            <span class="trend">&uarr; {{ total_booking_percentage }} %</span>
+            <span class="trend">&uarr; {{ total_booking_percentage|floatformat:2 }} %</span>
             <span>vs. last month</span>
             {% elif total_booking_percentage < 0 %}
-            <span class="trend" style="color:#F87171">&darr; {{ total_booking_percentage }} %</span>
+            <span class="trend" style="color:#F87171">&darr; {{ total_booking_percentage|floatformat:2 }} %</span>
             <span>vs. last month</span>
             {% endif %}
         </div>
@@ -59,10 +66,10 @@
         <strong class="stat-value">{{ confirmed_booking }}</strong>
         <div class="stat-foot">
             {% if percentage >= 0 %}
-             <span class="trend">&uarr; {{ percentage }} %</span>
+             <span class="trend">&uarr; {{ percentage|floatformat:2 }} %</span>
              <span>vs. last month</span>
              {% elif percentage < 0  %}
-             <span class="trend" style="color: #F87171;">&darr; {{ percentage }} %</span>
+             <span class="trend" style="color: #F87171;">&darr; {{ percentage|floatformat:2 }} %</span>
              <span>vs. last month</span>
             {% endif %}
         </div>
@@ -81,10 +88,10 @@
         <strong class="stat-value">{{ pending_booking }}</strong>
         <div class="stat-foot">
             {% if pending_booking_percentage >= 0 %}
-             <span class="trend">&uarr; {{ pending_booking_percentage }}%</span>
+             <span class="trend">&uarr; {{ pending_booking_percentage|floatformat:2 }}%</span>
              <span>vs. last month</span>
              {% elif pending_booking_percentage < 0 %}
-             <span class="trend" style="color:#F87171;" > &darr; {{ pending_booking_percentage }}%</span>
+             <span class="trend" style="color:#F87171;" > &darr; {{ pending_booking_percentage|floatformat:2 }}%</span>
              <span>vs. last month</span>
             {% endif %}
         </div>
@@ -102,10 +109,10 @@
         <strong class="stat-value">{{ booking_cancelled }}</strong>
         <div class="stat-foot">
             {% if booking_cancelled_percentage >= 0 %}
-             <span class="trend">&uarr; {{ booking_cancelled_percentage }}%</span>
+             <span class="trend">&uarr; {{ booking_cancelled_percentage|floatformat:2 }}%</span>
              <span>vs. last month</span>
             {% elif booking_cancelled_percentage < 0 %}
-             <span class="trend" style="color: #F87171;">&darr; {{ booking_cancelled_percentage }}%</span>
+             <span class="trend" style="color: #F87171;">&darr; {{ booking_cancelled_percentage|floatformat:2 }}%</span>
              <span>vs. last month</span>
              
             {% endif %}
@@ -190,6 +197,10 @@
                         </td>
 						
                     </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="12" class="text-center" style="color: var(--gold-light);">No bookings found.</td>
+                    </tr>
 					{% endfor %}
                     
                 </tbody>
@@ -269,7 +280,7 @@
         </form>
 
         <div class="table-scroll">
-            <table class="data-table">
+            <table class="data-table today-bookings-table">
                 <thead>
                     <tr>
                         <th>BOOKING ID</th>
@@ -290,18 +301,18 @@
 					{% for booking in today_event_count %}
                     <tr>
 						
-                        <td class="cell-primary">{{ booking.booking_id }}</td>
-                        <td class="cell-primary">{{ booking.customer_name }}</td>
-                        <td>{{ booking.event_name }}</td>
-                        <td>{{ booking.event_date }}</td>
-                        <td>{{ booking.event_time }}</td>
-                        <td>{{ booking.event_guest }}</td>
-                        <td>{{ booking.event_hall }}</td>
-                        <td class="cell-primary">RS {{ booking.hall_price }}</td>
-                        <td>{{ booking.created_at }}</td>
-                        <td><span class="status {{ booking.payment_status|lower }}">{{ booking.payment_status }}</span></td>
-                        <td><span class="status {{ booking.status|lower }}">{{ booking.status }}</span></td>
-                        <td>
+                        <td class="cell-primary" data-label="Booking ID">{{ booking.booking_id }}</td>
+                        <td class="cell-primary" data-label="Customer">{{ booking.customer_name }}</td>
+                        <td data-label="Event">{{ booking.event_name }}</td>
+                        <td data-label="Event date">{{ booking.event_date }}</td>
+                        <td data-label="Event time">{{ booking.event_time }}</td>
+                        <td data-label="Guests">{{ booking.event_guest }}</td>
+                        <td data-label="Hall portion">{{ booking.event_hall }}</td>
+                        <td class="cell-primary" data-label="Amount">RS {{ booking.hall_price }}</td>
+                        <td data-label="Created at">{{ booking.created_at }}</td>
+                        <td data-label="Payment"><span class="status {{ booking.payment_status|lower }}">{{ booking.payment_status }}</span></td>
+                        <td data-label="Status"><span class="status {{ booking.status|lower }}">{{ booking.status }}</span></td>
+                        <td data-label="Actions">
                             <div class="table-actions">
                                 <a class="icon-button" href="#booking-list" aria-label="View BK-2026-084">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -312,6 +323,10 @@
                             </div>
                         </td>
 						
+                    </tr>
+                    {% empty %}
+                    <tr class="today-bookings-empty">
+                        <td colspan="12" class="text-center" style="color: var(--gold-light);">No bookings created today.</td>
                     </tr>
 					{% endfor %}
                     

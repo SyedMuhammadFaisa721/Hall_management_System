@@ -8,13 +8,24 @@ from .form import hallmaster_user_creation, new_booking , new_expense ,new_inven
 from django.views.generic import ListView
 from django.contrib import messages
 from django.http import HttpResponse
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.db.models.functions import ExtractMonth
 from django.core.paginator import Paginator
 from .models import newbooking , staff , expense , Inventory, InventoryCategory , payment
 from django.db.models import Sum ,Max 
 from datetime import date , datetime , timedelta
 import csv
 from django.utils import timezone
+
+def format_report_payment_amount(amount):
+    if amount >= 1_000_000_000:
+        value = f"{amount / 1_000_000_000:.4f}".rstrip('0').rstrip('.')
+        return f"{value}B"
+    elif amount >= 1_000_000:
+        value = f"{amount / 1_000_000:.4f}".rstrip('0').rstrip('.')
+        return f"{value}M"
+    return f"{amount:,.4f}".rstrip('0').rstrip('.')
+
 
 def log_in(request):
         
@@ -548,8 +559,175 @@ def expense_data_download(request):
 
 @login_required(login_url='login')
 def Reports_view(request):
-    today = timezone.now().today()  
-    return render(request , 'reports.html')
+    today = timezone.localdate()
+    current_month = today.strftime('%B')
+    current__month = today.month
+    previous_month_date = today.replace(day=1) - timedelta(days=1)
+    previous_month = previous_month_date.month
+    previous__month = previous_month_date.strftime('%B')
+    current_year = today.year
+    previous_year = current_year - 1
+    booking_count = newbooking.objects.filter(event_date__month=current__month, event_date__year=current_year).count()
+    bookingcount_previous = newbooking.objects.filter(event_date__month=previous_month, event_date__year=previous_month_date.year).count()
+    booking_created_count = newbooking.objects.filter(created_at__month=current__month, created_at__year=current_year).count()
+    booking_created_count_previous = newbooking.objects.filter(created_at__month=previous_month, created_at__year=previous_month_date.year).count()
+
+    status_confirmed = ['confirmed', 'Confirmed', 'confirm', 'Confirm' , 'Comfirmed']
+    status_advance = ['advance', 'Advance']
+    status_pending = ['Pending', 'pending','unpaid','not paid' , 'Unpaid','Notpaid']
+    status_cancelled = ['cancelled', 'Cancelled', 'Cancel', 'Cancel']
+    total_booking = newbooking.objects.filter(event_date__year = current_year).count()
+    yearly_booking_confirm_count = newbooking.objects.filter(status__in = status_confirmed , event_date__year = current_year).count()
+    yearly_booking_advance_count = newbooking.objects.filter(status__in = status_advance , event_date__year = current_year).count()
+    yearly_booking_pending_count = newbooking.objects.filter(status__in = status_pending , event_date__year = current_year).count()
+    yearly_booking_cancelled_count = newbooking.objects.filter(status__in = status_cancelled , event_date__year = current_year).count()
+    yearly_confirm_booking_precentage = (yearly_booking_confirm_count/total_booking) * 100 if total_booking else 0
+    yearly_advance_booking_precentage = (yearly_booking_advance_count/total_booking) * 100 if total_booking else 0
+    yearly_pending_booking_precentage = (yearly_booking_pending_count/total_booking) * 100 if total_booking else 0
+    yearly_canceled_booking_precentage = (yearly_booking_cancelled_count/total_booking) * 100 if total_booking else 0
+    previous_yearly_booking_count = newbooking.objects.filter(event_date__year = previous_year).count()
+    previous_yearly_booking_confirm_count = newbooking.objects.filter(status__in = status_confirmed , event_date__year = previous_year).count()
+    previous_yearly_booking_advance_count = newbooking.objects.filter(status__in = status_advance , event_date__year = previous_year).count()
+    previous_yearly_booking_pending_count = newbooking.objects.filter(status__in = status_pending , event_date__year = previous_year).count()
+    previous_yearly_booking_cancelled_count = newbooking.objects.filter(status__in = status_cancelled , event_date__year = previous_year).count()
+    previous_yearly_confirm_booking_precentage = (previous_yearly_booking_confirm_count/previous_yearly_booking_count) * 100 if previous_yearly_booking_count else 0
+    previous_yearly_advance_booking_precentage = (previous_yearly_booking_advance_count/previous_yearly_booking_count) * 100 if previous_yearly_booking_count else 0
+    previous_yearly_pending_booking_precentage = (previous_yearly_booking_pending_count/previous_yearly_booking_count) * 100 if previous_yearly_booking_count else 0
+    previous_yearly_canceled_booking_precentage = (previous_yearly_booking_cancelled_count/previous_yearly_booking_count) * 100 if previous_yearly_booking_count else 0
+
+    booking_confirm_count = newbooking.objects.filter(status__in = status_confirmed , event_date__month = current__month , event_date__year = current_year).count()
+    booking_advance_count = newbooking.objects.filter(status__in = status_advance , event_date__month = current__month , event_date__year = current_year).count()
+    booking_pending_count = newbooking.objects.filter(status__in = status_pending , event_date__month = current__month , event_date__year = current_year).count()
+    booking_cancelled_count = newbooking.objects.filter(status__in = status_cancelled , event_date__month = current__month , event_date__year = current_year).count()
+    confirm_booking_precentage = (booking_confirm_count/booking_count) * 100 if booking_count else 0
+    advance_booking_precentage = (booking_advance_count/booking_count) * 100 if booking_count else 0
+    pending_booking_precentage = (booking_pending_count/booking_count) * 100 if booking_count else 0
+    canceled_booking_precentage = (booking_cancelled_count/booking_count) * 100 if booking_count else 0
+
+    #Payment method distribution count code
+    total_revenue= payment.objects.filter(payment_date__year = current_year).aggregate(Sum('amount'))['amount__sum'] or 0
+    cash_payment = payment.objects.filter(method__in = ['cash','Cash'] , payment_date__year = current_year).aggregate(Sum('amount'))['amount__sum'] or 0
+    card_payment = payment.objects.filter(method__in = ['card','Card'] , payment_date__year = current_year).aggregate(Sum('amount'))['amount__sum'] or 0
+    online_payment = payment.objects.filter(method__in = ['online','Online'] , payment_date__year = current_year).aggregate(Sum('amount'))['amount__sum'] or 0
+    bank_transfer_payment = payment.objects.filter(method__in = ['bank transfer','Bank Transfer'] , payment_date__year = current_year).aggregate(Sum('amount'))['amount__sum'] or 0
+    cash_payment_display = format_report_payment_amount(cash_payment)
+    card_payment_display = format_report_payment_amount(card_payment)
+    online_payment_display = format_report_payment_amount(online_payment)
+    bank_transfer_payment_display = format_report_payment_amount(bank_transfer_payment)
+    total_payment_display = format_report_payment_amount(total_revenue)
+    cash_payment_percentage = (cash_payment/total_revenue) * 100 if total_revenue else 0
+    card_payment_percentage = (card_payment/total_revenue) * 100 if total_revenue else 0
+    online_payment_percentage = (online_payment/total_revenue) * 100 if total_revenue else 0
+    bank_transfer_payment_percentage = (bank_transfer_payment/total_revenue) * 100 if total_revenue else 0
+    # Compare monthly booking creation dates with scheduled event dates.
+    month_labels = [date(current_year, month, 1).strftime('%B') for month in range(1, 13)]
+    event_bookings_by_month = {
+        row['month']: row['total']
+        for row in newbooking.objects.filter(event_date__year=current_year)
+        .annotate(month=ExtractMonth('event_date'))
+        .values('month')
+        .annotate(total=Count('booking_id'))
+    }
+    created_bookings_by_month = {
+        row['month']: row['total']
+        for row in newbooking.objects.filter(created_at__year=current_year)
+        .annotate(month=ExtractMonth('created_at'))
+        .values('month')
+        .annotate(total=Count('booking_id'))
+    }
+    booking_chart_data = {
+        'labels': month_labels,
+        'datasets': [
+            {
+                'label': 'Booking created',
+                'data': [created_bookings_by_month.get(month, 0) for month in range(1, 13)],
+            },
+            {
+                'label': 'Event this Month',
+                'data': [event_bookings_by_month.get(month, 0) for month in range(1, 13)],
+            },
+        ],
+    }
+    booking_chart_aria_label = (
+        f"Monthly bookings created and event dates for {current_year}."
+    )
+
+    context = {
+        'current_month': current_month,
+        'current__month': current__month,
+        'previous__month': previous__month,
+        'previous_month_year': previous_month_date.year,
+        'current_year': current_year,
+        'previous_year': previous_year,
+        'booking_count':booking_count,
+        'bookingcount_previous':bookingcount_previous,
+        'booking_created_count':booking_created_count,
+        'booking_created_count_previous':booking_created_count_previous,
+        'booking_chart_data': booking_chart_data,
+        'booking_chart_aria_label': booking_chart_aria_label,
+        'total_booking':total_booking,
+        'booking_confirm_count':booking_confirm_count,
+        'booking_advance_count':booking_advance_count,
+        'booking_pending_count':booking_pending_count,
+        'booking_cancelled_count':booking_cancelled_count,
+        'confirm_booking_precentage':confirm_booking_precentage,
+        'advance_booking_precentage':advance_booking_precentage,
+        'pending_booking_precentage':pending_booking_precentage,
+        'canceled_booking_precentage':canceled_booking_precentage,
+        'yearly_booking_confirm_count':yearly_booking_confirm_count,
+        'yearly_booking_advance_count':yearly_booking_advance_count,
+        'yearly_booking_pending_count':yearly_booking_pending_count,
+        'yearly_booking_cancelled_count':yearly_booking_cancelled_count,
+        'yearly_confirm_booking_precentage':yearly_confirm_booking_precentage,
+        'yearly_advance_booking_precentage':yearly_advance_booking_precentage,
+        'yearly_pending_booking_precentage':yearly_pending_booking_precentage,
+        'yearly_canceled_booking_precentage':yearly_canceled_booking_precentage,
+        'previous_yearly_booking_count':previous_yearly_booking_count,
+        'previous_yearly_booking_confirm_count':previous_yearly_booking_confirm_count,
+        'previous_yearly_booking_advance_count':previous_yearly_booking_advance_count,
+        'previous_yearly_booking_pending_count':previous_yearly_booking_pending_count,
+        'previous_yearly_booking_cancelled_count':previous_yearly_booking_cancelled_count,
+        'previous_yearly_confirm_booking_precentage':previous_yearly_confirm_booking_precentage,
+        'previous_yearly_advance_booking_precentage':previous_yearly_advance_booking_precentage,
+        'previous_yearly_pending_booking_precentage':previous_yearly_pending_booking_precentage,
+        'previous_yearly_canceled_booking_precentage':previous_yearly_canceled_booking_precentage,
+        'cash_payment':cash_payment,
+        'card_payment':card_payment,
+        'online_payment':online_payment,
+        'bank_transfer_payment':bank_transfer_payment,
+        'cash_payment_display':cash_payment_display,
+        'card_payment_display':card_payment_display,
+        'online_payment_display':online_payment_display,
+        'bank_transfer_payment_display':bank_transfer_payment_display,
+        'total_payment_display':total_payment_display,
+        'cash_payment_percentage':cash_payment_percentage,
+        'card_payment_percentage':card_payment_percentage,
+        'online_payment_percentage':online_payment_percentage,
+        'bank_transfer_payment_percentage':bank_transfer_payment_percentage,
+    }
+    return render(request , 'reports.html' , context)
+
+
+@login_required(login_url='login')
+def Report_detail_view(request, report_type):
+    report_pages = {
+        'bookings': ('Booking Reports', 'Review booking activity, status and event schedules.'),
+        'financial': ('Financial Reports', 'Review revenue, costs and financial performance.'),
+        'payments': ('Payment Reports', 'Review payment activity and collection records.'),
+        'inventory': ('Inventory Reports', 'Review stock levels and inventory movement.'),
+        'staff': ('Staff Reports', 'Review staff assignments and team activity.'),
+        'customers': ('Customer Reports', 'Review customer activity and booking history.'),
+        'hall-performance': ('Hall Performance Reports', 'Review hall utilisation and event performance.'),
+        'maintenance': ('Maintenance Reports', 'Review maintenance activity and venue upkeep.'),
+        'expenses': ('Expense Reports', 'Review recorded expenses and operating costs.'),
+    }
+    title, description = report_pages[report_type]
+    return render(request, f'reports/{report_type}.html', {
+        'report_title': title,
+        'report_description': description,
+        'report_type': report_type,
+    })
+
 @login_required(login_url='login')
 def Staff_view(request):
     total_staff = staff.objects.all().count()
@@ -774,6 +952,10 @@ def tester(request):
         month = today.month
         pre = today.strftime('%b')
         next = month + 1
+        todays = datetime.now().month
+        previous_month = today -1
+        previous_month_name = today.strftime("%b")
+        print(previous_month_name)
         context = {
             'pre':pre,
             'next':next,

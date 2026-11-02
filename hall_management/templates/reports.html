@@ -1,172 +1,889 @@
 {% extends "base.html" %}
+
 {% block title %}Reports | HallMaster{% endblock %}
+{% block page_key %}reports{% endblock %}
+{% load humanize %}
+{% load static %}
+{% block page_scripts %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/reports-dashboard.css' %}?v=2">
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script defer src="{% static 'javascript/reports-dashboard.js' %}?v=2"></script>
+{% endblock %}
+
 {% block page_content %}
-<style>
-    .reports-page{--rp-line:var(--border);--rp-muted:var(--quiet);--rp-blue:var(--gold-light);--rp-teal:var(--green);--rp-violet:#8298b0;--rp-amber:var(--orange)}
-    .reports-page .page-heading{margin-bottom:20px}.reports-page .page-heading p{max-width:560px}
-    .rp-filter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;margin-bottom:17px;border:1px solid var(--border);border-radius:var(--radius);background:rgba(255,255,255,.018)}
-    .rp-tabs{display:flex;gap:3px;flex-wrap:wrap}.rp-tabs button{padding:7px 10px;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:10px;cursor:pointer}.rp-tabs button.active,.rp-tabs button:hover{color:var(--gold-light);background:rgba(201,169,110,.13)}.rp-date{color:var(--muted);font-size:10px;white-space:nowrap}
-    .rp-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.rp-kpi{min-width:0;padding:15px;overflow:hidden;border:1px solid var(--border);border-radius:9px;background:linear-gradient(145deg,#12171b,#0c1013)}.rp-kpi-head{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:10px}.rp-kpi-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;color:var(--gold-light);background:rgba(201,169,110,.1);font-size:11px;font-weight:700}.rp-kpi strong{display:block;margin:10px 0 5px;color:var(--text);font-family:"Playfair Display",serif;font-size:clamp(19px,2vw,25px);font-weight:600}.rp-kpi small{color:var(--quiet);font-size:9px}.rp-kpi small b{color:var(--green);font-weight:700}
-    .rp-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(290px,.9fr);gap:13px;margin:0 0 14px}.rp-grid.equal{grid-template-columns:repeat(2,minmax(0,1fr))}.rp-card{min-width:0;padding:16px 17px 13px;border:1px solid var(--border);border-radius:9px;background:linear-gradient(145deg,rgba(255,255,255,.028),rgba(255,255,255,.012))}.rp-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}.rp-card-head h2{margin:0;color:var(--text);font-size:12px;font-weight:600}.rp-card-head p{margin:5px 0 0;color:var(--quiet);font-size:10px}.rp-chip{padding:5px 8px;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:9px;white-space:nowrap}
-    .rp-chart{height:210px}.rp-chart svg{width:100%;height:100%;overflow:visible}.rp-gridline{stroke:rgba(255,255,255,.075);stroke-dasharray:3 5}.rp-axis{fill:#858d93;font:9px "DM Sans",sans-serif}.rp-bar{rx:3;transition:opacity .2s}.rp-bar:hover{opacity:.72}.rp-line-revenue{fill:none;stroke:var(--gold-light);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.rp-area{fill:url(#rpFill)}.rp-legend{display:flex;gap:14px;margin-top:5px;color:var(--muted);font-size:9px}.rp-legend span{display:flex;align-items:center;gap:6px}.rp-dot{width:7px;height:7px;border-radius:50%;background:var(--dot)}
-    .rp-donut-wrap{display:flex;align-items:center;justify-content:center;gap:20px;min-height:215px}.rp-donut{position:relative;display:grid;place-items:center;width:150px;height:150px;flex:none;border-radius:50%;background:conic-gradient(var(--gold) 0 58%,var(--green) 58% 77%,var(--rp-violet) 77% 90%,var(--rp-amber) 90% 100%)}.rp-donut:before{content:"";position:absolute;inset:16px;border-radius:50%;background:#11161a}.rp-donut-center{position:relative;text-align:center}.rp-donut-center strong{display:block;color:var(--text);font-family:"Playfair Display",serif;font-size:23px;font-weight:600}.rp-donut-center span{color:var(--quiet);font-size:9px}.rp-legend-list{display:grid;gap:11px;width:min(190px,100%)}.rp-legend-row{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:10px}.rp-legend-row span{display:flex;align-items:center;gap:7px}.rp-legend-row b{color:var(--text);font-size:10px}
-    .rp-bars{display:grid;gap:14px;padding:6px 0 2px}.rp-bar-row{display:grid;grid-template-columns:100px 1fr 32px;align-items:center;gap:9px;color:var(--muted);font-size:10px}.rp-bar-track{height:5px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden}.rp-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--gold-dark),var(--gold-light))}.rp-bar-row b{color:var(--text);text-align:right;font-size:10px}
-    .rp-ops{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.rp-op{padding:11px;border:1px solid rgba(255,255,255,.055);border-radius:8px;background:rgba(255,255,255,.018)}.rp-op span{display:block;color:var(--quiet);font-size:9px}.rp-op strong{display:block;margin:7px 0 3px;color:var(--text);font-family:"Playfair Display",serif;font-size:18px;font-weight:600}.rp-op small{color:var(--quiet);font-size:9px}.rp-note{margin:12px 0 0;color:var(--quiet);font-size:9px}
-    @media(max-width:1000px){.rp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.rp-ops{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:720px){.rp-grid,.rp-grid.equal{grid-template-columns:1fr}.rp-filter{align-items:flex-start;flex-direction:column}.rp-date{white-space:normal}.rp-card{padding:15px}.rp-donut-wrap{gap:17px}}
-    @media(max-width:430px){.rp-kpis{gap:8px}.rp-kpi{padding:12px}.rp-kpi strong{font-size:19px}.rp-kpi-head{font-size:9px}.rp-donut-wrap{flex-direction:column;padding:8px 0}.rp-legend-list{width:100%}.rp-bar-row{grid-template-columns:82px 1fr 30px}}
-</style>
-<div class="reports-page">
-    <header class="page-heading">
-        <div><span class="eyebrow">HALLMASTER ANALYTICS</span><h1>Reports</h1><p>Your venue performance, bookings and finances at a glance.</p></div>
-        <div class="heading-actions"><button class="text-button" type="button" onclick="window.print()">Print report</button><button class="primary-button" type="button" onclick="window.print()">Export PDF</button></div>
-    </header>
+<div id="hallmaster-reports" class="reports-page is-comparing">
+  <div class="report-export-row">
+    <div class="report-export-actions" aria-label="Export report">
+      <button class="report-export-button" type="button" title="Preview only; no file is generated." disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 3h9l4 4v14H6z"/>
+          <path d="M14 3v5h5M9 14h6m-6 3h6"/>
+        </svg>
+        Export PDF
+      </button>
+      <button class="report-export-button" type="button" title="Preview only; no file is generated." disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 3h9l4 4v14H6z"/>
+          <path d="M14 3v5h5M9 13l4 5m0-5-4 5"/>
+        </svg>
+        Export Excel
+      </button>
+      <button class="report-export-button" type="button" title="Preview only; no file is generated." disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 3h9l4 4v14H6z"/>
+          <path d="M14 3v5h5M9 13h6m-6 4h6"/>
+        </svg>
+        Export CSV
+      </button>
+    </div>
+  </div>
+  <header class="report-heading">
+    <div class="report-heading-brand">
+      <svg class="report-heading-mark" viewBox="0 0 40 40" fill="currentColor" aria-hidden="true">
+        <rect x="2" y="24" width="7" height="14" rx="1.5"/>
+        <rect x="12" y="16" width="7" height="22" rx="1.5"/>
+        <rect x="22" y="8" width="7" height="30" rx="1.5"/>
+        <rect x="32" y="2" width="6" height="36" rx="1.5"/>
+      </svg>
+      <div class="report-heading-copy">
+        <span class="eyebrow">HALLMASTER ANALYTICS</span>
+        <h1>Reports</h1>
+        <p>Comprehensive insights into your hall business performance.</p>
+      </div>
+    </div>
+    <div class="report-header-tools">
+      <label class="report-header-month-control">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="16" rx="2"/>
+          <path d="M16 3v4M8 3v4M3 10h18"/>
+        </svg>
+        <select id="report-month" class="report-header-month" aria-label="Report month" disabled>
+          <option value="all">All months</option>
+          <option value="0">January</option>
+          <option value="1">February</option>
+          <option value="2">March</option>
+          <option value="3">April</option>
+          <option value="4">May</option>
+          <option value="5">June</option>
+          <option value="6">July</option>
+          <option value="7">August</option>
+          <option value="8">September</option>
+          <option value="9">October</option>
+          <option value="10">November</option>
+          <option value="11">December</option>
+        </select>
+        <svg class="report-header-month-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m7 10 5 5 5-5"/>
+        </svg>
+      </label>
+      <select class="report-header-year" id="report-year" aria-label="Report year" disabled>
+        <option selected>2026</option>
+        <option>2025</option>
+        <option>2024</option>
+        <option>2023</option>
+      </select>
+      <label class="report-header-compare" for="report-compare">
+        <span>Compare with {{ previous_year }}</span>
+        <input id="report-compare" type="checkbox" aria-label="Compare with previous year" checked disabled>
+      </label>
+    </div>
+  </header>
 
-    <div class="rp-filter"><nav class="rp-tabs" aria-label="Report period"><button type="button" data-period="today">Today</button><button type="button" data-period="week">Week</button><button type="button" data-period="month">Month</button><button type="button" data-period="quarter">Quarter</button><button class="active" type="button" data-period="year" aria-pressed="true">Year</button></nav><span class="rp-date"><span id="rp-period-label">01 Jan – 31 Dec 2026</span> <span class="rp-chip">All halls</span></span></div>
+  <nav class="report-nav" aria-label="Jump to report section">
+    <a href="#report-overview">Overview</a>
+    <a href="#report-bookings">Bookings</a>
+    <a href="#report-yearly-booking-status">Yearly status</a>
+    <a href="#report-financial">Financials</a>
+    <a href="#report-payments">Payments</a>
+    <a href="#report-expenses">Expenses</a>
+    <a href="#report-halls">Hall performance</a>
+    <a href="#report-customers">Customers</a>
+  </nav>
+  <section class="report-section" id="report-overview" aria-labelledby="report-overview-title">
+    <div class="report-section-heading">
+      <div>
+        <h2 id="report-overview-title">Business overview</h2>
+        <p>At-a-glance performance for {{ current_year }}</p>
+      </div>
+      <span class="report-period-label">01 Jan 2026 – 31 Dec 2026</span>
+    </div>
+    <div class="report-kpis">
+      <article class="report-kpi">
+        <div class="report-kpi-top">
+          <span class="report-kpi-title">Total bookings</span>
+          <span class="report-kpi-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="2"/>
+              <path d="M16 3v4M8 3v4M3 10h18"/>
+            </svg>
+          </span>
+        </div>
+        <strong class="report-kpi-value">{{ total_booking }}</strong>
+        <div class="report-kpi-foot"><span class="positive">↗ 8.2%</span> vs. previous year {{ previous_year }}</div>
+        <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
+          <path d="M1 20 12 16 22 17 32 10 43 12 54 5 65 2" fill="none" stroke="var(--gold-light)" stroke-width="1.7"/>
+        </svg>
+      </article>
+      <article class="report-kpi">
+        <div class="report-kpi-top">
+          <span class="report-kpi-title">Total revenue of {{ current_year }}</span>
+          <span class="report-kpi-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20m5-15c0-2-2-3-5-3S7 5 7 7s2 3 5 4 5 2 5 4-2 4-5 4-5-2-5-4"/>
+            </svg>
+          </span>
+        </div>
+        <strong class="report-kpi-value">Rs {{ total_payment_display }}</strong>
+        <div class="report-kpi-foot"><span class="positive">↗ 12.8%</span> vs. previous year {{ previous_year }}</div>
+        <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
+          <path d="M1 21 12 15 22 17 32 12 43 8 54 9 65 2" fill="none" stroke="var(--green)" stroke-width="1.7"/>
+        </svg>
+      </article>
+      <article class="report-kpi">
+        <div class="report-kpi-top">
+          <span class="report-kpi-title">Received payments</span>
+          <span class="report-kpi-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2.5" y="5" width="19" height="14" rx="2"/>
+              <path d="M3 10h18m-14 5h4"/>
+            </svg>
+          </span>
+        </div>
+        <strong class="report-kpi-value">Rs 12.40M</strong>
+        <div class="report-kpi-foot"><span class="positive">78.7%</span> of booking value collected</div>
+        <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
+          <path d="M1 20 12 19 22 12 32 14 43 8 54 6 65 3" fill="none" stroke="var(--blue)" stroke-width="1.7"/>
+        </svg>
+      </article>
+      <article class="report-kpi">
+        <div class="report-kpi-top">
+          <span class="report-kpi-title">Net profit</span>
+          <span class="report-kpi-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 19V5m0 14h18M7 15l4-4 3 2 5-7m-4 0h4v4"/>
+            </svg>
+          </span>
+        </div>
+        <strong class="report-kpi-value">Rs 10.93M</strong>
+        <div class="report-kpi-foot"><span class="positive">69.4%</span> margin on revenue</div>
+        <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
+          <path d="M1 20 12 15 22 17 32 11 43 12 54 5 65 2" fill="none" stroke="var(--orange)" stroke-width="1.7"/>
+        </svg>
+      </article>
+    </div>
+  </section>
 
-    <section class="rp-kpis" id="overview" aria-label="Key performance indicators">
-        <article class="rp-kpi" style="--accent:#69a8ff"><div class="rp-kpi-head"><span>Total revenue</span><span class="rp-kpi-icon">Rs</span></div><strong data-metric="revenue">Rs 15.75M</strong><small><b>↗ 12.8%</b> compared to previous period</small></article>
-        <article class="rp-kpi" style="--accent:#53d6bd"><div class="rp-kpi-head"><span>Bookings</span><span class="rp-kpi-icon">BK</span></div><strong data-metric="bookings">284</strong><small><b>↗ 8.2%</b> compared to previous period</small></article>
-        <article class="rp-kpi" style="--accent:#a48bff"><div class="rp-kpi-head"><span>Collected</span><span class="rp-kpi-icon">PY</span></div><strong data-metric="collected">Rs 12.40M</strong><small><span data-metric="payments">246</span> payments received</small></article>
-        <article class="rp-kpi" style="--accent:#f3bb66"><div class="rp-kpi-head"><span>Expenses</span><span class="rp-kpi-icon">EX</span></div><strong data-metric="expenses">Rs 4.82M</strong><small>Estimated profit <b data-metric="profit">Rs 10.93M</b></small></article>
-    </section>
+  <section class="report-section" id="report-bookings" aria-labelledby="report-bookings-title">
+    <div class="report-section-heading">
+      <div>
+        <h2 id="report-bookings-title">Booking analytics</h2>
+        <p>Volume, status and year-over-year activity</p>
+      </div>
+    </div>
+    <div class="report-grid">
+      <article class="report-card">
+        <div class="report-card-heading">
+          <div>
+            <h3>Monthly booking comparison</h3>
+            <p>Monthly booking creation and event-date totals · {{ current_year }}</p>
+          </div>
+          <span class="report-chip">{{ current_year }}</span>
+        </div>
+        <div class="report-month-booking-summary">
+          <div>
+            <span>{{ current_month }} bookings</span>
+            <strong>{{ booking_count }}</strong>
+          </div>
+          <div class="report-booking-created">
+            <span>{{ current_month }} created</span>
+            <strong>{{ booking_created_count }}</strong>
+          </div>
+          <div>
+            <span>{{ previous__month }} {{ previous_month_year }} bookings</span>
+            <strong>{{ bookingcount_previous }}</strong>
+          </div>
+          <div class="report-booking-created">
+            <span>{{ previous__month }} {{ previous_month_year }} created</span>
+            <strong>{{ booking_created_count_previous }}</strong>
+          </div>
+          <p>Actual booking records · event month compared with creation month</p>
+        </div>
+        <!-- Yahan se backend-connected booking chart ka markup shuru hota hai. -->
+        <div class="report-chart report-booking-chart">
+          <canvas id="booking-comparison-chart" role="img" aria-label="{{ booking_chart_aria_label }}"></canvas>
+        </div>
+        <p id="booking-chart-error" class="report-chart-error" role="status" hidden>Booking chart could not be loaded. Please refresh the page.</p>
+        {{ booking_chart_data|json_script:"booking-chart-data" }}
+        <!-- Backend-connected booking chart markup ends here. -->
+        <div class="report-summary-strip">
+          <div class="report-summary-item">
+            <span>Total bookings</span>
+            <strong>{{ total_booking }}</strong>
+          </div>
+          <div class="report-summary-item">
+            <span>Confirmed</span>
+            <strong>{{ yearly_booking_confirm_count }}</strong>
+          </div>
+          <div class="report-summary-item">
+            <span>Pending</span>
+            <strong>{{ yearly_booking_pending_count }}</strong>
+          </div>
+          <div class="report-summary-item">
+            <span>Cancelled</span>
+            <strong>{{ yearly_booking_cancelled_count }}</strong>
+          </div>
+        </div>
+      </article>
+      <article class="report-card">
+        <div class="report-card-heading">
+          <div>
+            <h3>Booking status of {{ current_month }} {{ current_year }} Events</h3>
+            <p>Distribution across all sample bookings</p>
+          </div>
+          <span class="report-chip">{{ booking_count }} total</span>
+        </div>
+        <div class="report-donut-layout report-monthly-status-layout">
+          <div class="report-donut" role="img" aria-label="Illustrative booking status: 62 percent confirmed, 17 percent pending, 11 percent cancelled, 10 percent other">
+            <div class="report-donut-center"><strong>{{ booking_count }}</strong><span>Bookings</span></div>
+          </div>
+          <div class="report-legend-list report-yearly-status-list">
+            <div class="report-yearly-status-heading">
+              <span></span>
+              <span>Booking number</span>
+              <span>Percentage</span>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#55c58a"></i>Confirmed</span>
+              <b>{{ booking_confirm_count }}</b>
+              <b>{{ confirm_booking_precentage|floatformat:2 }}%</b>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#e1c58e"></i>Pending</span>
+              <b>{{ booking_pending_count }}</b>
+              <b>{{ pending_booking_precentage|floatformat:2 }}%</b>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#F87171"></i>Cancelled</span>
+              <b>{{ booking_cancelled_count }}</b>
+              <b>{{ canceled_booking_precentage|floatformat:2 }}%</b>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#8299bd"></i>Advance</span>
+              <b>{{ booking_advance_count }}</b>
+              <b>{{ advance_booking_precentage|floatformat:2 }}%</b>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
 
-    <section class="rp-grid" aria-label="Revenue and booking charts">
-        <article class="rp-card">
-            <div class="rp-card-head"><div><h2>Income overview</h2><p>Revenue and expenses across the year</p></div><span class="rp-chip">2026 ▾</span></div>
-            <div class="rp-chart" role="img" aria-label="Bar chart comparing monthly revenue and expenses">
-                <svg viewBox="0 0 680 230" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="rpBar" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#69a8ff"/><stop offset="1" stop-color="#4380db" stop-opacity=".55"/></linearGradient><linearGradient id="rpFill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#69a8ff" stop-opacity=".25"/><stop offset="1" stop-color="#69a8ff" stop-opacity="0"/></linearGradient></defs>
-                    <line class="rp-gridline" x1="38" y1="25" x2="670" y2="25"/><line class="rp-gridline" x1="38" y1="70" x2="670" y2="70"/><line class="rp-gridline" x1="38" y1="115" x2="670" y2="115"/><line class="rp-gridline" x1="38" y1="160" x2="670" y2="160"/><line class="rp-gridline" x1="38" y1="205" x2="670" y2="205"/>
-                    <text class="rp-axis" x="2" y="29">2.0M</text><text class="rp-axis" x="2" y="74">1.5M</text><text class="rp-axis" x="2" y="119">1.0M</text><text class="rp-axis" x="2" y="164">0.5M</text>
-                    <g id="rp-revenue-bars" fill="url(#rpBar)"></g><g id="rp-expense-bars" fill="#8298b0" opacity=".85"></g><g id="rp-bar-labels"></g>
-                </svg>
-            </div><div class="rp-legend"><span><i class="rp-dot" style="--dot:#69a8ff"></i>Revenue</span><span><i class="rp-dot" style="--dot:#a48bff"></i>Expenses</span></div>
-        </article>
-        <article class="rp-card">
-            <div class="rp-card-head"><div><h2>Booking status</h2><p>How your bookings are progressing</p></div><span class="rp-chip">This year</span></div>
-            <div class="rp-donut-wrap"><div class="rp-donut" role="img" aria-label="Booking status: 77 percent completed, 10 percent pending, 7 percent cancelled, 6 percent other"><div class="rp-donut-center"><strong>284</strong><span>Total bookings</span></div></div><div class="rp-legend-list"><div class="rp-legend-row"><span><i class="rp-dot" style="--dot:#69a8ff"></i>Completed</span><b>219 · 77%</b></div><div class="rp-legend-row"><span><i class="rp-dot" style="--dot:#53d6bd"></i>Pending</span><b>28 · 10%</b></div><div class="rp-legend-row"><span><i class="rp-dot" style="--dot:#a48bff"></i>Cancelled</span><b>19 · 7%</b></div><div class="rp-legend-row"><span><i class="rp-dot" style="--dot:#f3bb66"></i>Other</span><b>18 · 6%</b></div></div></div>
-        </article>
-    </section>
+  <section class="report-section" id="report-yearly-booking-status" aria-labelledby="report-yearly-booking-status-title">
+    <div class="report-section-heading">
+      <div>
+        <h2 id="report-yearly-booking-status-title">Yearly booking status</h2>
+        <p>Compare booking status across the current and previous year</p>
+      </div>
+    </div>
+    <div class="report-grid equal">
+      <article class="report-card">
+        <div class="report-card-heading">
+          <div>
+            <h3>Current year bookings</h3>
+            <p>Booking status breakdown</p>
+          </div>
+          <span class="report-chip">{{ current_year }}</span>
+        </div>
+        <div class="report-donut-layout">
+          <div class="report-donut" role="img" aria-label="Current year booking status chart placeholder" style>
+            <div class="report-donut-center">
+              <strong>{{ total_booking }}</strong>
+              <span>Bookings</span>
+            </div>
+          </div>
+          <div class="report-legend-list report-yearly-status-list">
+            <div class="report-yearly-status-heading">
+              <span></span>
+              <span>Booking number</span>
+              <span>Percentage</span>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#55c58a"></i>Confirmed</span>
+              <b>{{ yearly_booking_confirm_count }}</b>
+              <b>{{ yearly_confirm_booking_precentage|floatformat:1 }}%</b>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#e1c58e"></i>Pending</span>
+              <b>{{ yearly_booking_pending_count }}</b>
+              <b>{{ yearly_pending_booking_precentage|floatformat:1 }}%</b>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#F87171"></i>Cancelled</span>
+              <b>{{ yearly_booking_cancelled_count }}</b>
+              <b>{{ yearly_canceled_booking_precentage|floatformat:1 }}%</b>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#8299bd"></i>Advance</span>
+              <b>{{ yearly_booking_advance_count }}</b>
+              <b>{{ yearly_advance_booking_precentage|floatformat:1 }}%</b>
+            </div>
+          </div>
+        </div>
+      </article>
 
-    <section class="rp-grid equal" aria-label="Booking trends and event types">
-        <article class="rp-card"><div class="rp-card-head"><div><h2>Bookings over time</h2><p>Monthly event volume</p></div><span class="rp-chip">284 total</span></div><div class="rp-chart" role="img" aria-label="Line graph showing monthly booking volume rising through the year"><svg viewBox="0 0 600 230" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="bookingFill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#53d6bd" stop-opacity=".25"/><stop offset="1" stop-color="#53d6bd" stop-opacity="0"/></linearGradient></defs><line class="rp-gridline" x1="35" y1="28" x2="590" y2="28"/><line class="rp-gridline" x1="35" y1="75" x2="590" y2="75"/><line class="rp-gridline" x1="35" y1="122" x2="590" y2="122"/><line class="rp-gridline" x1="35" y1="169" x2="590" y2="169"/><path d="M42 147 L91 137 L140 125 L189 139 L238 111 L287 99 L336 116 L385 83 L434 76 L483 90 L532 55 L581 35 L581 190 L42 190Z" fill="url(#bookingFill)"/><path d="M42 147 L91 137 L140 125 L189 139 L238 111 L287 99 L336 116 L385 83 L434 76 L483 90 L532 55 L581 35" class="rp-line-revenue" style="stroke:#53d6bd"/><g fill="#53d6bd"><circle cx="42" cy="147" r="3"/><circle cx="140" cy="125" r="3"/><circle cx="238" cy="111" r="3"/><circle cx="336" cy="116" r="3"/><circle cx="434" cy="76" r="3"/><circle cx="532" cy="55" r="3"/><circle cx="581" cy="35" r="3"/></g><text class="rp-axis" x="40" y="218">Jan</text><text class="rp-axis" x="136" y="218">Mar</text><text class="rp-axis" x="232" y="218">May</text><text class="rp-axis" x="328" y="218">Jul</text><text class="rp-axis" x="424" y="218">Sep</text><text class="rp-axis" x="520" y="218">Nov</text></svg></div></article>
-        <article class="rp-card"><div class="rp-card-head"><div><h2>Events by type</h2><p>Most popular occasions</p></div><span class="rp-chip">284 events</span></div><div class="rp-donut-wrap"><div class="rp-donut" style="background:conic-gradient(#69a8ff 0 58%,#53d6bd 58% 77%,#a48bff 77% 90%,#f3bb66 90% 100%)" role="img" aria-label="Event types: weddings 58 percent, corporate 19 percent, engagements 13 percent, other 10 percent"><div class="rp-donut-center"><strong>284</strong><span>Events</span></div></div><div class="rp-legend-list"><div class="rp-legend-row"><span><i class="rp-dot" style="--dot:#69a8ff"></i>Weddings</span><b>58%</b></div><div class="rp-legend-row"><span><i class="rp-dot" style="--dot:#53d6bd"></i>Corporate</span><b>19%</b></div><div class="rp-legend-row"><span><i class="rp-dot" style="--dot:#a48bff"></i>Engagements</span><b>13%</b></div><div class="rp-legend-row"><span><i class="rp-dot" style="--dot:#f3bb66"></i>Other</span><b>10%</b></div></div></div></article>
-    </section>
+      <article class="report-card">
+        <div class="report-card-heading">
+          <div>
+            <h3>Previous year bookings</h3>
+            <p>Booking status breakdown</p>
+          </div>
+          <span class="report-chip">{{ previous_year }}</span>
+        </div>
+        <div class="report-donut-layout">
+          <div class="report-donut" role="img" aria-label="Previous year booking status chart placeholder">
+            <div class="report-donut-center">
+              <strong>{{ previous_yearly_booking_count }}</strong>
+              <span>Bookings</span>
+            </div>
+          </div>
+          <div class="report-legend-list report-yearly-status-list">
+            <div class="report-yearly-status-heading">
+              <span></span>
+              <span>Booking number</span>
+              <span>Percentage</span>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#55c58a"></i>Confirmed</span>
+              <b>{{ previous_yearly_booking_confirm_count }}</b>
+              <b>{{ previous_yearly_confirm_booking_precentage|floatformat:1 }}%</b>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#e1c58e"></i>Pending</span>
+              <b>{{ previous_yearly_booking_pending_count }}</b>
+              <b>{{ previous_yearly_pending_booking_precentage|floatformat:1 }}%</b>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#F87171"></i>Cancelled</span>
+              <b>{{ previous_yearly_booking_cancelled_count }}</b>
+              <b>{{ previous_yearly_canceled_booking_precentage|floatformat:1 }}%</b>
+            </div>
+            <div class="report-legend-row">
+              <span><i style="--legend-color:#8299bd"></i>Advance</span>
+              <b>{{ previous_yearly_booking_advance_count }}</b>
+              <b>{{ previous_yearly_advance_booking_precentage|floatformat:1 }}%</b>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
 
-    <section class="rp-grid equal" aria-label="Payments and venue operations">
-        <article class="rp-card"><div class="rp-card-head"><div><h2>Where money comes from</h2><p>Collections by payment method</p></div><span class="rp-chip">Rs 12.40M</span></div><div class="rp-bars"><div class="rp-bar-row"><span>Bank transfer</span><div class="rp-bar-track"><div class="rp-bar-fill" style="width:42%"></div></div><b>42%</b></div><div class="rp-bar-row"><span>Card</span><div class="rp-bar-track"><div class="rp-bar-fill" style="width:28%;background:linear-gradient(90deg,#a48bff,#8069dd)"></div></div><b>28%</b></div><div class="rp-bar-row"><span>Cash</span><div class="rp-bar-track"><div class="rp-bar-fill" style="width:18%;background:linear-gradient(90deg,#53d6bd,#32a991)"></div></div><b>18%</b></div><div class="rp-bar-row"><span>Online</span><div class="rp-bar-track"><div class="rp-bar-fill" style="width:12%;background:linear-gradient(90deg,#f3bb66,#cf9140)"></div></div><b>12%</b></div></div></article>
-        <article class="rp-card"><div class="rp-card-head"><div><h2>Venue pulse</h2><p>A few more numbers that matter</p></div><span class="rp-chip">Operations</span></div><div class="rp-ops"><div class="rp-op"><span>Hall utilisation</span><strong>72%</strong><small>Booked days</small></div><div class="rp-op"><span>Customers</span><strong>261</strong><small>23 returning</small></div><div class="rp-op"><span>Avg. guests</span><strong>312</strong><small>Per event</small></div><div class="rp-op"><span>Overdue invoices</span><strong>12</strong><small>Rs 840K due</small></div></div></article>
-    </section>
-    <p class="rp-note">Charts and figures are frontend sample data, ready to connect to live report data.</p>
+  <section class="report-section" id="report-financial" aria-labelledby="report-financial-title">
+    <div class="report-section-heading">
+      <div>
+        <h2 id="report-financial-title">Financial performance</h2>
+        <p>Revenue, expenses and profit across the reporting year</p>
+      </div>
+    </div>
+    <article class="report-card">
+      <div class="report-card-heading">
+        <div>
+          <h3>Revenue · expenses · profit</h3>
+          <p>Monthly financial comparison · illustrative Rs values</p>
+        </div>
+        <span class="report-chip">Rs 15.75M revenue</span>
+      </div>
+      <div class="report-chart report-financial-chart" role="img" aria-label="Illustrative monthly comparison chart for revenue, expenses and profit">
+        <svg viewBox="0 0 900 225" preserveAspectRatio="none" aria-hidden="true">
+          <line class="report-gridline" x1="48" y1="22" x2="890" y2="22"/>
+          <line class="report-gridline" x1="48" y1="66" x2="890" y2="66"/>
+          <line class="report-gridline" x1="48" y1="110" x2="890" y2="110"/>
+          <line class="report-gridline" x1="48" y1="154" x2="890" y2="154"/>
+          <line class="report-gridline" x1="48" y1="198" x2="890" y2="198"/>
+          <text class="report-axis" x="3" y="26">2.0M</text>
+          <text class="report-axis" x="3" y="70">1.5M</text>
+          <text class="report-axis" x="3" y="114">1.0M</text>
+          <text class="report-axis" x="3" y="158">0.5M</text>
+          <g fill="#c9a96e">
+            <rect x="76" y="119" width="18" height="79" rx="3">
+              <title>January revenue sample: Rs 900K</title>
+            </rect>
+            <rect x="145" y="108" width="18" height="90" rx="3"/>
+            <rect x="214" y="99" width="18" height="99" rx="3"/>
+            <rect x="283" y="103" width="18" height="95" rx="3"/>
+            <rect x="352" y="90" width="18" height="108" rx="3"/>
+            <rect x="421" y="77" width="18" height="121" rx="3"/>
+            <rect x="490" y="84" width="18" height="114" rx="3"/>
+            <rect x="559" y="68" width="18" height="130" rx="3"/>
+            <rect x="628" y="60" width="18" height="138" rx="3"/>
+            <rect x="697" y="65" width="18" height="133" rx="3"/>
+            <rect x="766" y="48" width="18" height="150" rx="3"/>
+            <rect x="835" y="34" width="18" height="164" rx="3"/>
+          </g>
+          <g fill="#8298b0">
+            <rect x="98" y="162" width="10" height="36" rx="2"/>
+            <rect x="167" y="158" width="10" height="40" rx="2"/>
+            <rect x="236" y="154" width="10" height="44" rx="2"/>
+            <rect x="305" y="158" width="10" height="40" rx="2"/>
+            <rect x="374" y="149" width="10" height="49" rx="2"/>
+            <rect x="443" y="145" width="10" height="53" rx="2"/>
+            <rect x="512" y="151" width="10" height="47" rx="2"/>
+            <rect x="581" y="139" width="10" height="59" rx="2"/>
+            <rect x="650" y="136" width="10" height="62" rx="2"/>
+            <rect x="719" y="141" width="10" height="57" rx="2"/>
+            <rect x="788" y="129" width="10" height="69" rx="2"/>
+            <rect x="857" y="122" width="10" height="76" rx="2"/>
+          </g>
+          <g fill="#55c58a">
+            <rect x="111" y="132" width="10" height="66" rx="2"><title>January profit sample</title></rect>
+            <rect x="180" y="123" width="10" height="75" rx="2"><title>February profit sample</title></rect>
+            <rect x="249" y="116" width="10" height="82" rx="2"><title>March profit sample</title></rect>
+            <rect x="318" y="121" width="10" height="77" rx="2"><title>April profit sample</title></rect>
+            <rect x="387" y="108" width="10" height="90" rx="2"><title>May profit sample</title></rect>
+            <rect x="456" y="96" width="10" height="102" rx="2"><title>June profit sample</title></rect>
+            <rect x="525" y="102" width="10" height="96" rx="2"><title>July profit sample</title></rect>
+            <rect x="594" y="86" width="10" height="112" rx="2"><title>August profit sample</title></rect>
+            <rect x="663" y="78" width="10" height="120" rx="2"><title>September profit sample</title></rect>
+            <rect x="732" y="84" width="10" height="114" rx="2"><title>October profit sample</title></rect>
+            <rect x="801" y="67" width="10" height="131" rx="2"><title>November profit sample</title></rect>
+            <rect x="870" y="52" width="10" height="146" rx="2"><title>December profit sample</title></rect>
+          </g>
+          <text class="report-axis" x="78" y="216">Jan</text>
+          <text class="report-axis" x="147" y="216">Feb</text>
+          <text class="report-axis" x="216" y="216">Mar</text>
+          <text class="report-axis" x="285" y="216">Apr</text>
+          <text class="report-axis" x="354" y="216">May</text>
+          <text class="report-axis" x="423" y="216">Jun</text>
+          <text class="report-axis" x="492" y="216">Jul</text>
+          <text class="report-axis" x="561" y="216">Aug</text>
+          <text class="report-axis" x="630" y="216">Sep</text>
+          <text class="report-axis" x="699" y="216">Oct</text>
+          <text class="report-axis" x="768" y="216">Nov</text>
+          <text class="report-axis" x="837" y="216">Dec</text>
+        </svg>
+      </div>
+      <div class="report-legend">
+        <span><i style="--legend-color:var(--gold)"></i>Revenue</span>
+        <span><i style="--legend-color:var(--blue)"></i>Expenses</span>
+        <span><i style="--legend-color:var(--green)"></i>Profit</span>
+      </div>
+      <div class="report-summary-strip">
+        <div class="report-summary-item">
+          <span>Booking value</span>
+          <strong>Rs 15.75M</strong>
+          <small>284 bookings</small>
+        </div>
+        <div class="report-summary-item">
+          <span>Received amount</span>
+          <strong>Rs 12.40M</strong>
+          <small>78.7% collected</small>
+        </div>
+        <div class="report-summary-item">
+          <span>Total expenses</span>
+          <strong>Rs 4.82M</strong>
+          <small>Operating costs</small>
+        </div>
+        <div class="report-summary-item">
+          <span>Net profit</span>
+          <strong>Rs 10.93M</strong>
+          <small>Before tax</small>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="report-section" id="report-payments" aria-labelledby="report-payments-title">
+    <div class="report-section-heading">
+      <div>
+        <h2 id="report-payments-title">Payment analytics</h2>
+        <p>Collection mix, monthly receipts and outstanding balance</p>
+      </div>
+    </div>
+    <div class="report-grid equal">
+      <article class="report-card">
+        <div class="report-card-heading">
+          <div>
+            <h3>Payment method distribution</h3>
+            <p>Share of illustrative received payments</p>
+          </div>
+          <span class="report-chip">Rs {{ total_payment_display }} received</span>
+        </div>
+        <div class="report-methods">
+          <div class="report-method">
+            <span>Cash payments</span>
+            <strong>Rs {{ cash_payment_display }}</strong>
+            <small>{{ cash_payment_percentage|floatformat:4 }}%</small>
+          </div>
+          <div class="report-method">
+            <span>Bank transfers</span>
+            <strong>Rs {{ bank_transfer_payment_display }}</strong>
+            <small>{{ bank_transfer_payment_percentage|floatformat:4 }}%</small>
+          </div>
+          <div class="report-method">
+            <span>Online payments</span>
+            <strong>Rs {{ online_payment_display }}</strong>
+            <small>{{ online_payment_percentage|floatformat:4 }}%</small>
+          </div>
+          <div class="report-method">
+            <span>Card payments</span>
+            <strong>Rs {{ card_payment_display }}</strong>
+            <small>{{ card_payment_percentage|floatformat:4 }}%</small>
+          </div>
+        </div>
+        <div class="report-bars" aria-label="Payment method share">
+          <div class="report-bar-row">
+            <span>Cash</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:{{ cash_payment_percentage }}%;--bar-color:#22C55E"></div>
+            </div>
+            <strong>{{ cash_payment_percentage|floatformat:4 }}%</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Bank transfer</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:{{ bank_transfer_payment_percentage }}%;--bar-color: #F59E0B"></div>
+            </div>
+            <strong>{{ bank_transfer_payment_percentage|floatformat:4 }}%</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Online</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:{{ online_payment_percentage }}%;--bar-color: #A855F7"></div>
+            </div>
+            <strong>{{ online_payment_percentage|floatformat:4 }}%</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Card</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:{{ card_payment_percentage }}%;--bar-color: #3B82F6"></div>
+            </div>
+            <strong>{{ card_payment_percentage|floatformat:4 }}%</strong>
+          </div>
+        </div>
+      </article>
+      <article class="report-card">
+        <div class="report-card-heading">
+          <div>
+            <h3>Monthly collections</h3>
+            <p>Payment receipts · illustrative monthly totals</p>
+          </div>
+          <span class="report-chip">246 payments</span>
+        </div>
+        <div class="report-bars">
+          <div class="report-bar-row">
+            <span>Jan</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:48%"></div>
+            </div>
+            <strong>Rs 0.62M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Feb</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:56%"></div>
+            </div>
+            <strong>Rs 0.74M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Mar</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:53%"></div>
+            </div>
+            <strong>Rs 0.70M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Apr</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:69%"></div>
+            </div>
+            <strong>Rs 0.91M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>May</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:76%"></div>
+            </div>
+            <strong>Rs 1.00M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Jun – Dec</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:100%"></div>
+            </div>
+            <strong>Rs 8.43M</strong>
+          </div>
+        </div>
+        <div class="report-pending" style="margin-top:14px">
+          <span>Pending payments · 38 invoices</span>
+          <strong>Rs 3.35M</strong>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="report-section" id="report-expenses" aria-labelledby="report-expenses-title">
+    <div class="report-section-heading">
+      <div>
+        <h2 id="report-expenses-title">Expense analytics</h2>
+        <p>Monthly expense pattern and operating cost categories</p>
+      </div>
+    </div>
+    <div class="report-grid equal">
+      <article class="report-card">
+        <div class="report-card-heading">
+          <div>
+            <h3>Expense category distribution</h3>
+            <p>Illustrative share of Rs 4.82M expenses</p>
+          </div>
+          <span class="report-chip">Rs 4.82M total</span>
+        </div>
+        <div class="report-categories">
+          <div class="report-category">
+            <span>Operations</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:38%;--bar-color:var(--gold-light)"></div>
+            </div>
+            <strong>Rs 1.83M</strong>
+          </div>
+          <div class="report-category">
+            <span>Decoration</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:27%;--bar-color:var(--green)"></div>
+            </div>
+            <strong>Rs 1.30M</strong>
+          </div>
+          <div class="report-category">
+            <span>Utilities</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:21%;--bar-color:var(--blue)"></div>
+            </div>
+            <strong>Rs 1.01M</strong>
+          </div>
+          <div class="report-category">
+            <span>Other expenses</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:14%;--bar-color:var(--orange)"></div>
+            </div>
+            <strong>Rs 0.68M</strong>
+          </div>
+        </div>
+      </article>
+      <article class="report-card">
+        <div class="report-card-heading">
+          <div>
+            <h3>Monthly expense trend</h3>
+            <p>Sample operating costs by period</p>
+          </div>
+          <span class="report-chip">2026</span>
+        </div>
+        <div class="report-bars">
+          <div class="report-bar-row">
+            <span>Jan</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:45%;--bar-color:var(--blue)"></div>
+            </div>
+            <strong>Rs 0.29M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Feb</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:52%;--bar-color:var(--blue)"></div>
+            </div>
+            <strong>Rs 0.34M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Mar</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:48%;--bar-color:var(--blue)"></div>
+            </div>
+            <strong>Rs 0.31M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Apr</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:62%;--bar-color:var(--blue)"></div>
+            </div>
+            <strong>Rs 0.40M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>May</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:70%;--bar-color:var(--blue)"></div>
+            </div>
+            <strong>Rs 0.45M</strong>
+          </div>
+          <div class="report-bar-row">
+            <span>Jun – Dec</span>
+            <div class="report-bar-track">
+              <div class="report-bar-fill" style="width:100%;--bar-color:var(--blue)"></div>
+            </div>
+            <strong>Rs 3.03M</strong>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="report-section" id="report-halls" aria-labelledby="report-hall-title">
+    <div class="report-section-heading">
+      <div>
+        <h2 id="report-hall-title">Hall performance</h2>
+        <p>Occupancy, booking volume and revenue by hall portion</p>
+      </div>
+    </div>
+    <article class="report-card">
+      <div class="report-hall-stats">
+        <div class="report-hall-stat">
+          <span>Overall occupancy</span>
+          <strong>72%</strong>
+        </div>
+        <div class="report-hall-stat">
+          <span>Bookings by hall portions</span>
+          <strong>284</strong>
+        </div>
+        <div class="report-hall-stat">
+          <span>Top portion by revenue</span>
+          <strong>Hall A</strong>
+        </div>
+      </div>
+      <div class="report-table-scroll">
+        <table class="report-hall-table">
+          <thead>
+            <tr>
+              <th>Hall portion</th>
+              <th>Bookings</th>
+              <th>Occupancy</th>
+              <th>Revenue</th>
+              <th>Performance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Hall A</strong></td>
+              <td>126</td>
+              <td>
+                <span class="report-occupancy">
+                  81%
+                  <span class="report-occupancy-track"><i style="width:81%"></i></span>
+                </span>
+              </td>
+              <td>Rs 7.24M</td>
+              <td>Above average</td>
+            </tr>
+            <tr>
+              <td><strong>Hall B</strong></td>
+              <td>98</td>
+              <td>
+                <span class="report-occupancy">
+                  69%
+                  <span class="report-occupancy-track"><i style="width:69%"></i></span>
+                </span>
+              </td>
+              <td>Rs 5.18M</td>
+              <td>Steady</td>
+            </tr>
+            <tr>
+              <td><strong>Hall C</strong></td>
+              <td>60</td>
+              <td>
+                <span class="report-occupancy">
+                  61%
+                  <span class="report-occupancy-track"><i style="width:61%"></i></span>
+                </span>
+              </td>
+              <td>Rs 3.33M</td>
+              <td>Growth opportunity</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="report-section" id="report-customers" aria-labelledby="report-customer-title">
+    <div class="report-section-heading">
+      <div>
+        <h2 id="report-customer-title">Customer analytics</h2>
+        <p>Customer retention and highest booking value</p>
+      </div>
+    </div>
+    <article class="report-card">
+      <div class="report-customer-summary">
+        <div>
+          <span>Total customers</span>
+          <strong>261</strong>
+        </div>
+        <div>
+          <span>New customers</span>
+          <strong>208</strong>
+        </div>
+        <div>
+          <span>Repeat customers</span>
+          <strong>53</strong>
+        </div>
+      </div>
+      <div class="report-card-heading">
+        <div>
+          <h3>Top customers</h3>
+          <p>Illustrative customer booking summary</p>
+        </div>
+        <span class="report-chip">Sample profiles</span>
+      </div>
+      <div class="report-table-scroll">
+        <table class="report-customer-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Bookings</th>
+              <th>Last event</th>
+              <th>Booking value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <span class="report-customer-avatar">AK</span>
+                <strong>Ayesha Khan</strong>
+              </td>
+              <td>6</td>
+              <td>Wedding reception</td>
+              <td>Rs 840,000</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="report-customer-avatar">UM</span>
+                <strong>Usman Malik</strong>
+              </td>
+              <td>4</td>
+              <td>Corporate dinner</td>
+              <td>Rs 620,000</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="report-customer-avatar">SR</span>
+                <strong>Sana Raza</strong>
+              </td>
+              <td>3</td>
+              <td>Engagement</td>
+              <td>Rs 475,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <details class="report-details">
+    <summary>About these report controls and sample figures</summary>
+    <p>
+      This page is a frontend preview. The figures, charts, hall portions and
+      customer profiles are illustrative demonstration values, not real
+      HallMaster records. The displayed reporting period is fixed to 2026; the
+      period controls and export buttons are disabled, and no files are
+      generated or downloaded.
+    </p>
+  </details>
 </div>
-<script>
-    (() => {
-        const report = document.querySelector('.reports-page');
-        if (!report) return;
 
-        const periodLabels = { today: 'Today', week: 'This week', month: 'This month', quarter: 'This quarter', year: 'This year' };
-        const sampleMetrics = {
-            today:   { revenue: 'Rs 42.5K', bookings: '2', collected: 'Rs 31K', payments: '2', expenses: 'Rs 8.2K', profit: 'Rs 34.3K' },
-            week:    { revenue: 'Rs 286K', bookings: '9', collected: 'Rs 214K', payments: '8', expenses: 'Rs 76K', profit: 'Rs 210K' },
-            month:   { revenue: 'Rs 1.24M', bookings: '24', collected: 'Rs 980K', payments: '21', expenses: 'Rs 386K', profit: 'Rs 854K' },
-            quarter: { revenue: 'Rs 4.18M', bookings: '76', collected: 'Rs 3.31M', payments: '68', expenses: 'Rs 1.29M', profit: 'Rs 2.89M' },
-            year:    { revenue: 'Rs 15.75M', bookings: '284', collected: 'Rs 12.40M', payments: '246', expenses: 'Rs 4.82M', profit: 'Rs 10.93M' }
-        };
-        const chartSamples = {
-            today: { labels: ['AM', 'PM'], revenue: [38, 64], expenses: [20, 28] },
-            week: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], revenue: [35, 48, 42, 67, 55, 88, 72], expenses: [20, 28, 24, 32, 26, 40, 35] },
-            month: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], revenue: [44, 70, 58, 92], expenses: [25, 38, 30, 46] },
-            quarter: { labels: ['Month 1', 'Month 2', 'Month 3'], revenue: [52, 74, 92], expenses: [32, 40, 46] },
-            year: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], revenue: [55, 63, 69, 61, 77, 82, 73, 87, 92, 84, 96, 100], expenses: [25, 29, 33, 30, 38, 42, 36, 46, 49, 43, 54, 58] }
-        };
-
-        const formatDate = date => date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        const getRange = period => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const start = new Date(today);
-            const end = new Date(today);
-            if (period === 'week') {
-                start.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-                end.setDate(start.getDate() + 6);
-            } else if (period === 'month') {
-                start.setDate(1);
-                end.setMonth(end.getMonth() + 1, 0);
-            } else if (period === 'quarter') {
-                const quarterMonth = Math.floor(today.getMonth() / 3) * 3;
-                start.setMonth(quarterMonth, 1);
-                end.setMonth(quarterMonth + 3, 0);
-            } else if (period === 'year') {
-                start.setMonth(0, 1);
-                end.setMonth(11, 31);
-            }
-            return period === 'today' ? formatDate(today) : `${formatDate(start)} – ${formatDate(end)}`;
-        };
-
-        report.querySelectorAll('[data-period]').forEach(button => {
-            button.addEventListener('click', () => {
-                const period = button.dataset.period;
-                report.querySelectorAll('[data-period]').forEach(tab => {
-                    const selected = tab === button;
-                    tab.classList.toggle('active', selected);
-                    tab.setAttribute('aria-pressed', String(selected));
-                });
-                report.querySelector('#rp-period-label').textContent = getRange(period);
-                const sample = chartSamples[period];
-                const revenueBars = report.querySelector('#rp-revenue-bars');
-                const expenseBars = report.querySelector('#rp-expense-bars');
-                const barLabels = report.querySelector('#rp-bar-labels');
-                revenueBars.replaceChildren();
-                expenseBars.replaceChildren();
-                barLabels.replaceChildren();
-                const plotLeft = 45, plotWidth = 620, plotBottom = 205, plotHeight = 180;
-                const slot = plotWidth / sample.labels.length;
-                const revenueWidth = Math.min(22, slot * .42);
-                const expenseWidth = Math.min(10, slot * .2);
-                sample.labels.forEach((label, index) => {
-                    const center = plotLeft + slot * (index + .5);
-                    const revenueHeight = plotHeight * sample.revenue[index] / 100;
-                    const expenseHeight = plotHeight * sample.expenses[index] / 100;
-                    const revenueBar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                    revenueBar.setAttribute('class', 'rp-bar');
-                    revenueBar.setAttribute('x', center - revenueWidth / 2 - expenseWidth / 2);
-                    revenueBar.setAttribute('y', plotBottom - revenueHeight);
-                    revenueBar.setAttribute('width', revenueWidth);
-                    revenueBar.setAttribute('height', revenueHeight);
-                    revenueBars.append(revenueBar);
-                    const expenseBar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                    expenseBar.setAttribute('class', 'rp-bar');
-                    expenseBar.setAttribute('x', center + revenueWidth / 2 - expenseWidth / 2);
-                    expenseBar.setAttribute('y', plotBottom - expenseHeight);
-                    expenseBar.setAttribute('width', expenseWidth);
-                    expenseBar.setAttribute('height', expenseHeight);
-                    expenseBars.append(expenseBar);
-                    if (sample.labels.length <= 7 || index % 2 === 0) {
-                        const axisLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        axisLabel.setAttribute('class', 'rp-axis');
-                        axisLabel.setAttribute('x', center - 10);
-                        axisLabel.setAttribute('y', '222');
-                        axisLabel.textContent = label;
-                        barLabels.append(axisLabel);
-                    }
-                });
-                Object.entries(sampleMetrics[period]).forEach(([key, value]) => {
-                    const metric = report.querySelector(`[data-metric="${key}"]`);
-                    if (metric) metric.textContent = value;
-                });
-                report.querySelectorAll('.rp-chip').forEach(chip => {
-                    if (['This year', '284 total', '284 events'].includes(chip.textContent.trim())) {
-                        chip.textContent = periodLabels[period];
-                    }
-                });
-                report.querySelectorAll('.rp-card-head p').forEach(caption => {
-                    if (caption.dataset.baseCaption === undefined) caption.dataset.baseCaption = caption.textContent;
-                    if (caption.textContent.includes('across the year')) caption.textContent = `Revenue and expenses · ${periodLabels[period].toLowerCase()}`;
-                    if (caption.textContent.includes('Monthly event volume')) caption.textContent = `Event volume · ${periodLabels[period].toLowerCase()}`;
-                });
-            });
-        });
-        report.querySelector('[data-period="year"]').click();
-    })();
-</script>
 {% endblock %}

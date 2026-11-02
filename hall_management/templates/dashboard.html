@@ -258,6 +258,10 @@
                         </td>
 						
                     </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="12" class="text-center" style="color: var(--gold-light);">No bookings created today.</td>
+                    </tr>
 					{% endfor %}
                     
                 </tbody>
