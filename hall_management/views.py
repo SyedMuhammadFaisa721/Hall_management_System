@@ -505,7 +505,7 @@ def Expenses_view(request):
         return render(request , 'expenses.html', context)
     else:
         expense_list = expense.objects.all().order_by('-expense_id')
-        paginator = Paginator(expense_list , 1)
+        paginator = Paginator(expense_list , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)   
     context ={
@@ -619,6 +619,41 @@ def Reports_view(request):
     card_payment_percentage = (card_payment/total_revenue) * 100 if total_revenue else 0
     online_payment_percentage = (online_payment/total_revenue) * 100 if total_revenue else 0
     bank_transfer_payment_percentage = (bank_transfer_payment/total_revenue) * 100 if total_revenue else 0
+
+    #Hall performance backend logic starts here
+    portion_a = newbooking.objects.filter(event_hall = 'A' , event_date__month = current__month , event_date__year = current_year).count()
+    portion_b = newbooking.objects.filter(event_hall = 'B' , event_date__month = current__month , event_date__year = current_year).count()
+    portion_c = newbooking.objects.filter(event_hall = 'C' , event_date__month = current__month , event_date__year = current_year).count()
+    portion_A_b = newbooking.objects.filter(event_hall = 'A and B' , event_date__month = current__month , event_date__year = current_year).count()
+    portion_b_c = newbooking.objects.filter(event_hall = 'B and C' , event_date__month = current__month , event_date__year = current_year).count()
+    portion_a_price = newbooking.objects.filter(event_hall = 'A' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    portion_b_price = newbooking.objects.filter(event_hall = 'B' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    portion_c_price = newbooking.objects.filter(event_hall = 'C' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    portion_A_b_price = newbooking.objects.filter(event_hall = 'A and B' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    portion_b_c_price = newbooking.objects.filter(event_hall = 'B and C' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    portion_a_display = format_report_payment_amount(portion_a_price)
+    portion_b_display = format_report_payment_amount(portion_b_price)
+    portion_c_display = format_report_payment_amount(portion_c_price)
+    portion_A_b_display = format_report_payment_amount(portion_A_b_price)
+    portion_b_c_display = format_report_payment_amount(portion_b_c_price)
+    portions = {
+        'Hall A': portion_a,
+        'Hall B': portion_b,
+        'Hall C': portion_c,
+        'Hall A and B': portion_A_b,
+        'Hall B and C': portion_b_c,
+    }
+    top_hall_portion = max(portions, key=portions.get) if portions else None
+
+    #Financial performance backend logic starts here
+    Received_amount = payment.objects.filter(payment_date__year = current_year , payment_status__in = ['paid' , 'Paid' , 'advance', 'Advance']).aggregate(Sum('amount'))['amount__sum'] or 0
+    Received_amount_display = format_report_payment_amount(Received_amount)
+    total_expenses = expense.objects.filter(date__year = current_year , status__in = ['paid' , 'Paid']).aggregate(Sum('amount'))['amount__sum'] or 0
+    total_expenses_display = format_report_payment_amount(total_expenses)
+    net_profit = Received_amount - total_expenses
+    net_profit_display = format_report_payment_amount(net_profit)
+    recieved_amount_percentage = (Received_amount/total_revenue) * 100 if total_revenue else 0
+
     # Compare monthly booking creation dates with scheduled event dates.
     month_labels = [date(current_year, month, 1).strftime('%B') for month in range(1, 13)]
     event_bookings_by_month = {
@@ -704,6 +739,23 @@ def Reports_view(request):
         'card_payment_percentage':card_payment_percentage,
         'online_payment_percentage':online_payment_percentage,
         'bank_transfer_payment_percentage':bank_transfer_payment_percentage,
+        #hall performance context data
+        'portion_a':portion_a,
+        'portion_b':portion_b,
+        'portion_c':portion_c,
+        'portion_A_b':portion_A_b,
+        'portion_b_c':portion_b_c,
+        'portion_a_display':portion_a_display,
+        'portion_b_display':portion_b_display,
+        'portion_c_display':portion_c_display,
+        'portion_A_b_display':portion_A_b_display,
+        'portion_b_c_display':portion_b_c_display,
+        'top_hall_portion':top_hall_portion,
+        #financial performance context data
+        'received_amount_display':Received_amount_display,
+        'total_expenses_display':total_expenses_display,
+        'net_profit_display':net_profit_display,
+        'recieved_amount_percentage':recieved_amount_percentage,
     }
     return render(request , 'reports.html' , context)
 

@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07090b">
   <meta name="description" content="HallMaster venue management dashboard">
+  <script>
+    try {
+      if (localStorage.getItem('hallmaster-theme') === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#F7F4ED');
+      }
+    } catch (error) {
+      console.error('Unable to read the saved HallMaster theme.', error);
+    }
+  </script>
   <title>{% block title %}Dashboard | HallMaster{% endblock %}</title>
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/hallmaster.css' %}?v=12">
@@ -106,6 +116,7 @@
   </script>
   <script defer src="{% static 'javascript/select-picker.js' %}?v=3"></script>
   {% endblock %}
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=11">
 </head>
 <body data-page="{% block page_key %}{{ page|default:'dashboard' }}{% endblock %}">
 {% block content %}
@@ -164,6 +175,16 @@
       </div>
       <div class="topbar-right">
         <label class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><input class="search-input" type="search" placeholder="Search anything..." autocomplete="off"><kbd class="shortcut">/</kbd></label>
+        <div class="theme-switch" role="group" aria-label="Color theme">
+          <button class="theme-choice" type="button" data-theme-choice="light" aria-pressed="false" aria-label="Switch to day theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+            <span>Day</span>
+          </button>
+          <button class="theme-choice" type="button" data-theme-choice="dark" aria-pressed="false" aria-label="Switch to night theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"/></svg>
+            <span>Night</span>
+          </button>
+        </div>
         <a class="icon-button notification-button" href="{% url 'notifications' %}" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12a2 2 0 0 0 4 0"/></svg><i class="notification-badge"></i></a>
         <a class="primary-button topbar-action" href="{% url 'bookingform' %}">+ New booking</a>
         <div class="profile-wrap"><button class="profile-button" type="button" aria-expanded="false" aria-controls="profileDropdown">
@@ -177,10 +198,11 @@
       </div>
     </header>
     <main class="content-wrap">{% block page_content %}{% endblock %}</main>
-    <footer class="app-footer"><span>HallMaster &copy; 2026 · Secure Venue Management System. Design and Develope by   <strong style="color: gold;">Syed Muhammad Faisal</strong></span>
+    <footer class="app-footer"><span>HallMaster &copy; 2026 · Secure Venue Management System. Design and Develope by   <a href="https://syedfaisal721.pythonanywhere.com/" target="_blank"><strong style="color: gold;">Syed Muhammad Faisal</strong></a></span>
     </footer>
   </div>
 </div>
 {% endblock %}
+<script src="{% static 'javascript/theme.js' %}?v=2"></script>
 </body>
 </html>

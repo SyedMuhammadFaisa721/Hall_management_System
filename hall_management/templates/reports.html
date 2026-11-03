@@ -471,22 +471,22 @@
       <div class="report-summary-strip">
         <div class="report-summary-item">
           <span>Booking value</span>
-          <strong>Rs 15.75M</strong>
-          <small>284 bookings</small>
+          <strong>Rs {{ total_payment_display }}</strong>
+          <small>{{ total_booking }} bookings</small>
         </div>
         <div class="report-summary-item">
           <span>Received amount</span>
-          <strong>Rs 12.40M</strong>
-          <small>78.7% collected</small>
+          <strong>Rs {{ received_amount_display }}</strong>
+          <small>{{ recieved_amount_percentage|floatformat:2 }} % collected</small>
         </div>
         <div class="report-summary-item">
           <span>Total expenses</span>
-          <strong>Rs 4.82M</strong>
+          <strong>Rs {{ total_expenses_display }}</strong>
           <small>Operating costs</small>
         </div>
         <div class="report-summary-item">
           <span>Net profit</span>
-          <strong>Rs 10.93M</strong>
+          <strong>Rs {{ net_profit_display }}</strong>
           <small>Before tax</small>
         </div>
       </div>
@@ -728,7 +728,7 @@
   <section class="report-section" id="report-halls" aria-labelledby="report-hall-title">
     <div class="report-section-heading">
       <div>
-        <h2 id="report-hall-title">Hall performance</h2>
+        <h2 id="report-hall-title">Hall performance of {{ current_month }} {{ current_year }}</h2>
         <p>Occupancy, booking volume and revenue by hall portion</p>
       </div>
     </div>
@@ -740,11 +740,11 @@
         </div>
         <div class="report-hall-stat">
           <span>Bookings by hall portions</span>
-          <strong>284</strong>
+          <strong>{{ booking_count }}</strong>
         </div>
         <div class="report-hall-stat">
           <span>Top portion by revenue</span>
-          <strong>Hall A</strong>
+          <strong>{{ top_hall_portion }}</strong>
         </div>
       </div>
       <div class="report-table-scroll">
@@ -761,39 +761,63 @@
           <tbody>
             <tr>
               <td><strong>Hall A</strong></td>
-              <td>126</td>
+              <td>{{ portion_a }}</td>
               <td>
                 <span class="report-occupancy">
                   81%
                   <span class="report-occupancy-track"><i style="width:81%"></i></span>
                 </span>
               </td>
-              <td>Rs 7.24M</td>
-              <td>Above average</td>
+              <td>Rs {{ portion_a_display }}</td>
+              <td>{% if portion_a > portion_b and portion_a > portion_c and portion_a > portion_A_b and portion_a > portion_b_c %}High performer{% elif portion_a > portion_b or portion_a > portion_c %}Average{% else %}Low performer{% endif %}</td>
             </tr>
             <tr>
               <td><strong>Hall B</strong></td>
-              <td>98</td>
+              <td>{{ portion_b }}</td>
               <td>
                 <span class="report-occupancy">
                   69%
                   <span class="report-occupancy-track"><i style="width:69%"></i></span>
                 </span>
               </td>
-              <td>Rs 5.18M</td>
-              <td>Steady</td>
+              <td>Rs {{ portion_b_display }}</td>
+              <td>{% if portion_b > portion_a and portion_b > portion_c and portion_b > portion_A_b and portion_b > portion_b_c %}High performer{% elif portion_b > portion_a or portion_b > portion_c %}Average{% else %}Low performer{% endif %}</td>
             </tr>
             <tr>
               <td><strong>Hall C</strong></td>
-              <td>60</td>
+              <td>{{ portion_c }}</td>
               <td>
                 <span class="report-occupancy">
                   61%
                   <span class="report-occupancy-track"><i style="width:61%"></i></span>
                 </span>
               </td>
-              <td>Rs 3.33M</td>
-              <td>Growth opportunity</td>
+              <td>Rs {{ portion_c_display }}</td>
+              <td>{% if portion_c > portion_a and portion_c > portion_b and portion_c > portion_A_b and portion_c > portion_b_c %}High performer{% elif portion_c > portion_a or portion_c > portion_b %}Average{% else %}Low performer{% endif %}</td>
+            </tr>
+            <tr>
+              <td><strong>Hall A and B Combined</strong></td>
+              <td>{{ portion_A_b }}</td>
+              <td>
+                <span class="report-occupancy">
+                  61%
+                  <span class="report-occupancy-track"><i style="width:61%"></i></span>
+                </span>
+              </td>
+              <td>Rs {{ portion_A_b_display }}</td>
+              <td>{% if portion_A_b > portion_a and portion_A_b > portion_b and portion_A_b > portion_c and portion_A_b > portion_b_c %}High performer{% elif portion_A_b > portion_a or portion_A_b > portion_c %}Average{% else %}Low performer{% endif %}</td>
+            </tr>
+            <tr>
+              <td><strong>Hall B and C Combined</strong></td>
+              <td>{{ portion_b_c }}</td>
+              <td>
+                <span class="report-occupancy">
+                  61%
+                  <span class="report-occupancy-track"><i style="width:61%"></i></span>
+                </span>
+              </td>
+              <td>Rs {{ portion_b_c_display }}</td>
+              <td>{% if portion_b_c > portion_a and portion_b_c > portion_b and portion_b_c > portion_c and portion_b_c > portion_A_b %}High performer{% elif portion_b_c > portion_a or portion_b_c > portion_c %}Average{% else %}Low performer{% endif %}</td>
             </tr>
           </tbody>
         </table>
@@ -873,17 +897,6 @@
       </div>
     </article>
   </section>
-
-  <details class="report-details">
-    <summary>About these report controls and sample figures</summary>
-    <p>
-      This page is a frontend preview. The figures, charts, hall portions and
-      customer profiles are illustrative demonstration values, not real
-      HallMaster records. The displayed reporting period is fixed to 2026; the
-      period controls and export buttons are disabled, and no files are
-      generated or downloaded.
-    </p>
-  </details>
 </div>
 
 {% endblock %}

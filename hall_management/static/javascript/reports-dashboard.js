@@ -15,19 +15,42 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   const chartData = JSON.parse(dataElement.textContent);
-  const colors = ['#F87171', '#6EA8FE'];
+  const getChartTheme = function () {
+    const light = document.documentElement.dataset.theme === 'light';
+    const rootStyle = getComputedStyle(document.documentElement);
+    const token = function (name) {
+      return rootStyle.getPropertyValue(name).trim();
+    };
 
-  new Chart(canvas, {
+    return light ? {
+      colors: [token('--red'), token('--blue')],
+      text: token('--text'),
+      muted: token('--muted'),
+      surface: token('--surface'),
+      border: token('--border-strong'),
+      grid: token('--border'),
+    } : {
+      colors: ['#F87171', '#6EA8FE'],
+      text: '#F4F1EA',
+      muted: '#8C959C',
+      surface: '#11161A',
+      border: 'rgba(225, 197, 142, 0.25)',
+      grid: 'rgba(255, 255, 255, 0.07)',
+    };
+  };
+  const initialTheme = getChartTheme();
+
+  const chart = new Chart(canvas, {
     type: 'line',
     data: {
       labels: chartData.labels,
       datasets: chartData.datasets.map(function (dataset, index) {
         return {
           ...dataset,
-          borderColor: colors[index],
-          backgroundColor: colors[index],
-          pointBackgroundColor: colors[index],
-          pointBorderColor: '#11161A',
+          borderColor: initialTheme.colors[index],
+          backgroundColor: initialTheme.colors[index],
+          pointBackgroundColor: initialTheme.colors[index],
+          pointBorderColor: initialTheme.surface,
           pointBorderWidth: 2,
           pointRadius: 3.5,
           pointHoverRadius: 6,
@@ -56,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
           position: 'top',
           align: 'center',
           labels: {
-            color: '#F4F1EA',
+            color: initialTheme.text,
             usePointStyle: true,
             pointStyle: 'circle',
             boxWidth: 8,
@@ -67,11 +90,11 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         tooltip: {
           enabled: true,
-          backgroundColor: 'rgba(14, 18, 22, 0.96)',
-          borderColor: 'rgba(225, 197, 142, 0.25)',
+          backgroundColor: initialTheme.surface,
+          borderColor: initialTheme.border,
           borderWidth: 1,
-          titleColor: '#F4F1EA',
-          bodyColor: '#C6CBD0',
+          titleColor: initialTheme.text,
+          bodyColor: initialTheme.muted,
           padding: 11,
           displayColors: true,
           titleFont: { family: 'DM Sans, sans-serif', size: 11, weight: '600' },
@@ -91,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
           grid: { display: false },
           border: { display: false },
           ticks: {
-            color: '#8C959C',
+            color: initialTheme.muted,
             minRotation: 45,
             maxRotation: 45,
             autoSkip: false,
@@ -101,9 +124,9 @@ document.addEventListener('DOMContentLoaded', function () {
         y: {
           beginAtZero: true,
           border: { display: false },
-          grid: { color: 'rgba(255, 255, 255, 0.07)', drawTicks: false },
+          grid: { color: initialTheme.grid, drawTicks: false },
           ticks: {
-            color: '#8C959C',
+            color: initialTheme.muted,
             precision: 0,
             padding: 9,
             font: { family: 'DM Sans, sans-serif', size: 9 },
@@ -111,11 +134,31 @@ document.addEventListener('DOMContentLoaded', function () {
           title: {
             display: true,
             text: 'Events / bookings',
-            color: '#8C959C',
+            color: initialTheme.muted,
             font: { family: 'DM Sans, sans-serif', size: 9 },
           },
         },
       },
     },
+  });
+
+  window.addEventListener('hallmaster:themechange', function () {
+    const theme = getChartTheme();
+    chart.data.datasets.forEach(function (dataset, index) {
+      dataset.borderColor = theme.colors[index];
+      dataset.backgroundColor = theme.colors[index];
+      dataset.pointBackgroundColor = theme.colors[index];
+      dataset.pointBorderColor = theme.surface;
+    });
+    chart.options.plugins.legend.labels.color = theme.text;
+    chart.options.plugins.tooltip.backgroundColor = theme.surface;
+    chart.options.plugins.tooltip.borderColor = theme.border;
+    chart.options.plugins.tooltip.titleColor = theme.text;
+    chart.options.plugins.tooltip.bodyColor = theme.muted;
+    chart.options.scales.x.ticks.color = theme.muted;
+    chart.options.scales.y.grid.color = theme.grid;
+    chart.options.scales.y.ticks.color = theme.muted;
+    chart.options.scales.y.title.color = theme.muted;
+    chart.update('none');
   });
 });
