@@ -567,15 +567,41 @@ def Reports_view(request):
     previous__month = previous_month_date.strftime('%B')
     current_year = today.year
     previous_year = current_year - 1
-    booking_count = newbooking.objects.filter(event_date__month=current__month, event_date__year=current_year).count()
-    bookingcount_previous = newbooking.objects.filter(event_date__month=previous_month, event_date__year=previous_month_date.year).count()
-    booking_created_count = newbooking.objects.filter(created_at__month=current__month, created_at__year=current_year).count()
-    booking_created_count_previous = newbooking.objects.filter(created_at__month=previous_month, created_at__year=previous_month_date.year).count()
-
     status_confirmed = ['confirmed', 'Confirmed', 'confirm', 'Confirm' , 'Comfirmed']
     status_advance = ['advance', 'Advance']
     status_pending = ['Pending', 'pending','unpaid','not paid' , 'Unpaid','Notpaid']
     status_cancelled = ['cancelled', 'Cancelled', 'Cancel', 'Cancel']
+    #Dashboard report backend logic starts here
+    booking_count = newbooking.objects.filter(event_date__month=current__month, event_date__year=current_year).count()
+    bookingcount_previous = newbooking.objects.filter(event_date__month=previous_month, event_date__year=previous_month_date.year).count()
+    if bookingcount_previous <= 0:
+        booking_count_percentage = 100
+    if booking_count <= 0:
+        booking_count_percentage = 0
+    else:
+        booking_count_percentage = ((booking_count - bookingcount_previous) / bookingcount_previous) * 100
+    booking_created_count = newbooking.objects.filter(created_at__month=current__month, created_at__year=current_year).count()
+    booking_created_count_previous = newbooking.objects.filter(created_at__month=previous_month, created_at__year=previous_month_date.year).count()
+    total_revenue_current_month = newbooking.objects.filter( event_date__month=current__month, event_date__year=current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    current_month_revenue_display = format_report_payment_amount(total_revenue_current_month)
+    previous_month_revenue = newbooking.objects.filter(event_date__month=previous_month, event_date__year=previous_month_date.year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    if previous_month_revenue == 0:
+        total_revenue_percentage = 100
+    elif total_revenue_current_month == 0:
+        total_revenue_percentage = 0
+    else:
+        total_revenue_percentage = ((total_revenue_current_month - previous_month_revenue) / previous_month_revenue) * 100 
+    status_confirm = ['confirmed', 'Confirmed', 'confirm', 'Confirm' , 'Comfirmed' , 'Advance' , 'advance']
+    received_payment_current_month = newbooking.objects.filter(status__in  =status_confirm, event_date__month=current__month, event_date__year=current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    received_payment_current_month_display = format_report_payment_amount(received_payment_current_month)
+    received_payment_percentage = (received_payment_current_month / total_revenue_current_month) * 100 if total_revenue_current_month else 0
+    current_month_expense = expense.objects.filter(date__month=current__month, date__year=current_year, status__in = ['Paid' ,'paid', 'advance']).aggregate(Sum('amount'))['amount__sum'] or 0
+    current_month_expense_display = format_report_payment_amount(current_month_expense)
+    net_profit_current_month = received_payment_current_month - current_month_expense
+    net_profit_current_month_display = format_report_payment_amount(net_profit_current_month)
+
+
+
     total_booking = newbooking.objects.filter(event_date__year = current_year).count()
     yearly_booking_confirm_count = newbooking.objects.filter(status__in = status_confirmed , event_date__year = current_year).count()
     yearly_booking_advance_count = newbooking.objects.filter(status__in = status_advance , event_date__year = current_year).count()
@@ -695,6 +721,13 @@ def Reports_view(request):
         'current_year': current_year,
         'previous_year': previous_year,
         'booking_count':booking_count,
+        'booking_count_percentage':booking_count_percentage,
+        'received_payment_current_month_display':received_payment_current_month_display,
+        'current_month_expense_display':current_month_expense_display,
+        'net_profit_current_month_display':net_profit_current_month_display,
+        'received_payment_percentage':received_payment_percentage,
+        'total_revenue_percentage':total_revenue_percentage,
+        'current_month_revenue_display':current_month_revenue_display,
         'bookingcount_previous':bookingcount_previous,
         'booking_created_count':booking_created_count,
         'booking_created_count_previous':booking_created_count_previous,

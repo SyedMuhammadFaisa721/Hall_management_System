@@ -104,14 +104,14 @@
     <div class="report-section-heading">
       <div>
         <h2 id="report-overview-title">Business overview</h2>
-        <p>At-a-glance performance for {{ current_year }}</p>
+        <p>At-a-glance performance for {{ current_month }} {{ current_year }}</p>
       </div>
       <span class="report-period-label">01 Jan 2026 – 31 Dec 2026</span>
     </div>
     <div class="report-kpis">
       <article class="report-kpi">
         <div class="report-kpi-top">
-          <span class="report-kpi-title">Total bookings</span>
+          <span class="report-kpi-title">Total bookings of {{ current_month }} {{ current_year }}</span>
           <span class="report-kpi-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="5" width="18" height="16" rx="2"/>
@@ -119,30 +119,42 @@
             </svg>
           </span>
         </div>
-        <strong class="report-kpi-value">{{ total_booking }}</strong>
-        <div class="report-kpi-foot"><span class="positive">↗ 8.2%</span> vs. previous year {{ previous_year }}</div>
+        <strong class="report-kpi-value">{{ booking_count }}</strong>
+        {% if booking_count_percentage == 0 %}
+         <div class="report-kpi-foot"><span class="positive" style="color: var(--gold-light);">{{ booking_count_percentage|floatformat:2 }}%</span> vs. previous month {{ previous__month }} {{ current_year }}</div>
+         {% elif booking_count_percentage > 0 %}
+         <div class="report-kpi-foot"><span class="positive">&uarr; {{ booking_count_percentage|floatformat:2 }}%</span> vs. previous month {{ previous__month }} {{ current_year }}</div>
+         {% elif booking_count_percentage < 0 %}
+         <div class="report-kpi-foot"><span class="positive" style="color: #F87171;">&darr; {{ booking_count_percentage|floatformat:2 }}%</span> vs. previous month {{ previous__month }} {{ current_year }}</div>
+        {% endif %}
         <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
           <path d="M1 20 12 16 22 17 32 10 43 12 54 5 65 2" fill="none" stroke="var(--gold-light)" stroke-width="1.7"/>
         </svg>
       </article>
       <article class="report-kpi">
         <div class="report-kpi-top">
-          <span class="report-kpi-title">Total revenue of {{ current_year }}</span>
+          <span class="report-kpi-title">Total revenue of {{ current_month }} {{ current_year }}</span>
           <span class="report-kpi-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2v20m5-15c0-2-2-3-5-3S7 5 7 7s2 3 5 4 5 2 5 4-2 4-5 4-5-2-5-4"/>
             </svg>
           </span>
         </div>
-        <strong class="report-kpi-value">Rs {{ total_payment_display }}</strong>
-        <div class="report-kpi-foot"><span class="positive">↗ 12.8%</span> vs. previous year {{ previous_year }}</div>
+        <strong class="report-kpi-value">Rs {{ current_month_revenue_display }}</strong>
+        {% if total_revenue_percentage == 0 %}
+         <div class="report-kpi-foot"><span class="positive" style="color: var(--gold-light);">{{ total_revenue_percentage|floatformat:2 }}%</span> vs. previous month {{ previous__month }} {{ current_year }}</div>
+         {% elif total_revenue_percentage > 0 %}
+         <div class="report-kpi-foot"><span class="positive">&uarr; {{ total_revenue_percentage|floatformat:2 }}%</span> vs. previous month {{ previous__month }} {{ current_year }}</div>
+         {% elif total_revenue_percentage < 0 %}
+         <div class="report-kpi-foot"><span class="positive" style="color: #F87171;">&darr; {{ total_revenue_percentage|floatformat:2 }}%</span> vs. previous month {{ previous__month }} {{ current_year }}</div>
+        {% endif %}
         <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
           <path d="M1 21 12 15 22 17 32 12 43 8 54 9 65 2" fill="none" stroke="var(--green)" stroke-width="1.7"/>
         </svg>
       </article>
       <article class="report-kpi">
         <div class="report-kpi-top">
-          <span class="report-kpi-title">Received payments</span>
+          <span class="report-kpi-title">Received payments of {{ current_month }} {{ current_year }}</span>
           <span class="report-kpi-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2.5" y="5" width="19" height="14" rx="2"/>
@@ -150,22 +162,37 @@
             </svg>
           </span>
         </div>
-        <strong class="report-kpi-value">Rs 12.40M</strong>
-        <div class="report-kpi-foot"><span class="positive">78.7%</span> of booking value collected</div>
+        <strong class="report-kpi-value">Rs {{ received_payment_current_month_display }}</strong>
+        <div class="report-kpi-foot"><span class="positive">{{ received_payment_percentage|floatformat:2 }}%</span> of booking value collected</div>
         <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
           <path d="M1 20 12 19 22 12 32 14 43 8 54 6 65 3" fill="none" stroke="var(--blue)" stroke-width="1.7"/>
         </svg>
       </article>
       <article class="report-kpi">
         <div class="report-kpi-top">
-          <span class="report-kpi-title">Net profit</span>
+          <span class="report-kpi-title">Total Expenses of  {{ current_month }} {{ current_year }}</span>
           <span class="report-kpi-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 19V5m0 14h18M7 15l4-4 3 2 5-7m-4 0h4v4"/>
             </svg>
           </span>
         </div>
-        <strong class="report-kpi-value">Rs 10.93M</strong>
+        <strong class="report-kpi-value">Rs {{ current_month_expense_display }}</strong>
+        <div class="report-kpi-foot"><span class="positive">69.4%</span> vs previous month {{ previous__month }} {{ current_year }}</div>
+        <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
+          <path d="M1 20 12 15 22 17 32 11 43 12 54 5 65 2" fill="none" stroke="var(--orange)" stroke-width="1.7"/>
+        </svg>
+      </article>
+      <article class="report-kpi">
+        <div class="report-kpi-top">
+          <span class="report-kpi-title">Net profit of {{ current_month }} {{ current_year }}</span>
+          <span class="report-kpi-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 19V5m0 14h18M7 15l4-4 3 2 5-7m-4 0h4v4"/>
+            </svg>
+          </span>
+        </div>
+        <strong class="report-kpi-value">Rs {{ net_profit_current_month_display }}</strong>
         <div class="report-kpi-foot"><span class="positive">69.4%</span> margin on revenue</div>
         <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
           <path d="M1 20 12 15 22 17 32 11 43 12 54 5 65 2" fill="none" stroke="var(--orange)" stroke-width="1.7"/>
@@ -392,7 +419,7 @@
           <h3>Revenue · expenses · profit</h3>
           <p>Monthly financial comparison · illustrative Rs values</p>
         </div>
-        <span class="report-chip">Rs 15.75M revenue</span>
+        <span class="report-chip">{{ current_year }}</span>
       </div>
       <div class="report-chart report-financial-chart" role="img" aria-label="Illustrative monthly comparison chart for revenue, expenses and profit">
         <svg viewBox="0 0 900 225" preserveAspectRatio="none" aria-hidden="true">
