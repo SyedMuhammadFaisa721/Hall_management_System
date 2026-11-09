@@ -186,7 +186,7 @@
                     <h2>Upcoming bookings</h2>
                     <p>Next events at your venue</p>
                 </div>
-                <a class="section-link" href="/bookings/">View all</a>
+                <a class="section-link" href="{% url 'availability' %}#upcoming-title">View all</a>
             </div>
             <div class="booking-list">
                 {% for event in upcoming_event %}
@@ -198,6 +198,8 @@
                 </span>
                     <span class="status {{ event.status|lower }}">{% if event.status|lower == 'confrimed' %}Confirmed{% else %}{{ event.status|title }}{% endif %}</span>
                 </article>
+                {% empty %}
+                <p class="text-center" style="min-height: 120px; display: grid; place-items: center; margin: 0; color: var(--gold-light);">No upcoming bookings.</p>
                 {% endfor %}
             </div>
         </section>
@@ -241,7 +243,13 @@
                         <td>{{ booking.event_date }}</td>
                         <td>{{ booking.event_time }}</td>
                         <td>{{ booking.event_guest }}</td>
-                        <td>{{ booking.event_hall }}</td>
+                        <td>
+                         {% for hall in booking.event_hall.all %}
+                         {{ hall.portion_name }}{% if not forloop.last %}, {% endif %}
+                         {% empty %}
+                         No hall selected
+                         {% endfor %}
+                        </td>
                         <td class="cell-primary">RS {{ booking.hall_price }}</td>
                         <td>{{ booking.created_at }}</td>
                         <td><span class="status {{ booking.payment_status|lower }}">{{ booking.payment_status }}</span></td>

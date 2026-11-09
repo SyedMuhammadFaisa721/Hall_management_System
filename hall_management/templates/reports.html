@@ -6,37 +6,32 @@
 {% load static %}
 {% block page_scripts %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'css/reports-dashboard.css' %}?v=2">
+<link rel="stylesheet" href="{% static 'css/reports-dashboard.css' %}?v=5">
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script defer src="{% static 'javascript/reports-dashboard.js' %}?v=2"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+<script defer src="{% static 'javascript/reports-dashboard.js' %}?v=6"></script>
 {% endblock %}
 
 {% block page_content %}
 <div id="hallmaster-reports" class="reports-page is-comparing">
   <div class="report-export-row">
     <div class="report-export-actions" aria-label="Export report">
-      <button class="report-export-button" type="button" title="Preview only; no file is generated." disabled>
+      <button class="report-export-button" type="button" data-report-export="PDF" title="Download this report as a PDF.">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M6 3h9l4 4v14H6z"/>
           <path d="M14 3v5h5M9 14h6m-6 3h6"/>
         </svg>
-        Export PDF
+        <span>Export PDF</span>
       </button>
-      <button class="report-export-button" type="button" title="Preview only; no file is generated." disabled>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M6 3h9l4 4v14H6z"/>
-          <path d="M14 3v5h5M9 13l4 5m0-5-4 5"/>
-        </svg>
-        Export Excel
-      </button>
-      <button class="report-export-button" type="button" title="Preview only; no file is generated." disabled>
+      <a class="report-export-button" data-report-export="CSV" href="{% url 'export_reports_csv' %}" title="Download report data as CSV.">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M6 3h9l4 4v14H6z"/>
           <path d="M14 3v5h5M9 13h6m-6 4h6"/>
         </svg>
         Export CSV
-      </button>
+      </a>
     </div>
+    <p class="report-export-error" id="report-export-error" role="status" hidden></p>
   </div>
   <header class="report-heading">
     <div class="report-heading-brand">
@@ -98,7 +93,7 @@
     <a href="#report-payments">Payments</a>
     <a href="#report-expenses">Expenses</a>
     <a href="#report-halls">Hall performance</a>
-    <a href="#report-customers">Customers</a>
+    <a href="#report-staff">Staff salary</a>
   </nav>
   <section class="report-section" id="report-overview" aria-labelledby="report-overview-title">
     <div class="report-section-heading">
@@ -178,7 +173,13 @@
           </span>
         </div>
         <strong class="report-kpi-value">Rs {{ current_month_expense_display }}</strong>
-        <div class="report-kpi-foot"><span class="positive">69.4%</span> vs previous month {{ previous__month }} {{ current_year }}</div>
+        {% if current_month_expense_percentage == 0 %}
+         <div class="report-kpi-foot"><span class="positive" style="color: var(--gold-light);">{{ current_month_expense_percentage|floatformat:2 }}%</span> vs. previous month {{ previous__month }} {{ current_year }}</div>
+         {% elif current_month_expense_percentage > 0 %}
+         <div class="report-kpi-foot"><span class="positive">&uarr; {{ current_month_expense_percentage|floatformat:2 }}%</span> vs. previous month {{ previous__month }} {{ current_year }}</div>
+         {% elif current_month_expense_percentage < 0 %}
+         <div class="report-kpi-foot"><span class="positive" style="color: #F87171;">&darr; {{ current_month_expense_percentage|floatformat:2 }}%</span> vs. previous month {{ previous__month }} {{ current_year }}</div>
+        {% endif %}
         <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
           <path d="M1 20 12 15 22 17 32 11 43 12 54 5 65 2" fill="none" stroke="var(--orange)" stroke-width="1.7"/>
         </svg>
@@ -193,7 +194,7 @@
           </span>
         </div>
         <strong class="report-kpi-value">Rs {{ net_profit_current_month_display }}</strong>
-        <div class="report-kpi-foot"><span class="positive">69.4%</span> margin on revenue</div>
+        <div class="report-kpi-foot"><span class="positive">{{ protif_margin|floatformat:2 }}%</span> margin on revenue</div>
         <svg class="report-spark" viewBox="0 0 66 24" aria-hidden="true">
           <path d="M1 20 12 15 22 17 32 11 43 12 54 5 65 2" fill="none" stroke="var(--orange)" stroke-width="1.7"/>
         </svg>
@@ -271,7 +272,7 @@
           <span class="report-chip">{{ booking_count }} total</span>
         </div>
         <div class="report-donut-layout report-monthly-status-layout">
-          <div class="report-donut" role="img" aria-label="Illustrative booking status: 62 percent confirmed, 17 percent pending, 11 percent cancelled, 10 percent other">
+          <div class="report-donut" role="img" aria-label="Booking status for {{ current_month }} {{ current_year }}" style="background: {{ monthly_booking_status_donut }};">
             <div class="report-donut-center"><strong>{{ booking_count }}</strong><span>Bookings</span></div>
           </div>
           <div class="report-legend-list report-yearly-status-list">
@@ -280,26 +281,13 @@
               <span>Booking number</span>
               <span>Percentage</span>
             </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#55c58a"></i>Confirmed</span>
-              <b>{{ booking_confirm_count }}</b>
-              <b>{{ confirm_booking_precentage|floatformat:2 }}%</b>
+            {% for segment in monthly_booking_status_segments %}
+            <div class="report-legend-row" data-share="{{ segment.percentage }}">
+              <span><i style="--legend-color:{{ segment.color }}"></i>{{ segment.label }}</span>
+              <b>{{ segment.count }}</b>
+              <b>{{ segment.percentage|floatformat:2 }}%</b>
             </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#e1c58e"></i>Pending</span>
-              <b>{{ booking_pending_count }}</b>
-              <b>{{ pending_booking_precentage|floatformat:2 }}%</b>
-            </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#F87171"></i>Cancelled</span>
-              <b>{{ booking_cancelled_count }}</b>
-              <b>{{ canceled_booking_precentage|floatformat:2 }}%</b>
-            </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#8299bd"></i>Advance</span>
-              <b>{{ booking_advance_count }}</b>
-              <b>{{ advance_booking_precentage|floatformat:2 }}%</b>
-            </div>
+            {% endfor %}
           </div>
         </div>
       </article>
@@ -323,7 +311,7 @@
           <span class="report-chip">{{ current_year }}</span>
         </div>
         <div class="report-donut-layout">
-          <div class="report-donut" role="img" aria-label="Current year booking status chart placeholder" style>
+          <div class="report-donut" role="img" aria-label="Booking status for {{ current_year }}" style="background: {{ yearly_booking_status_donut }};">
             <div class="report-donut-center">
               <strong>{{ total_booking }}</strong>
               <span>Bookings</span>
@@ -335,26 +323,13 @@
               <span>Booking number</span>
               <span>Percentage</span>
             </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#55c58a"></i>Confirmed</span>
-              <b>{{ yearly_booking_confirm_count }}</b>
-              <b>{{ yearly_confirm_booking_precentage|floatformat:1 }}%</b>
+            {% for segment in yearly_booking_status_segments %}
+            <div class="report-legend-row" data-share="{{ segment.percentage }}">
+              <span><i style="--legend-color:{{ segment.color }}"></i>{{ segment.label }}</span>
+              <b>{{ segment.count }}</b>
+              <b>{{ segment.percentage|floatformat:1 }}%</b>
             </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#e1c58e"></i>Pending</span>
-              <b>{{ yearly_booking_pending_count }}</b>
-              <b>{{ yearly_pending_booking_precentage|floatformat:1 }}%</b>
-            </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#F87171"></i>Cancelled</span>
-              <b>{{ yearly_booking_cancelled_count }}</b>
-              <b>{{ yearly_canceled_booking_precentage|floatformat:1 }}%</b>
-            </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#8299bd"></i>Advance</span>
-              <b>{{ yearly_booking_advance_count }}</b>
-              <b>{{ yearly_advance_booking_precentage|floatformat:1 }}%</b>
-            </div>
+            {% endfor %}
           </div>
         </div>
       </article>
@@ -368,7 +343,7 @@
           <span class="report-chip">{{ previous_year }}</span>
         </div>
         <div class="report-donut-layout">
-          <div class="report-donut" role="img" aria-label="Previous year booking status chart placeholder">
+          <div class="report-donut" role="img" aria-label="Booking status for {{ previous_year }}" style="background: {{ previous_year_booking_status_donut }};">
             <div class="report-donut-center">
               <strong>{{ previous_yearly_booking_count }}</strong>
               <span>Bookings</span>
@@ -380,26 +355,13 @@
               <span>Booking number</span>
               <span>Percentage</span>
             </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#55c58a"></i>Confirmed</span>
-              <b>{{ previous_yearly_booking_confirm_count }}</b>
-              <b>{{ previous_yearly_confirm_booking_precentage|floatformat:1 }}%</b>
+            {% for segment in previous_year_booking_status_segments %}
+            <div class="report-legend-row" data-share="{{ segment.percentage }}">
+              <span><i style="--legend-color:{{ segment.color }}"></i>{{ segment.label }}</span>
+              <b>{{ segment.count }}</b>
+              <b>{{ segment.percentage|floatformat:1 }}%</b>
             </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#e1c58e"></i>Pending</span>
-              <b>{{ previous_yearly_booking_pending_count }}</b>
-              <b>{{ previous_yearly_pending_booking_precentage|floatformat:1 }}%</b>
-            </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#F87171"></i>Cancelled</span>
-              <b>{{ previous_yearly_booking_cancelled_count }}</b>
-              <b>{{ previous_yearly_canceled_booking_precentage|floatformat:1 }}%</b>
-            </div>
-            <div class="report-legend-row">
-              <span><i style="--legend-color:#8299bd"></i>Advance</span>
-              <b>{{ previous_yearly_booking_advance_count }}</b>
-              <b>{{ previous_yearly_advance_booking_precentage|floatformat:1 }}%</b>
-            </div>
+            {% endfor %}
           </div>
         </div>
       </article>
@@ -417,82 +379,40 @@
       <div class="report-card-heading">
         <div>
           <h3>Revenue · expenses · profit</h3>
-          <p>Monthly financial comparison · illustrative Rs values</p>
+          <p>Annual received payments and net profit use the left scale; paid expenses use the right scale.</p>
         </div>
-        <span class="report-chip">{{ current_year }}</span>
+        <span class="report-chip">{{ financial_year_start }}–{{ current_year }}</span>
       </div>
-      <div class="report-chart report-financial-chart" role="img" aria-label="Illustrative monthly comparison chart for revenue, expenses and profit">
-        <svg viewBox="0 0 900 225" preserveAspectRatio="none" aria-hidden="true">
-          <line class="report-gridline" x1="48" y1="22" x2="890" y2="22"/>
-          <line class="report-gridline" x1="48" y1="66" x2="890" y2="66"/>
-          <line class="report-gridline" x1="48" y1="110" x2="890" y2="110"/>
-          <line class="report-gridline" x1="48" y1="154" x2="890" y2="154"/>
-          <line class="report-gridline" x1="48" y1="198" x2="890" y2="198"/>
-          <text class="report-axis" x="3" y="26">2.0M</text>
-          <text class="report-axis" x="3" y="70">1.5M</text>
-          <text class="report-axis" x="3" y="114">1.0M</text>
-          <text class="report-axis" x="3" y="158">0.5M</text>
-          <g fill="#c9a96e">
-            <rect x="76" y="119" width="18" height="79" rx="3">
-              <title>January revenue sample: Rs 900K</title>
-            </rect>
-            <rect x="145" y="108" width="18" height="90" rx="3"/>
-            <rect x="214" y="99" width="18" height="99" rx="3"/>
-            <rect x="283" y="103" width="18" height="95" rx="3"/>
-            <rect x="352" y="90" width="18" height="108" rx="3"/>
-            <rect x="421" y="77" width="18" height="121" rx="3"/>
-            <rect x="490" y="84" width="18" height="114" rx="3"/>
-            <rect x="559" y="68" width="18" height="130" rx="3"/>
-            <rect x="628" y="60" width="18" height="138" rx="3"/>
-            <rect x="697" y="65" width="18" height="133" rx="3"/>
-            <rect x="766" y="48" width="18" height="150" rx="3"/>
-            <rect x="835" y="34" width="18" height="164" rx="3"/>
-          </g>
-          <g fill="#8298b0">
-            <rect x="98" y="162" width="10" height="36" rx="2"/>
-            <rect x="167" y="158" width="10" height="40" rx="2"/>
-            <rect x="236" y="154" width="10" height="44" rx="2"/>
-            <rect x="305" y="158" width="10" height="40" rx="2"/>
-            <rect x="374" y="149" width="10" height="49" rx="2"/>
-            <rect x="443" y="145" width="10" height="53" rx="2"/>
-            <rect x="512" y="151" width="10" height="47" rx="2"/>
-            <rect x="581" y="139" width="10" height="59" rx="2"/>
-            <rect x="650" y="136" width="10" height="62" rx="2"/>
-            <rect x="719" y="141" width="10" height="57" rx="2"/>
-            <rect x="788" y="129" width="10" height="69" rx="2"/>
-            <rect x="857" y="122" width="10" height="76" rx="2"/>
-          </g>
-          <g fill="#55c58a">
-            <rect x="111" y="132" width="10" height="66" rx="2"><title>January profit sample</title></rect>
-            <rect x="180" y="123" width="10" height="75" rx="2"><title>February profit sample</title></rect>
-            <rect x="249" y="116" width="10" height="82" rx="2"><title>March profit sample</title></rect>
-            <rect x="318" y="121" width="10" height="77" rx="2"><title>April profit sample</title></rect>
-            <rect x="387" y="108" width="10" height="90" rx="2"><title>May profit sample</title></rect>
-            <rect x="456" y="96" width="10" height="102" rx="2"><title>June profit sample</title></rect>
-            <rect x="525" y="102" width="10" height="96" rx="2"><title>July profit sample</title></rect>
-            <rect x="594" y="86" width="10" height="112" rx="2"><title>August profit sample</title></rect>
-            <rect x="663" y="78" width="10" height="120" rx="2"><title>September profit sample</title></rect>
-            <rect x="732" y="84" width="10" height="114" rx="2"><title>October profit sample</title></rect>
-            <rect x="801" y="67" width="10" height="131" rx="2"><title>November profit sample</title></rect>
-            <rect x="870" y="52" width="10" height="146" rx="2"><title>December profit sample</title></rect>
-          </g>
-          <text class="report-axis" x="78" y="216">Jan</text>
-          <text class="report-axis" x="147" y="216">Feb</text>
-          <text class="report-axis" x="216" y="216">Mar</text>
-          <text class="report-axis" x="285" y="216">Apr</text>
-          <text class="report-axis" x="354" y="216">May</text>
-          <text class="report-axis" x="423" y="216">Jun</text>
-          <text class="report-axis" x="492" y="216">Jul</text>
-          <text class="report-axis" x="561" y="216">Aug</text>
-          <text class="report-axis" x="630" y="216">Sep</text>
-          <text class="report-axis" x="699" y="216">Oct</text>
-          <text class="report-axis" x="768" y="216">Nov</text>
-          <text class="report-axis" x="837" y="216">Dec</text>
+      {# START: Backend-driven annual revenue, expense and profit chart. #}
+      <div class="report-chart report-financial-chart" role="img" aria-label="Annual received payments and net profit use the left scale; paid expenses use the right scale from {{ financial_year_start }} through {{ current_year }}">
+        <svg viewBox="0 0 940 225" preserveAspectRatio="none" aria-hidden="true">
+          {% for tick in financial_axis_ticks %}
+          <line class="report-gridline" x1="48" y1="{{ tick.y }}" x2="830" y2="{{ tick.y }}"/>
+          <text class="report-axis" x="3" y="{{ tick.label_y }}">{{ tick.label }}</text>
+          {% endfor %}
+          {% for tick in financial_expense_axis_ticks %}
+          <text class="report-axis" x="840" y="{{ tick.label_y }}">{{ tick.label }}</text>
+          {% endfor %}
+          <text class="report-axis report-chart-axis-title" x="48" y="12">Revenue / profit (Rs)</text>
+          <text class="report-axis report-chart-axis-title" x="930" y="12" text-anchor="end">Expenses (Rs)</text>
+          {% for period in financial_periods %}
+          <rect x="{{ period.revenue_x }}" y="{{ period.revenue_y }}" width="28" height="{{ period.revenue_height }}" rx="3" fill="#c9a96e">
+            <title>{{ period.year }} received: Rs {{ period.revenue|floatformat:0|intcomma }}</title>
+          </rect>
+          <rect x="{{ period.expenses_x }}" y="{{ period.expenses_y }}" width="20" height="{{ period.expenses_height }}" rx="2" fill="#8298b0">
+            <title>{{ period.year }} paid expenses: Rs {{ period.expenses|floatformat:0|intcomma }}</title>
+          </rect>
+          <rect x="{{ period.profit_x }}" y="{{ period.profit_y }}" width="20" height="{{ period.profit_height }}" rx="2" fill="#55c58a">
+            <title>{{ period.year }} net profit: Rs {{ period.profit|floatformat:0|intcomma }}</title>
+          </rect>
+          <text class="report-axis" x="{{ period.label_x }}" y="216">{{ period.year }}</text>
+          {% endfor %}
         </svg>
       </div>
+      {# END: Backend-driven annual revenue, expense and profit chart. #}
       <div class="report-legend">
         <span><i style="--legend-color:var(--gold)"></i>Revenue</span>
-        <span><i style="--legend-color:var(--blue)"></i>Expenses</span>
+        <span><i style="--legend-color:var(--blue)"></i>Expenses (right scale)</span>
         <span><i style="--legend-color:var(--green)"></i>Profit</span>
       </div>
       <div class="report-summary-strip">
@@ -852,73 +772,57 @@
     </article>
   </section>
 
-  <section class="report-section" id="report-customers" aria-labelledby="report-customer-title">
+  <section class="report-section" id="report-staff" aria-labelledby="report-staff-title">
     <div class="report-section-heading">
       <div>
-        <h2 id="report-customer-title">Customer analytics</h2>
-        <p>Customer retention and highest booking value</p>
+        <h2 id="report-staff-title">Staff salary status</h2>
+        <p>Salary payment progress and status by staff category</p>
       </div>
     </div>
     <article class="report-card">
-      <div class="report-customer-summary">
+      <div class="report-staff-summary">
         <div>
-          <span>Total customers</span>
-          <strong>261</strong>
+          <span>Marked paid</span>
+          <strong>{{ staff_salary_paid_count }}</strong>
         </div>
         <div>
-          <span>New customers</span>
-          <strong>208</strong>
+          <span>Marked unpaid</span>
+          <strong>{{ staff_salary_unpaid_count }}</strong>
         </div>
         <div>
-          <span>Repeat customers</span>
-          <strong>53</strong>
+          <span>Payment completion</span>
+          <strong>{{ salary_completion_percentage|floatformat:0 }}%</strong>
         </div>
       </div>
       <div class="report-card-heading">
         <div>
-          <h3>Top customers</h3>
-          <p>Illustrative customer booking summary</p>
+          <h3>Salary status by category</h3>
+          <p>Staff records marked paid or unpaid; salary amounts are not stored.</p>
         </div>
-        <span class="report-chip">Sample profiles</span>
       </div>
       <div class="report-table-scroll">
-        <table class="report-customer-table">
+        <table class="report-staff-table">
           <thead>
             <tr>
-              <th>Customer</th>
-              <th>Bookings</th>
-              <th>Last event</th>
-              <th>Booking value</th>
+              <th>Category</th>
+              <th>Paid records</th>
+              <th>Unpaid records</th>
+              <th>Total records</th>
             </tr>
           </thead>
           <tbody>
+            {% for category in staff_salary_by_category %}
             <tr>
-              <td>
-                <span class="report-customer-avatar">AK</span>
-                <strong>Ayesha Khan</strong>
-              </td>
-              <td>6</td>
-              <td>Wedding reception</td>
-              <td>Rs 840,000</td>
+              <td><strong>{{ category.category|title }}</strong></td>
+              <td>{{ category.paid_count }}</td>
+              <td>{{ category.unpaid_count }}</td>
+              <td>{{ category.record_count }}</td>
             </tr>
+            {% empty %}
             <tr>
-              <td>
-                <span class="report-customer-avatar">UM</span>
-                <strong>Usman Malik</strong>
-              </td>
-              <td>4</td>
-              <td>Corporate dinner</td>
-              <td>Rs 620,000</td>
+              <td colspan="4"><span class="report-empty-state">No staff salary records to report.</span></td>
             </tr>
-            <tr>
-              <td>
-                <span class="report-customer-avatar">SR</span>
-                <strong>Sana Raza</strong>
-              </td>
-              <td>3</td>
-              <td>Engagement</td>
-              <td>Rs 475,000</td>
-            </tr>
+            {% endfor %}
           </tbody>
         </table>
       </div>

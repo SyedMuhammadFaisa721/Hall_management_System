@@ -1,6 +1,13 @@
 from django.db import models
 from datetime import datetime
 
+class Hall_portion(models.Model):
+     portion_name = models.CharField(max_length=10 , null=False)
+     portion_capacity = models.PositiveBigIntegerField()
+     portion_status = models.CharField(max_length=20 
+                                       , choices=[('Active','Active'), ('Inactive','Inactive')], default='Active')
+     def __str__(self):
+         return f'Portion: {self.portion_name}'
 class newbooking(models.Model):
     booking_id     = models.CharField(max_length=40 , primary_key=True, editable=False)
     created_at     = models.DateField(auto_now_add=True)
@@ -12,11 +19,13 @@ class newbooking(models.Model):
     event_type     = models.CharField(max_length=100)
     event_date     = models.DateField()
     event_guest    = models.IntegerField(null=False)
-    event_hall     = models.CharField(max_length=10)
+    event_hall     = models.ManyToManyField(Hall_portion , related_name='booked_halls')
     special_req    = models.CharField(max_length=500 , null= True)
     hall_price     = models.IntegerField(null=False)
     status         = models.CharField(max_length=20)
-    event_time     = models.CharField(max_length=8, null=True, default="00:00:00")
+    event_time     = models.CharField(max_length=8, 
+                                      choices=[('Day','Day'), ('Night','Night')],
+                                      default = 'Night')
     payment_status = models.CharField(max_length=20 , default="Pending")
     def save(self , *args ,**kwargs):
         if not self.booking_id:
@@ -91,6 +100,12 @@ class staff(models.Model):
     staff_nic_num   = models.CharField(max_length=16 , unique=True , null=False)
     staff_status    = models.CharField(max_length=10)
     staff_join_date = models.DateField(default=datetime.now)
+    category        = models.CharField(max_length=20 , default='worker')
+    Salary_status   = models.CharField(
+        max_length=20,
+        choices=[('Paid', 'Paid'), ('Unpaid', 'Unpaid')],
+        default='Unpaid',
+    )
     def __str__(self):
          return self.staff_id
 class InventoryCategory(models.Model):

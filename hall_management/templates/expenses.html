@@ -117,7 +117,7 @@
                             <td>{{ expense.date }}</td>
                             <td class="cell-primary">Rs {{ expense.amount|intword|intcomma }}</td>
                             <td>{{ expense.paid_by }}</td>
-                            <td><span class="status {{ expense.status }} ">{{ expense.status }}</span></td>
+                            <td><span class="status {{ expense.status|lower }} ">{{ expense.status }}</span></td>
                         </tr>
                         {% endfor %}
                     </tbody>

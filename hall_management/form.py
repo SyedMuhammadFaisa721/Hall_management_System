@@ -112,10 +112,39 @@ class new_payment(forms.ModelForm):
         self.fields['refference_num'].widget.attrs['maxlength'] = 40
         for field in self.fields.values():
             field.widget.attrs['class'] = 'payment-form-control'
-class new_inventory(forms.ModelForm) :
+class new_inventory(forms.ModelForm):
     class Meta:
         model = Inventory
         fields = "__all__"
+        widgets = {
+            'inventory_name': forms.TextInput(attrs={'class': 'input'}),
+            'category': forms.Select(attrs={'class': 'select'}),
+            'inventory_quantity': forms.NumberInput(attrs={'class': 'input inventory-quantity-input', 'min': 0}),
+            'available_quantity': forms.NumberInput(attrs={'class': 'input inventory-quantity-input', 'min': 0}),
+            'damage_quantity': forms.NumberInput(attrs={'class': 'input inventory-quantity-input', 'min': 0}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        total = cleaned_data.get('inventory_quantity')
+        available = cleaned_data.get('available_quantity')
+        damaged = cleaned_data.get('damage_quantity')
+
+        for field_name in ('inventory_quantity', 'available_quantity', 'damage_quantity'):
+            value = cleaned_data.get(field_name)
+            if value is not None and value < 0:
+                self.add_error(field_name, 'Quantity cannot be negative.')
+
+        if total is not None and available is not None and damaged is not None:
+            if available + damaged > total:
+                self.add_error(
+                    'damage_quantity',
+                    'Available and damaged quantities cannot exceed total quantity.',
+                )
+
+        return cleaned_data
+
+
 class new_inventory_category(forms.ModelForm):
     class Meta:
         model  = InventoryCategory

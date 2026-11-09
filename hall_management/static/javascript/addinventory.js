@@ -1,11 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('add-inventory-form');
   const total = document.getElementById('inventory-total');
   const available = document.getElementById('inventory-available');
   const damaged = document.getElementById('inventory-damaged');
   const name = document.getElementById('inventory-name');
   const category = document.getElementById('inventory-category');
-  const feedback = document.getElementById('inventory-feedback');
 
   function updatePreview() {
     const totalCount = Number(total.value) || 0;
@@ -22,12 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     damaged.setCustomValidity(hasOverflow ? 'Available and damaged quantities cannot exceed total quantity.' : '');
   }
 
-  form.addEventListener('input', updatePreview);
-  form.addEventListener('change', updatePreview);
-  form.addEventListener('submit', function (event) {
-    event.preventDefault();
-    updatePreview();
-    if (!form.reportValidity()) return;
-    feedback.textContent = 'Preview only: connect a backend to save this inventory item.';
-  });
+  document.getElementById('add-inventory-form').addEventListener('input', updatePreview);
+  document.getElementById('add-inventory-form').addEventListener('change', updatePreview);
+  updatePreview();
 });

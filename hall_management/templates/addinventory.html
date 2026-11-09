@@ -27,9 +27,22 @@
 			Back to inventory
 		</a>
 	</header>
+	   {% if messages %}
+        <div class="operation-form-feedback" role="status" aria-live="polite">
+        {% for message in messages %}
+        <p class="{{ message.tags }}">{{ message }}</p>
+        {% endfor %}
+        </div>
+        {% endif %}
 
 	<div class="operation-create-layout">
-		<form class="operation-form" id="add-inventory-form" novalidate>
+		<form class="operation-form" id="add-inventory-form" method="post">
+			{% csrf_token %}
+			{% if form.non_field_errors %}
+			<div class="operation-form-feedback inventory-field-error" role="alert">
+				{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+			</div>
+			{% endif %}
 			<section class="operation-form-section" aria-labelledby="inventory-item-title">
 				<div class="operation-section-heading">
 					<span class="operation-section-index">01</span>
@@ -41,17 +54,27 @@
 				<div class="operation-field-grid">
 					<label class="operation-field operation-field-wide">
 						<span>Item name <i>Required</i></span>
-						<input class="input" id="inventory-name" name="inventory_name" type="text" maxlength="20" placeholder="e.g. Banquet chair" required>
+						<input class="input" id="inventory-name" name="inventory_name" type="text" maxlength="20" placeholder="e.g. Banquet chair" required value="{{ form.inventory_name.value|default:'' }}" aria-invalid="{% if form.inventory_name.errors %}true{% else %}false{% endif %}" {% if form.inventory_name.errors %}aria-describedby="inventory-name-errors"{% endif %}>
 						<small>Keep the name short and easy to scan in the stock list.</small>
+						{% if form.inventory_name.errors %}
+						<ul class="inventory-field-error" id="inventory-name-errors" role="alert">
+							{% for error in form.inventory_name.errors %}<li>{{ error }}</li>{% endfor %}
+						</ul>
+						{% endif %}
 					</label>
 					<label class="operation-field operation-field-wide">
 						<span>Category <i>Required</i></span>
-						<select class="select" id="inventory-category" name="category" required>
-							<option value="" disabled selected>Select a category</option>
+						<select class="select" id="inventory-category" name="category" required aria-invalid="{% if form.category.errors %}true{% else %}false{% endif %}" {% if form.category.errors %}aria-describedby="inventory-category-errors"{% endif %}>
+							<option value="" disabled {% if not form.category.value %}selected{% endif %}>Select a category</option>
 							{% for categories in inventory_categories %}
-						    <option value="{{ categories.category_name }}">{{ categories.category_name }}</option>
+						    <option value="{{ categories.pk }}" {% if form.category.value|stringformat:"s" == categories.pk|stringformat:"s" %}selected{% endif %}>{{ categories.category_name }}</option>
 						    {% endfor %}
 						</select>
+						{% if form.category.errors %}
+						<ul class="inventory-field-error" id="inventory-category-errors" role="alert">
+							{% for error in form.category.errors %}<li>{{ error }}</li>{% endfor %}
+						</ul>
+						{% endif %}
 					</label>
 				</div>
 			</section>
@@ -67,15 +90,30 @@
 				<div class="operation-field-grid">
 					<label class="operation-field">
 						<span>Total quantity <i>Required</i></span>
-						<input class="input inventory-quantity-input" id="inventory-total" name="inventory_quantity" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
+						<input class="input inventory-quantity-input" id="inventory-total" name="inventory_quantity" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required value="{{ form.inventory_quantity.value|default:'' }}" aria-invalid="{% if form.inventory_quantity.errors %}true{% else %}false{% endif %}" {% if form.inventory_quantity.errors %}aria-describedby="inventory-total-errors"{% endif %}>
+						{% if form.inventory_quantity.errors %}
+						<ul class="inventory-field-error" id="inventory-total-errors" role="alert">
+							{% for error in form.inventory_quantity.errors %}<li>{{ error }}</li>{% endfor %}
+						</ul>
+						{% endif %}
 					</label>
 					<label class="operation-field">
 						<span>Available quantity <i>Required</i></span>
-						<input class="input inventory-quantity-input" id="inventory-available" name="available_quantity" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
+						<input class="input inventory-quantity-input" id="inventory-available" name="available_quantity" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required value="{{ form.available_quantity.value|default:'' }}" aria-invalid="{% if form.available_quantity.errors %}true{% else %}false{% endif %}" {% if form.available_quantity.errors %}aria-describedby="inventory-available-errors"{% endif %}>
+						{% if form.available_quantity.errors %}
+						<ul class="inventory-field-error" id="inventory-available-errors" role="alert">
+							{% for error in form.available_quantity.errors %}<li>{{ error }}</li>{% endfor %}
+						</ul>
+						{% endif %}
 					</label>
 					<label class="operation-field">
 						<span>Damaged quantity <i>Required</i></span>
-						<input class="input inventory-quantity-input" id="inventory-damaged" name="damage_quantity" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required>
+						<input class="input inventory-quantity-input" id="inventory-damaged" name="damage_quantity" type="number" min="0" step="1" inputmode="numeric" placeholder="0" required value="{{ form.damage_quantity.value|default:'' }}" aria-invalid="{% if form.damage_quantity.errors %}true{% else %}false{% endif %}" {% if form.damage_quantity.errors %}aria-describedby="inventory-damaged-errors"{% endif %}>
+						{% if form.damage_quantity.errors %}
+						<ul class="inventory-field-error" id="inventory-damaged-errors" role="alert">
+							{% for error in form.damage_quantity.errors %}<li>{{ error }}</li>{% endfor %}
+						</ul>
+						{% endif %}
 						<small>Available plus damaged cannot exceed total quantity.</small>
 					</label>
 				</div>
@@ -93,7 +131,6 @@
 					</button>
 				</div>
 			</div>
-			<p class="operation-form-feedback" id="inventory-feedback" role="status" aria-live="polite"></p>
 		</form>
 
 		<aside class="operation-summary-panel inventory-summary-panel" aria-label="Inventory quantity preview">
@@ -130,13 +167,6 @@
 				<span>Category</span>
 				<strong id="inventory-preview-category">Not selected</strong>
 			</div>
-			<div class="operation-preview-note">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-					<circle cx="12" cy="12" r="9"/>
-					<path d="M12 11v5m0-8h.01"/>
-				</svg>
-				<p>Frontend preview only. Stock counts are not saved yet.</p>
-			</div>
 		</aside>
 	</div>
 </div>
@@ -146,5 +176,5 @@
 <link rel="stylesheet" href="{% static 'css/operations.css' %}">
 <link rel="stylesheet" href="{% static 'css/addinventory.css' %}">
 {{ block.super }}
-<script defer src="{% static 'javascript/addinventory.js' %}"></script>
+<script defer src="{% static 'javascript/addinventory.js' %}?v=2"></script>
 {% endblock %}

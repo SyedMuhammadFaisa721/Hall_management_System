@@ -63,7 +63,7 @@
             
              <div class="toolbar-left">
                 <div class="toolbar-left">
-                    <form method="GET">
+                    <form class="staff-filters" method="GET">
                     <label class="sr-only" for="staff-search">Search staff</label>
                     <input
                         type="text"
@@ -81,6 +81,13 @@
                         <option value="Invited" {% if status_filter|lower == 'invited' %}selected{% endif %}>Invited</option>
                         <option value="Inactive" {% if status_filter|lower == 'inactive' %}selected{% endif %}>Inactive</option>
                     </select>
+                    <label class="sr-only" for="staff-status-filter">Filter by Category</label>
+                    <select class="select select-compact" id="staff-status-filter" name="status">
+                        <option value="" {% if not status_filter %}selected{% endif %}>All Category</option>
+                        <option value="Active" {% if status_filter|lower == 'active' %}selected{% endif %}>Waiter</option>
+                        <option value="Invited" {% if status_filter|lower == 'invited' %}selected{% endif %}>Security Guard</option>
+                        <option value="Inactive" {% if status_filter|lower == 'inactive' %}selected{% endif %}>Electricians</option>
+                    </select>
                     </form>
                 </div>
              </div>
@@ -91,10 +98,12 @@
                     <tr>
                         <th>NAME</th>
                         <th>EMAIL</th>
+                        <th>Category</th>
                         <th>PHONE</th>
                         <th>ROLE</th>
                         <th>JOINED</th>
                         <th>STATUS</th>
+                        <th>Salary Status</th>
                         <th>LAST ACTIVE</th>
                     </tr>
                 </thead>
@@ -103,10 +112,12 @@
                     <tr>
                         <td><span class="cell-primary">{{ staff.staff_name }}</span><span class="cell-sub">{{ staff.staff_id }}</span></td>
                         <td>{{ staff.staff_email }}</td>
+                        <td>{{ staff.category }}</td>
                         <td>{{ staff.staff_number }}</td>
                         <td>{{ staff.staff_role }}</td>
                         <td>{{ staff.staff_join_date }}</td>
                         <td><span class="status {{ staff.staff_status }}">{{ staff.staff_status|title }}</span></td>
+                        <td><span class="status {{ staff.Salary_status|lower }}">{{ staff.Salary_status|title }}</span></td>
                         <td>Now</td>
                     </tr>
                     {% endfor %}

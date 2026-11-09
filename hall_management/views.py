@@ -7,14 +7,15 @@ from django.views.decorators.http import require_POST
 from .form import hallmaster_user_creation, new_booking , new_expense ,new_inventory ,new_staff ,new_inventory_category, loginform , new_payment
 from django.views.generic import ListView
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db.models import Count, Q
-from django.db.models.functions import ExtractMonth
+from django.db.models.functions import ExtractMonth, ExtractYear
 from django.core.paginator import Paginator
-from .models import newbooking , staff , expense , Inventory, InventoryCategory , payment
+from .models import Hall_portion, newbooking , staff , expense , Inventory, InventoryCategory , payment
 from django.db.models import Sum ,Max 
 from datetime import date , datetime , timedelta
 import csv
+import math
 from django.utils import timezone
 
 def format_report_payment_amount(amount):
@@ -25,6 +26,52 @@ def format_report_payment_amount(amount):
         value = f"{amount / 1_000_000:.4f}".rstrip('0').rstrip('.')
         return f"{value}M"
     return f"{amount:,.4f}".rstrip('0').rstrip('.')
+
+
+def format_report_chart_axis_label(amount):
+    if amount == 0:
+        return '0'
+    for divisor, suffix in ((1_000_000_000, 'B'), (1_000_000, 'M'), (1_000, 'K')):
+        if abs(amount) >= divisor:
+            value = f"{amount / divisor:.1f}".rstrip('0').rstrip('.')
+            return f'{value}{suffix}'
+    return f'{amount:,.0f}'
+
+
+def build_booking_status_donut(total_count, status_counts):
+    status_colors = (
+        ('Confirmed', 'confirmed', '#55c58a'),
+        ('Pending', 'pending', '#e1c58e'),
+        ('Cancelled', 'cancelled', '#F87171'),
+        ('Advance', 'advance', '#8299bd'),
+    )
+    classified_count = sum(status_counts.values())
+    other_count = max(total_count - classified_count, 0)
+    segments = []
+    gradient_parts = []
+    current_count = 0
+
+    for label, key, color in status_colors + (('Other', 'other', '#9aa3ab'),):
+        count = other_count if key == 'other' else status_counts[key]
+        start = current_count * 100 / total_count if total_count else 0
+        current_count += count
+        end = current_count * 100 / total_count if total_count else 0
+        percentage = count * 100 / total_count if total_count else 0
+        segments.append({
+            'label': label,
+            'key': key,
+            'count': count,
+            'percentage': percentage,
+            'color': color,
+        })
+        if count:
+            gradient_parts.append(f'{color} {start:.4f}% {end:.4f}%')
+
+    gradient = (
+        f"conic-gradient({', '.join(gradient_parts)})"
+        if gradient_parts else 'conic-gradient(#d7dee5 0% 100%)'
+    )
+    return segments, gradient
 
 
 def log_in(request):
@@ -242,7 +289,127 @@ def export_booking_data(request):
     return response
 @login_required(login_url='login')
 def Availability_view(request):
-    return render(request , 'availability.html')
+    today = timezone.localdate()
+    current_month = today.strftime('%B')
+    current__month = today.month
+    previous_month_date = today.replace(day=1) - timedelta(days=1)
+    previous_month = previous_month_date.month
+    previous__month = previous_month_date.strftime('%B')
+    current_year = today.year
+    previous_year = current_year - 1
+    status_confirmed = ['confirmed', 'Confirmed', 'confirm', 'Confirm' , 'Comfirmed']
+    status_advance = ['advance', 'Advance']
+    status_pending = ['Pending', 'pending','unpaid','not paid' , 'Unpaid','Notpaid']
+    status_cancelled = ['cancelled', 'Cancelled', 'Cancel', 'Cancel']
+
+    #Upcoming events backend logic starts here:
+    upcoming_events = newbooking.objects.filter(event_date__gte = today).all()
+    paginator = Paginator(upcoming_events , 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    #card data backend logic starts here:
+    event_month = newbooking.objects.filter(event_date__month=current__month, event_date__year=current_year).count()
+    confirmed_event_month = newbooking.objects.filter(event_date__month=current__month, event_date__year=current_year, status__in=status_confirmed).count()
+    pending_event_month = newbooking.objects.filter(event_date__month=current__month, event_date__year=current_year, status__in=status_pending).count()
+    cancelled_event_month = newbooking.objects.filter(event_date__month=current__month, event_date__year=current_year, status__in=status_cancelled).count()
+    #available dates backend logic starts here:
+    month_start = today.replace(day=1)
+    next_month = (month_start + timedelta(days=32)).replace(day=1)
+    active_portion_ids = set(
+        Hall_portion.objects.filter(portion_status__iexact='Active').values_list('pk', flat=True)
+    )
+    booked_portions_by_date = {}
+    if active_portion_ids:
+        active_bookings = (
+            newbooking.objects.filter(
+                event_date__gte=today,
+                event_date__lt=next_month,
+                event_hall__portion_status__iexact='Active',
+            )
+            .exclude(
+                Q(status__iexact='cancel')
+                | Q(status__iexact='cancelled')
+                | Q(status__iexact='canceled')
+            )
+            .values_list('event_date', 'event_hall__pk')
+        )
+        for event_date, portion_id in active_bookings:
+            booked_portions_by_date.setdefault(event_date, set()).add(portion_id)
+
+    available_dates = sum(
+        1
+        for day_offset in range((next_month - today).days)
+        if active_portion_ids.difference(
+            booked_portions_by_date.get(today + timedelta(days=day_offset), set())
+        )
+    )
+    #logic ends here
+
+    context = {
+        'current_month': current_month,
+        'previous_month': previous__month,
+        'current_year': current_year,
+        'previous_year': previous_year,
+        'event_month': event_month,
+        'confirmed_event_month': confirmed_event_month,
+        'pending_event_month': pending_event_month,
+        'cancelled_event_month': cancelled_event_month,
+        'available_dates': available_dates,
+        'calendar_portions': list(Hall_portion.objects.order_by('portion_name').values('id', 'portion_name')),
+        # Upcoming events context starts here:
+        'page_obj':page_obj,
+    }
+    return render(request , 'availability.html' , context)
+
+
+@login_required(login_url='login')
+def Availability_events(request):
+    start_value = request.GET.get('start')
+    end_value = request.GET.get('end')
+    try:
+        start = date.fromisoformat(start_value)
+        end = date.fromisoformat(end_value)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Valid start and end dates are required.'}, status=400)
+
+    if start >= end:
+        return JsonResponse({'error': 'The end date must be after the start date.'}, status=400)
+
+    bookings = (
+        newbooking.objects.filter(event_date__gte=start, event_date__lt=end)
+        .prefetch_related('event_hall')
+        .order_by('event_date', 'event_time', 'booking_id')
+    )
+    events = []
+    for booking in bookings:
+        halls = [
+            {'id': hall.pk, 'name': hall.portion_name}
+            for hall in booking.event_hall.all()
+        ]
+        status = booking.status or 'Unknown'
+        events.append({
+            'id': booking.booking_id,
+            'title': booking.event_name,
+            'start': booking.event_date.isoformat(),
+            'extendedProps': {
+                'bookingId': booking.booking_id,
+                'customerName': booking.customer_name,
+                #'phoneNumber': booking.phone_number,
+                #'customerEmail': booking.customer_email,
+                #'eventType': booking.event_type,
+                'guestCount': booking.event_guest,
+                'eventTime': booking.event_time,
+                'halls': halls,
+                'hallPrice': booking.hall_price,
+                'specialRequest': booking.special_req or '',
+                'status': status,
+                #'paymentStatus': booking.payment_status,
+                'isCancelled': status.strip().lower() in {'cancel', 'cancelled', 'canceled'},
+            },
+        })
+
+    return JsonResponse({'events': events})
     
 @login_required(login_url='login')
 def Inventory_view(request):
@@ -250,9 +417,10 @@ def Inventory_view(request):
     inventory_categories = InventoryCategory.objects.all()
     total_inventory_num = Inventory.objects.all().count()
     available_inventory = Inventory.objects.aggregate(Sum('available_quantity'))['available_quantity__sum'] or 0
+    total_stock = Inventory.objects.aggregate(Sum('inventory_quantity'))['inventory_quantity__sum'] or 0
     total_category = InventoryCategory.objects.all().count()
     damage_inventory = Inventory.objects.aggregate(Sum('damage_quantity'))['damage_quantity__sum'] or 0
-    available_percentage = available_inventory / damage_inventory
+    available_percentage = available_inventory / total_stock * 100 if total_stock else 0
     search = request.GET.get('search' , "")
     if search:
         inventory_obj = Inventory.objects.filter(
@@ -279,8 +447,7 @@ def Inventory_view(request):
         total_inventory_num = Inventory.objects.all().count()
         available_inventory = Inventory.objects.aggregate(Sum('available_quantity'))['available_quantity__sum'] or 0
         total_category = Inventory.objects.aggregate(Sum('category'))['category__sum'] or 0
-        damage_inventory = Inventory.objects.aggregate(Sum('damage_quantity'))['damage_quantity__sum'] or 0
-        available_percentage = (available_inventory / damage_inventory)
+        available_percentage = available_inventory / total_stock * 100 if total_stock else 0
         paginator = Paginator(total_inventory , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -296,9 +463,7 @@ def Inventory_view(request):
             }
     return render(request , 'inventory.html' , context)
 
-@login_required(login_url='login')
-def Availability_view(request):
-    return render(request , 'availability.html')
+
 @login_required(login_url='login')
 def Customers_view(request):
     return render(request , 'customers.html')
@@ -464,10 +629,10 @@ def Expenses_view(request):
     yearly_expenses_previous = expense.objects.filter(date__year = previous_year , status__in = confirm_status).aggregate(Sum('amount'))['amount__sum'] or 0
     yearly_expenses_per = ((yearly_expenses-yearly_expenses_previous) / yearly_expenses_previous) * 100 or 0
     previous_month = current_month - 1
-    monthly_expenses = expense.objects.filter(date__month = current_month, date__year = current_year, status ='paid').aggregate(Sum('amount'))['amount__sum'] or 0
+    monthly_expenses = expense.objects.filter(date__month = current_month, date__year = current_year, status__in = confirm_status).aggregate(Sum('amount'))['amount__sum'] or 0
     monthly_expenses_previous = expense.objects.filter(date__month = previous_month,date__year = current_year, status__in =confirm_status).aggregate(Sum('amount'))['amount__sum'] or 0
     monthly_expenses_per =(( monthly_expenses - monthly_expenses_previous) / monthly_expenses_previous) * 100 or 0
-    monthly_expenses_pending = expense.objects.filter(date__month = current_month, status ='pending').aggregate(Sum('amount'))['amount__sum'] or 0
+    monthly_expenses_pending = expense.objects.filter(date__month = current_month, status__in = pending_status).aggregate(Sum('amount'))['amount__sum'] or 0
     calculate_pending = expense.objects.filter(status__in = pending_status ).count()
     largest_expense = expense.objects.all().aggregate(Max('amount'))['amount__max'] or 0
     expense_list = expense.objects.all().order_by('-expense_id')
@@ -597,8 +762,34 @@ def Reports_view(request):
     received_payment_percentage = (received_payment_current_month / total_revenue_current_month) * 100 if total_revenue_current_month else 0
     current_month_expense = expense.objects.filter(date__month=current__month, date__year=current_year, status__in = ['Paid' ,'paid', 'advance']).aggregate(Sum('amount'))['amount__sum'] or 0
     current_month_expense_display = format_report_payment_amount(current_month_expense)
+    previous_month_expense = expense.objects.filter(date__month=previous_month, date__year=previous_month_date.year, status__in = ['Paid' ,'paid', 'advance']).aggregate(Sum('amount'))['amount__sum'] or 0
+    if previous_month_expense == 0:
+        current_month_expense_percentage = 100
+    elif current_month_expense == 0:
+        current_month_expense_percentage = -100
+    else:
+        current_month_expense_percentage = ((current_month_expense - previous_month_expense) / previous_month_expense) * 100
     net_profit_current_month = received_payment_current_month - current_month_expense
     net_profit_current_month_display = format_report_payment_amount(net_profit_current_month)
+    protif_margin = (net_profit_current_month / received_payment_current_month) * 100 if received_payment_current_month else 0
+
+    staff_salary_status = staff.objects.aggregate(
+        paid_count=Count('staff_id', filter=Q(Salary_status__iexact='Paid')),
+        unpaid_count=Count('staff_id', filter=Q(Salary_status__iexact='Unpaid')),
+    )
+    salary_record_count = staff_salary_status['paid_count'] + staff_salary_status['unpaid_count']
+    salary_completion_percentage = (
+        staff_salary_status['paid_count'] / salary_record_count * 100
+        if salary_record_count else 0
+    )
+    staff_salary_by_category = staff.objects.values('category').annotate(
+        paid_count=Count('staff_id', filter=Q(Salary_status__iexact='Paid')),
+        unpaid_count=Count('staff_id', filter=Q(Salary_status__iexact='Unpaid')),
+        record_count=Count(
+            'staff_id',
+            filter=Q(Salary_status__iexact='Paid') | Q(Salary_status__iexact='Unpaid'),
+        ),
+    ).order_by('category')
 
 
 
@@ -629,6 +820,33 @@ def Reports_view(request):
     advance_booking_precentage = (booking_advance_count/booking_count) * 100 if booking_count else 0
     pending_booking_precentage = (booking_pending_count/booking_count) * 100 if booking_count else 0
     canceled_booking_precentage = (booking_cancelled_count/booking_count) * 100 if booking_count else 0
+    monthly_booking_status_segments, monthly_booking_status_donut = build_booking_status_donut(
+        booking_count,
+        {
+            'confirmed': booking_confirm_count,
+            'pending': booking_pending_count,
+            'cancelled': booking_cancelled_count,
+            'advance': booking_advance_count,
+        },
+    )
+    yearly_booking_status_segments, yearly_booking_status_donut = build_booking_status_donut(
+        total_booking,
+        {
+            'confirmed': yearly_booking_confirm_count,
+            'pending': yearly_booking_pending_count,
+            'cancelled': yearly_booking_cancelled_count,
+            'advance': yearly_booking_advance_count,
+        },
+    )
+    previous_year_booking_status_segments, previous_year_booking_status_donut = build_booking_status_donut(
+        previous_yearly_booking_count,
+        {
+            'confirmed': previous_yearly_booking_confirm_count,
+            'pending': previous_yearly_booking_pending_count,
+            'cancelled': previous_yearly_booking_cancelled_count,
+            'advance': previous_yearly_booking_advance_count,
+        },
+    )
 
     #Payment method distribution count code
     total_revenue= payment.objects.filter(payment_date__year = current_year).aggregate(Sum('amount'))['amount__sum'] or 0
@@ -680,6 +898,152 @@ def Reports_view(request):
     net_profit_display = format_report_payment_amount(net_profit)
     recieved_amount_percentage = (Received_amount/total_revenue) * 100 if total_revenue else 0
 
+    # START: Build the annual financial report chart through the current year.
+    financial_year_start = current_year - 4
+    annual_received_amounts = {
+        row['year']: float(row['total'] or 0)
+        for row in payment.objects.filter(
+            payment_date__year__gte=financial_year_start,
+            payment_date__year__lte=current_year,
+        ).filter(
+            Q(payment_status__iexact='Paid') | Q(payment_status__iexact='Advance'),
+        ).annotate(
+            year=ExtractYear('payment_date'),
+        ).values('year').annotate(
+            total=Sum('amount'),
+        )
+    }
+    annual_paid_expenses = {
+        row['year']: row['total'] or 0
+        for row in expense.objects.filter(
+            date__year__gte=financial_year_start,
+            date__year__lte=current_year,
+            status__iexact='Paid',
+        ).annotate(
+            year=ExtractYear('date'),
+        ).values('year').annotate(
+            total=Sum('amount'),
+        )
+    }
+    financial_periods = [
+        {
+            'year': year,
+            'revenue': annual_received_amounts.get(year, 0),
+            'expenses': annual_paid_expenses.get(year, 0),
+        }
+        for year in range(financial_year_start, current_year + 1)
+    ]
+    for period in financial_periods:
+        period['profit'] = period['revenue'] - period['expenses']
+
+    financial_values = [
+        value
+        for period in financial_periods
+        for value in (period['revenue'], period['profit'])
+    ]
+    financial_minimum = min([0, *financial_values])
+    financial_maximum = max([0, *financial_values])
+    raw_axis_step = (financial_maximum - financial_minimum) / 4
+    if raw_axis_step:
+        axis_magnitude = 10 ** math.floor(math.log10(raw_axis_step))
+        normalized_axis_step = raw_axis_step / axis_magnitude
+        if normalized_axis_step <= 1:
+            financial_axis_step = axis_magnitude
+        elif normalized_axis_step <= 2:
+            financial_axis_step = 2 * axis_magnitude
+        elif normalized_axis_step <= 5:
+            financial_axis_step = 5 * axis_magnitude
+        else:
+            financial_axis_step = 10 * axis_magnitude
+    else:
+        financial_axis_step = 1
+
+    financial_axis_minimum = math.floor(financial_minimum / financial_axis_step) * financial_axis_step
+    financial_axis_maximum = math.ceil(financial_maximum / financial_axis_step) * financial_axis_step
+    if financial_axis_minimum == financial_axis_maximum:
+        financial_axis_maximum = financial_axis_minimum + financial_axis_step
+
+    financial_expense_maximum = max(period['expenses'] for period in financial_periods)
+    if financial_expense_maximum:
+        raw_expense_axis_step = financial_expense_maximum / 4
+        expense_axis_magnitude = 10 ** math.floor(math.log10(raw_expense_axis_step))
+        normalized_expense_axis_step = raw_expense_axis_step / expense_axis_magnitude
+        if normalized_expense_axis_step <= 1:
+            financial_expense_axis_step = expense_axis_magnitude
+        elif normalized_expense_axis_step <= 2:
+            financial_expense_axis_step = 2 * expense_axis_magnitude
+        elif normalized_expense_axis_step <= 5:
+            financial_expense_axis_step = 5 * expense_axis_magnitude
+        else:
+            financial_expense_axis_step = 10 * expense_axis_magnitude
+        financial_expense_axis_maximum = (
+            math.ceil(financial_expense_maximum / financial_expense_axis_step)
+            * financial_expense_axis_step
+        )
+    else:
+        financial_expense_axis_step = 1
+        financial_expense_axis_maximum = 4
+
+    chart_top = 22
+    chart_bottom = 198
+    chart_height = chart_bottom - chart_top
+    financial_axis_ticks = []
+    tick_value = financial_axis_minimum
+    while tick_value <= financial_axis_maximum + financial_axis_step / 1000:
+        tick_y = chart_bottom - (
+            (tick_value - financial_axis_minimum)
+            / (financial_axis_maximum - financial_axis_minimum)
+            * chart_height
+        )
+        financial_axis_ticks.append({
+            'value': tick_value,
+            'label': format_report_chart_axis_label(tick_value),
+            'y': f'{tick_y:.2f}',
+            'label_y': f'{tick_y + 4:.2f}',
+        })
+        tick_value += financial_axis_step
+
+    financial_expense_axis_ticks = []
+    tick_value = 0
+    while tick_value <= financial_expense_axis_maximum + financial_expense_axis_step / 1000:
+        tick_y = chart_bottom - (
+            tick_value / financial_expense_axis_maximum * chart_height
+        )
+        financial_expense_axis_ticks.append({
+            'label': format_report_chart_axis_label(tick_value),
+            'y': f'{tick_y:.2f}',
+            'label_y': f'{tick_y + 4:.2f}',
+        })
+        tick_value += financial_expense_axis_step
+
+    zero_y = chart_bottom - (
+        (0 - financial_axis_minimum)
+        / (financial_axis_maximum - financial_axis_minimum)
+        * chart_height
+    )
+    for index, period in enumerate(financial_periods):
+        baseline_x = 68 + index * 150
+        period['revenue_x'] = f'{baseline_x:.1f}'
+        period['expenses_x'] = f'{baseline_x + 38:.1f}'
+        period['profit_x'] = f'{baseline_x + 66:.1f}'
+        period['label_x'] = f'{baseline_x + 25:.1f}'
+        for key in ('revenue', 'profit'):
+            value_y = chart_bottom - (
+                (period[key] - financial_axis_minimum)
+                / (financial_axis_maximum - financial_axis_minimum)
+                * chart_height
+            )
+            period[f'{key}_y'] = f'{min(value_y, zero_y):.2f}'
+            period[f'{key}_height'] = f'{abs(value_y - zero_y):.2f}'
+        expense_y = chart_bottom - (
+            period['expenses'] / financial_expense_axis_maximum * chart_height
+        )
+        period['expenses_y'] = f'{expense_y:.2f}'
+        period['expenses_height'] = f'{chart_bottom - expense_y:.2f}'
+
+    financial_zero_y = f'{zero_y:.2f}'
+    # END: Annual financial chart data and dynamic axis are ready for the report template.
+
     # Compare monthly booking creation dates with scheduled event dates.
     month_labels = [date(current_year, month, 1).strftime('%B') for month in range(1, 13)]
     event_bookings_by_month = {
@@ -724,7 +1088,13 @@ def Reports_view(request):
         'booking_count_percentage':booking_count_percentage,
         'received_payment_current_month_display':received_payment_current_month_display,
         'current_month_expense_display':current_month_expense_display,
+        'current_month_expense_percentage':current_month_expense_percentage,
         'net_profit_current_month_display':net_profit_current_month_display,
+        'protif_margin':protif_margin,
+        'staff_salary_paid_count':staff_salary_status['paid_count'],
+        'staff_salary_unpaid_count':staff_salary_status['unpaid_count'],
+        'salary_completion_percentage':salary_completion_percentage,
+        'staff_salary_by_category':staff_salary_by_category,
         'received_payment_percentage':received_payment_percentage,
         'total_revenue_percentage':total_revenue_percentage,
         'current_month_revenue_display':current_month_revenue_display,
@@ -738,6 +1108,12 @@ def Reports_view(request):
         'booking_advance_count':booking_advance_count,
         'booking_pending_count':booking_pending_count,
         'booking_cancelled_count':booking_cancelled_count,
+        'monthly_booking_status_segments':monthly_booking_status_segments,
+        'monthly_booking_status_donut':monthly_booking_status_donut,
+        'yearly_booking_status_segments':yearly_booking_status_segments,
+        'yearly_booking_status_donut':yearly_booking_status_donut,
+        'previous_year_booking_status_segments':previous_year_booking_status_segments,
+        'previous_year_booking_status_donut':previous_year_booking_status_donut,
         'confirm_booking_precentage':confirm_booking_precentage,
         'advance_booking_precentage':advance_booking_precentage,
         'pending_booking_precentage':pending_booking_precentage,
@@ -789,29 +1165,118 @@ def Reports_view(request):
         'total_expenses_display':total_expenses_display,
         'net_profit_display':net_profit_display,
         'recieved_amount_percentage':recieved_amount_percentage,
+        'financial_year_start':financial_year_start,
+        'financial_periods':financial_periods,
+        'financial_axis_ticks':financial_axis_ticks,
+        'financial_expense_axis_ticks':financial_expense_axis_ticks,
+        'financial_zero_y':financial_zero_y,
     }
     return render(request , 'reports.html' , context)
 
 
 @login_required(login_url='login')
-def Report_detail_view(request, report_type):
-    report_pages = {
-        'bookings': ('Booking Reports', 'Review booking activity, status and event schedules.'),
-        'financial': ('Financial Reports', 'Review revenue, costs and financial performance.'),
-        'payments': ('Payment Reports', 'Review payment activity and collection records.'),
-        'inventory': ('Inventory Reports', 'Review stock levels and inventory movement.'),
-        'staff': ('Staff Reports', 'Review staff assignments and team activity.'),
-        'customers': ('Customer Reports', 'Review customer activity and booking history.'),
-        'hall-performance': ('Hall Performance Reports', 'Review hall utilisation and event performance.'),
-        'maintenance': ('Maintenance Reports', 'Review maintenance activity and venue upkeep.'),
-        'expenses': ('Expense Reports', 'Review recorded expenses and operating costs.'),
-    }
-    title, description = report_pages[report_type]
-    return render(request, f'reports/{report_type}.html', {
-        'report_title': title,
-        'report_description': description,
-        'report_type': report_type,
-    })
+def export_reports_csv(request):
+    today = timezone.localdate()
+    current_year = today.year
+    current_month = today.month
+    previous_month_date = today.replace(day=1) - timedelta(days=1)
+
+    def safe_csv_text(value):
+        value = str(value)
+        if value.lstrip(' \t\r\n').startswith(('=', '+', '-', '@')):
+            return f"'{value}"
+        return value
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response.write('\ufeff')
+    response['Content-Disposition'] = (
+        f'attachment; filename="hallmaster-report-{current_year}.csv"'
+    )
+    writer = csv.writer(response)
+    writer.writerow(['Section', 'Period', 'Metric', 'Value'])
+
+    current_month_bookings = newbooking.objects.filter(
+        event_date__year=current_year,
+        event_date__month=current_month,
+    )
+    previous_month_bookings = newbooking.objects.filter(
+        event_date__year=previous_month_date.year,
+        event_date__month=previous_month_date.month,
+    )
+    current_month_created = newbooking.objects.filter(
+        created_at__year=current_year,
+        created_at__month=current_month,
+    )
+    previous_month_created = newbooking.objects.filter(
+        created_at__year=previous_month_date.year,
+        created_at__month=previous_month_date.month,
+    )
+    writer.writerow(['Bookings', today.strftime('%B %Y'), 'Bookings by event date', current_month_bookings.count()])
+    writer.writerow(['Bookings', today.strftime('%B %Y'), 'Bookings created', current_month_created.count()])
+    writer.writerow(['Bookings', previous_month_date.strftime('%B %Y'), 'Bookings by event date', previous_month_bookings.count()])
+    writer.writerow(['Bookings', previous_month_date.strftime('%B %Y'), 'Bookings created', previous_month_created.count()])
+
+    yearly_bookings = newbooking.objects.filter(event_date__year=current_year)
+    writer.writerow(['Bookings', current_year, 'Total bookings', yearly_bookings.count()])
+    for row in yearly_bookings.values('status').annotate(total=Count('booking_id')).order_by('status'):
+        writer.writerow(['Booking status', current_year, safe_csv_text(row['status']), row['total']])
+
+    yearly_payments = payment.objects.filter(payment_date__year=current_year)
+    total_payments = yearly_payments.aggregate(total=Sum('amount'))['total'] or 0
+    yearly_expenses = expense.objects.filter(date__year=current_year)
+    paid_expenses = yearly_expenses.filter(status__iexact='Paid')
+    paid_expense_total = paid_expenses.aggregate(total=Sum('amount'))['total'] or 0
+    writer.writerow(['Financials', current_year, 'Payments recorded', total_payments])
+    writer.writerow(['Financials', current_year, 'Paid expenses', paid_expense_total])
+    writer.writerow(['Financials', current_year, 'Net after paid expenses', total_payments - paid_expense_total])
+
+    for row in yearly_payments.values('method').annotate(
+        payment_count=Count('payment_id'),
+        total=Sum('amount'),
+    ).order_by('method'):
+        method_label = safe_csv_text(f"{row['method']} ({row['payment_count']} payments)")
+        writer.writerow(['Payment method', current_year, method_label, row['total'] or 0])
+
+    for row in yearly_expenses.values('expense_category').annotate(
+        expense_count=Count('expense_id'),
+        total=Sum('amount'),
+    ).order_by('expense_category'):
+        category_label = safe_csv_text(f"{row['expense_category']} ({row['expense_count']} expenses)")
+        writer.writerow(['Expense category', current_year, category_label, row['total'] or 0])
+
+    monthly_halls = current_month_bookings.values('event_hall').annotate(
+        booking_count=Count('booking_id'),
+        revenue=Sum('hall_price'),
+    ).order_by('event_hall')
+    for row in monthly_halls:
+        writer.writerow([
+            'Hall performance',
+            today.strftime('%B %Y'),
+            f"{safe_csv_text(row['event_hall'])} bookings",
+            row['booking_count'],
+        ])
+        writer.writerow([
+            'Hall performance',
+            today.strftime('%B %Y'),
+            f"{safe_csv_text(row['event_hall'])} revenue",
+            row['revenue'] or 0,
+        ])
+
+    salary_totals = staff.objects.aggregate(
+        paid=Count('staff_id', filter=Q(Salary_status__iexact='Paid')),
+        unpaid=Count('staff_id', filter=Q(Salary_status__iexact='Unpaid')),
+    )
+    writer.writerow(['Staff salaries', 'All records', 'Paid staff', salary_totals['paid']])
+    writer.writerow(['Staff salaries', 'All records', 'Unpaid staff', salary_totals['unpaid']])
+    for row in staff.objects.values('category').annotate(
+        paid=Count('staff_id', filter=Q(Salary_status__iexact='Paid')),
+        unpaid=Count('staff_id', filter=Q(Salary_status__iexact='Unpaid')),
+    ).order_by('category'):
+        category = safe_csv_text(row['category'])
+        writer.writerow(['Staff salaries', category, 'Paid staff', row['paid']])
+        writer.writerow(['Staff salaries', category, 'Unpaid staff', row['unpaid']])
+
+    return response
 
 @login_required(login_url='login')
 def Staff_view(request):
@@ -833,7 +1298,7 @@ def Staff_view(request):
         )
     if status_filter:
         staff_list = staff_list.filter(staff_status__iexact=status_filter)
-    paginator = Paginator(staff_list, 1)
+    paginator = Paginator(staff_list, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
     context={
         'staff_list': staff_list,
@@ -905,7 +1370,7 @@ def New_inventory(request):
             form.save()
             messages.success(request , "Inventory created successfully.")
             return redirect('inventoryform')
-        elif form.is_not_valid():
+        else:
             messages.error(request , "Please correct the errors below.")
     else:
         form  = new_inventory()
@@ -920,8 +1385,8 @@ def New_inventory_category(request):
         if form.is_valid():
             form.save()
             messages.success(request , "Inventory category created successfully.")
-            return redirect('inventorycategoryform')
-        elif form.is_not_valid():
+            return redirect('inventory')
+        else:
             messages.error(request , "Please correct the errors below.")
     else:
         form  = new_inventory_category()
@@ -1038,7 +1503,7 @@ def tester(request):
         pre = today.strftime('%b')
         next = month + 1
         todays = datetime.now().month
-        previous_month = today -1
+        previous_month = today +1
         previous_month_name = today.strftime("%b")
         print(previous_month_name)
         context = {

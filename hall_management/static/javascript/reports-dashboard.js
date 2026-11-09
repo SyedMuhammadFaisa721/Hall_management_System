@@ -1,4 +1,189 @@
 document.addEventListener('DOMContentLoaded', function () {
+  const pdfExportButton = document.querySelector('[data-report-export="PDF"]');
+  const pdfExportError = document.getElementById('report-export-error');
+  if (pdfExportButton && pdfExportError) {
+    pdfExportButton.addEventListener('click', async function () {
+      if (typeof window.html2pdf !== 'function') {
+        pdfExportError.textContent = 'PDF export could not load. Check your connection and try again.';
+        pdfExportError.hidden = false;
+        console.error('PDF export library is unavailable.');
+        return;
+      }
+
+      const report = document.getElementById('hallmaster-reports');
+      if (!report) {
+        pdfExportError.textContent = 'The report could not be found. Refresh the page and try again.';
+        pdfExportError.hidden = false;
+        console.error('PDF export could not find the report content.');
+        return;
+      }
+
+      const pdfExportLabel = pdfExportButton.querySelector('span');
+      const originalLabel = pdfExportLabel ? pdfExportLabel.textContent : 'Export PDF';
+      pdfExportButton.disabled = true;
+      pdfExportButton.setAttribute('aria-busy', 'true');
+      if (pdfExportLabel) pdfExportLabel.textContent = 'Generating PDF...';
+      pdfExportError.hidden = true;
+
+      const exportRoot = document.createElement('div');
+      exportRoot.className = 'report-pdf-render-root';
+      const exportReport = report.cloneNode(true);
+      exportReport.classList.add('report-pdf-export');
+      exportReport.querySelector('.report-export-row')?.remove();
+      exportReport.querySelector('.report-nav')?.remove();
+
+      report.querySelectorAll('canvas').forEach(function (sourceCanvas) {
+        const clonedCanvas = exportReport.querySelector('#' + CSS.escape(sourceCanvas.id));
+        if (!clonedCanvas) return;
+
+        const chartImage = document.createElement('img');
+        chartImage.className = 'report-pdf-chart-image';
+        chartImage.src = sourceCanvas.toDataURL('image/png');
+        chartImage.alt = sourceCanvas.getAttribute('aria-label') || 'Report chart';
+        chartImage.width = sourceCanvas.width;
+        chartImage.height = sourceCanvas.height;
+        clonedCanvas.replaceWith(chartImage);
+      });
+
+      report.querySelectorAll('.report-donut').forEach(function (sourceDonut, index) {
+        const clonedDonut = exportReport.querySelectorAll('.report-donut')[index];
+        if (!clonedDonut) return;
+
+        const size = Math.max(1, Math.round(sourceDonut.getBoundingClientRect().width));
+        const scale = 2;
+        const donutCanvas = document.createElement('canvas');
+        donutCanvas.width = size * scale;
+        donutCanvas.height = size * scale;
+        const context = donutCanvas.getContext('2d');
+        const center = donutCanvas.width / 2;
+        const lineWidth = donutCanvas.width * 0.19;
+        const radius = center - lineWidth / 2;
+        const rows = sourceDonut.parentElement.querySelectorAll('.report-legend-row');
+        const segments = Array.from(rows).map(function (row) {
+          const percentage = row.querySelectorAll('b');
+          const value = Number.parseFloat(
+            row.dataset.share || (percentage.length ? percentage[percentage.length - 1].textContent : '0'),
+          );
+          const swatch = row.querySelector('i');
+          return {
+            value: Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0,
+            color: swatch ? getComputedStyle(swatch).backgroundColor : '#8299bd',
+          };
+        }).filter(function (segment) {
+          return segment.value > 0;
+        });
+
+        context.lineWidth = lineWidth;
+        context.lineCap = 'butt';
+        context.strokeStyle = '#d7dee5';
+        context.beginPath();
+        context.arc(center, center, radius, 0, 2 * Math.PI);
+        context.stroke();
+
+        let startAngle = -Math.PI / 2;
+        segments.forEach(function (segment) {
+          const endAngle = startAngle + 2 * Math.PI * segment.value / 100;
+          context.strokeStyle = segment.color;
+          context.beginPath();
+          context.arc(center, center, radius, startAngle, endAngle);
+          context.stroke();
+          startAngle = endAngle;
+        });
+
+        const donutImage = document.createElement('img');
+        donutImage.className = 'report-pdf-donut-image';
+        donutImage.src = donutCanvas.toDataURL('image/png');
+        donutImage.alt = sourceDonut.getAttribute('aria-label') || 'Booking status chart';
+        donutImage.width = size;
+        donutImage.height = size;
+
+        const centerLabel = clonedDonut.querySelector('.report-donut-center');
+        clonedDonut.replaceChildren(donutImage);
+        if (centerLabel) clonedDonut.append(centerLabel);
+      });
+
+      const exportStyles = document.createElement('style');
+      exportStyles.textContent = `
+        #hallmaster-reports.report-pdf-export {
+          width: 1120px !important; max-width: none !important; margin: 0 !important;
+          padding: 28px !important; background: #fff !important; color: #202a33 !important;
+          font-family: Arial, sans-serif !important;
+        }
+        #hallmaster-reports.report-pdf-export * { box-sizing: border-box !important; }
+        #hallmaster-reports.report-pdf-export,
+        #hallmaster-reports.report-pdf-export .report-section,
+        #hallmaster-reports.report-pdf-export .report-card,
+        #hallmaster-reports.report-pdf-export .report-kpi,
+        #hallmaster-reports.report-pdf-export .report-method,
+        #hallmaster-reports.report-pdf-export .report-hall-stat,
+        #hallmaster-reports.report-pdf-export .report-staff-summary div,
+        #hallmaster-reports.report-pdf-export .report-summary-item,
+        #hallmaster-reports.report-pdf-export .report-customer-summary div {
+          background: #fff !important; box-shadow: none !important; border-color: #d7dee5 !important;
+        }
+        #hallmaster-reports.report-pdf-export * { color: #26333d !important; }
+        #hallmaster-reports.report-pdf-export .report-heading h1,
+        #hallmaster-reports.report-pdf-export .report-section-heading h2,
+        #hallmaster-reports.report-pdf-export .report-card-heading h3,
+        #hallmaster-reports.report-pdf-export .report-kpi-value,
+        #hallmaster-reports.report-pdf-export .report-staff-summary strong,
+        #hallmaster-reports.report-pdf-export table strong { color: #17212a !important; }
+        #hallmaster-reports.report-pdf-export .report-heading .eyebrow,
+        #hallmaster-reports.report-pdf-export .report-kpi-foot,
+        #hallmaster-reports.report-pdf-export .report-kpi-icon { color: #8a6633 !important; }
+        #hallmaster-reports.report-pdf-export .report-donut::before { background: #fff !important; }
+        #hallmaster-reports.report-pdf-export .report-donut { background: none !important; }
+        #hallmaster-reports.report-pdf-export .report-donut::before { display: none !important; }
+        #hallmaster-reports.report-pdf-export .report-pdf-donut-image {
+          position: absolute; inset: 0; width: 100%; height: 100%;
+        }
+        #hallmaster-reports.report-pdf-export .report-pdf-chart-image {
+          display: block; width: 100%; height: 100%; object-fit: contain;
+        }
+        #hallmaster-reports.report-pdf-export .report-table-scroll { overflow: visible !important; }
+        #hallmaster-reports.report-pdf-export .report-hall-table,
+        #hallmaster-reports.report-pdf-export .report-customer-table,
+        #hallmaster-reports.report-pdf-export .report-staff-table { min-width: 0 !important; }
+        #hallmaster-reports.report-pdf-export .report-section,
+        #hallmaster-reports.report-pdf-export .report-card,
+        #hallmaster-reports.report-pdf-export .report-kpi,
+        #hallmaster-reports.report-pdf-export table tr {
+          break-inside: avoid !important; page-break-inside: avoid !important;
+        }
+      `;
+      exportReport.prepend(exportStyles);
+      exportRoot.append(exportReport);
+      document.body.append(exportRoot);
+
+      try {
+        await window.html2pdf().set({
+          margin: [8, 8, 10, 8],
+          filename: 'hallmaster-report-' + new Date().toISOString().slice(0, 10) + '.pdf',
+          image: { type: 'jpeg', quality: 0.96 },
+          html2canvas: {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            windowWidth: 1160,
+            scrollX: 0,
+            scrollY: 0,
+            useCORS: true,
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['css', 'legacy'], avoid: ['.report-kpi', 'table tr'] },
+        }).from(exportReport).save();
+      } catch (error) {
+        pdfExportError.textContent = 'PDF export failed. Please try again.';
+        pdfExportError.hidden = false;
+        console.error('Unable to generate the report PDF.', error);
+      } finally {
+        exportRoot.remove();
+        pdfExportButton.disabled = false;
+        pdfExportButton.removeAttribute('aria-busy');
+        if (pdfExportLabel) pdfExportLabel.textContent = originalLabel;
+      }
+    });
+  }
+
   const canvas = document.getElementById('booking-comparison-chart');
   const dataElement = document.getElementById('booking-chart-data');
   const errorMessage = document.getElementById('booking-chart-error');

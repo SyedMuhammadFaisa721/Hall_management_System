@@ -217,7 +217,8 @@
 :root[data-theme="light"] .data-table th,
 :root[data-theme="light"] .users-table th,
 :root[data-theme="light"] #hallmaster-reports .report-hall-table th,
-:root[data-theme="light"] #hallmaster-reports .report-customer-table th {
+:root[data-theme="light"] #hallmaster-reports .report-customer-table th,
+:root[data-theme="light"] #hallmaster-reports .report-staff-table th {
   background: var(--bg-raised);
   color: var(--muted);
 }
@@ -225,14 +226,16 @@
 :root[data-theme="light"] .data-table td,
 :root[data-theme="light"] .users-table td,
 :root[data-theme="light"] #hallmaster-reports .report-hall-table td,
-:root[data-theme="light"] #hallmaster-reports .report-customer-table td {
+:root[data-theme="light"] #hallmaster-reports .report-customer-table td,
+:root[data-theme="light"] #hallmaster-reports .report-staff-table td {
   border-color: var(--border);
 }
 
 :root[data-theme="light"] .data-table tbody tr:hover,
 :root[data-theme="light"] .users-table tbody tr.user-row:hover,
 :root[data-theme="light"] #hallmaster-reports .report-hall-table tr:hover td,
-:root[data-theme="light"] #hallmaster-reports .report-customer-table tr:hover td {
+:root[data-theme="light"] #hallmaster-reports .report-customer-table tr:hover td,
+:root[data-theme="light"] #hallmaster-reports .report-staff-table tr:hover td {
   background: var(--surface-hover);
 }
 
@@ -920,6 +923,7 @@
 :root[data-theme="light"] #hallmaster-reports .report-method,
 :root[data-theme="light"] #hallmaster-reports .report-hall-stat,
 :root[data-theme="light"] #hallmaster-reports .report-customer-summary div,
+:root[data-theme="light"] #hallmaster-reports .report-staff-summary div,
 :root[data-theme="light"] #hallmaster-reports .report-month-booking-summary > div,
 :root[data-theme="light"] #hallmaster-reports .report-empty-state {
   border-color: var(--border);
@@ -1005,7 +1009,9 @@
 :root[data-theme="light"] #hallmaster-reports .report-hall-stat span,
 :root[data-theme="light"] #hallmaster-reports .report-hall-table th,
 :root[data-theme="light"] #hallmaster-reports .report-customer-table th,
+:root[data-theme="light"] #hallmaster-reports .report-staff-table th,
 :root[data-theme="light"] #hallmaster-reports .report-customer-summary span,
+:root[data-theme="light"] #hallmaster-reports .report-staff-summary span,
 :root[data-theme="light"] #hallmaster-reports .report-details summary,
 :root[data-theme="light"] #hallmaster-reports .report-details p {
   color: var(--muted);
@@ -1014,7 +1020,8 @@
 :root[data-theme="light"] #hallmaster-reports .report-legend-row b,
 :root[data-theme="light"] #hallmaster-reports .report-category strong,
 :root[data-theme="light"] #hallmaster-reports .report-hall-table td strong,
-:root[data-theme="light"] #hallmaster-reports .report-customer-table td strong {
+:root[data-theme="light"] #hallmaster-reports .report-customer-table td strong,
+:root[data-theme="light"] #hallmaster-reports .report-staff-table td strong {
   color: var(--text);
 }
 

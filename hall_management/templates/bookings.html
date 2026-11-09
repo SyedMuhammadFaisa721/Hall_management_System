@@ -162,7 +162,7 @@
                         <th>DATE</th>
                         <th>TIME</th>
                         <th>GUESTS</th>
-                        <th>PACKAGE</th>
+                        <th>Hall Portion</th>
                         <th>AMOUNT</th>
                         <th>CREATED AT</th>
                         <th>PAYMENT</th>
@@ -180,7 +180,13 @@
                         <td>{{ booking.event_date }}</td>
                         <td>{{ booking.event_time }}</td>
                         <td>{{ booking.event_guest }}</td>
-                        <td>{{ booking.event_hall }}</td>
+                        <td>
+                         {% for hall in booking.event_hall.all %}
+                         {{ hall.portion_name }}{% if not forloop.last %}, {% endif %}
+                         {% empty %}
+                         No hall selected
+                         {% endfor %}
+                        </td>
                         <td class="cell-primary">RS {{ booking.hall_price }}</td>
                         <td>{{ booking.created_at }}</td>
                         <td><span class="status {{ booking.payment_status|lower }}">{{ booking.payment_status }}</span></td>
@@ -307,7 +313,13 @@
                         <td data-label="Event date">{{ booking.event_date }}</td>
                         <td data-label="Event time">{{ booking.event_time }}</td>
                         <td data-label="Guests">{{ booking.event_guest }}</td>
-                        <td data-label="Hall portion">{{ booking.event_hall }}</td>
+                        <td>
+                         {% for hall in booking.event_hall.all %}
+                         {{ hall.portion_name }}{% if not forloop.last %}, {% endif %}
+                         {% empty %}
+                         No hall selected
+                         {% endfor %}
+                        </td>
                         <td class="cell-primary" data-label="Amount">RS {{ booking.hall_price }}</td>
                         <td data-label="Created at">{{ booking.created_at }}</td>
                         <td data-label="Payment"><span class="status {{ booking.payment_status|lower }}">{{ booking.payment_status }}</span></td>
