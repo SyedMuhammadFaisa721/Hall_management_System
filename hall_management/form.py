@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 from django.contrib.auth.models import Group
 from .models import newbooking , staff , expense , Inventory, InventoryCategory , payment
@@ -60,16 +62,45 @@ class hallmaster_user_creation(UserCreationForm):
 class new_booking(forms.ModelForm):
     class Meta:
         model = newbooking
-        fields = ("customer_name" , "phone_number", "nic_number" , "customer_email" , "event_name","event_type","event_date", "event_guest" , "event_hall", "special_req", "hall_price", "status")
+        fields = ("customer_name" , "phone_number", "nic_number" , "customer_email" , "event_name","event_type","event_date", "event_guest" , "event_hall", "special_req", "hall_price", "status", "service")
 class new_staff(forms.ModelForm):
     class Meta:
         model = staff
         exclude = ["staff_id"]
 class new_expense(forms.ModelForm):
+    expense_category = forms.ChoiceField(choices=[
+        ('Food', 'Food'),
+        ('Decoration', 'Decoration'),
+        ('Maintenance', 'Maintenance'),
+        ('Staff', 'Staff'),
+        ('Electricity', 'Electricity'),
+        ('Marketing', 'Marketing'),
+        ('Other', 'Other'),
+    ])
+    amount = forms.IntegerField(min_value=1)
+    status = forms.ChoiceField(
+        choices=[('Paid', 'Paid'), ('Pending', 'Pending')],
+        initial='Paid',
+    )
+
     class Meta:
         model   = expense
         exclude = ["expense_id"]
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
 class new_payment(forms.ModelForm):
+    amount = forms.DecimalField(
+        min_value=Decimal('0.01'),
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={
+            'min': '0.01',
+            'step': '0.01',
+            'inputmode': 'decimal',
+        }),
+    )
     booking = forms.ModelChoiceField(
         queryset=newbooking.objects.none(),
         label='Booking',
@@ -99,7 +130,6 @@ class new_payment(forms.ModelForm):
         fields = ('booking', 'payment_date', 'method', 'amount', 'refference_num', 'payment_status')
         widgets = {
             'payment_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
-            'amount': forms.NumberInput(attrs={'min': '0.01', 'step': '0.01', 'inputmode': 'decimal'}),
         }
 
     def __init__(self, *args, **kwargs):

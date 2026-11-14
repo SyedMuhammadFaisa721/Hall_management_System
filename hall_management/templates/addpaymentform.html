@@ -1,3 +1,4 @@
+{# Payment entry page: validate and save booking-linked payment records through Django. #}
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Record Payment | HallMaster{% endblock %}
@@ -80,5 +81,6 @@
 </div>
 {% endblock %}
 {% block page_scripts %}{{ block.super }}
-<link rel="stylesheet" href="{% static 'css/addpaymentform.css' %}">
+<link rel="stylesheet" href="{% static 'css/addpaymentform.css' %}?v=2">
 {% endblock %}
+{# End of the functional payment entry page. #}

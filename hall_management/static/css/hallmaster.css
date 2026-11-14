@@ -355,19 +355,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .booking-form-shell { padding-top: 16px; }
 .booking-form-card { display: block; overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: linear-gradient(180deg, rgba(18,22,26,.94), rgba(10,12,15,.96)); box-shadow: 0 18px 45px rgba(0,0,0,.28); }
-.booking-form-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--border); }
-.booking-form-header h2 { margin: 0; font-size: 14px; font-weight: 600; }
+.booking-form-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 24px; border-bottom: 1px solid var(--border); background: radial-gradient(ellipse at 0 0, rgba(201,169,110,.12), transparent 58%), linear-gradient(110deg, rgba(255,255,255,.025), transparent 65%); }
+.booking-form-heading-copy h2 { margin: 5px 0 4px; font-family: "Playfair Display", Georgia, serif; font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+.booking-form-heading-copy p { margin: 0; color: var(--muted); font-size: 11px; }
+.booking-form-kicker,
+.summary-eyebrow { color: var(--gold-light); font-size: 9px; font-weight: 700; letter-spacing: .16em; }
 .booking-form-pill { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border: 1px solid rgba(201,169,110,.25); border-radius: 999px; background: rgba(201,169,110,.06); color: var(--gold-light); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .booking-form-pill::before { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px rgba(85,197,138,.8); content: ""; }
 .booking-form-layout { display: grid; grid-template-columns: minmax(0,1.65fr) minmax(260px,.8fr); gap: 0; }
-.booking-form-main { padding: 22px; }
-.booking-form-summary { padding: 22px 20px; border-left: 1px solid var(--border); background: rgba(255,255,255,.015); }
-.booking-form-section + .booking-form-section { margin-top: 24px; }
-.booking-form-section h3 { margin: 0 0 14px; color: var(--text); font-size: 13px; }
+.booking-form-main { display: grid; gap: 18px; padding: 22px; }
+.booking-form-summary { align-self: stretch; padding: 22px 20px; border-left: 1px solid var(--border); background: linear-gradient(180deg, rgba(201,169,110,.035), rgba(255,255,255,.012)); }
+.booking-form-section { padding: 19px; border: 1px solid rgba(255,255,255,.075); border-radius: 14px; background: linear-gradient(145deg, rgba(255,255,255,.025), rgba(255,255,255,.008)); }
+.booking-form-section + .booking-form-section { margin-top: 0; }
+.booking-form-section-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.booking-section-index { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border: 1px solid rgba(201,169,110,.3); border-radius: 11px; background: rgba(201,169,110,.08); color: var(--gold-light); font-size: 10px; font-weight: 700; }
+.booking-form-section-heading h3 { margin: 0 0 4px; color: var(--text); font-size: 13px; }
+.booking-form-section-heading p { margin: 0; color: var(--quiet); font-size: 10px; }
 .booking-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
 .booking-form-field { min-width: 0; }
 .booking-form-field.full { grid-column: 1 / -1; }
 .booking-form-field label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.booking-form-field-label,
+.booking-form-field legend { display: block; margin: 0 0 7px; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.booking-form-field legend { padding: 0; }
+.booking-form-field fieldset,
+fieldset.booking-form-field { min-width: 0; border: 0; padding: 0; }
 .booking-form-field input,
 .booking-form-field select,
 .booking-form-field textarea { width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,.025); color: var(--text); font-size: 12px; outline: none; transition: border-color var(--ease), background var(--ease); }
@@ -392,16 +404,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .booking-form-field textarea { min-height: 90px; resize: vertical; }
 .booking-form-field input:focus,
 .booking-form-field select:focus,
-.booking-form-field textarea:focus { border-color: var(--border-strong); background: rgba(255,255,255,.04); }
+.booking-form-field textarea:focus { border-color: var(--gold); background: rgba(255,255,255,.04); box-shadow: 0 0 0 3px rgba(201,169,110,.1); }
+.booking-form-field small[role="alert"] { display: block; margin-top: 6px; color: #ff9a91; font-size: 10px; line-height: 1.4; }
+.booking-form-field .booking-field-hint { display: block; margin-top: 8px; color: var(--quiet); font-size: 10px; line-height: 1.5; }
 .booking-form-checks { display: flex; flex-wrap: wrap; gap: 10px; }
-.check-chip { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,.02); color: var(--muted); font-size: 10px; text-align: center; }
-.check-chip input { width: 18px; min-width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; margin: 0; padding: 0; accent-color: var(--gold); }
-.summary-card { padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,.02); }
-.summary-card h3 { margin: 0 0 16px; font-size: 12px; }
-.summary-meta { display: grid; gap: 12px; }
+.check-chip { position: relative; display: inline-flex; min-width: 132px; box-sizing: border-box; align-items: center; justify-content: center; padding: 8px 12px 8px 34px; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,.02); color: var(--muted); font-size: 10px; text-align: center; }
+.booking-form-field .check-chip { display: flex; margin: 0; font-size: 10px; letter-spacing: normal; text-transform: none; }
+.check-chip > span { flex: 1; text-align: center; }
+.check-chip:hover,
+.check-chip:has(input:checked) { border-color: rgba(201,169,110,.55); background: rgba(201,169,110,.09); color: var(--gold-light); }
+.check-chip input { position: absolute; top: 50%; left: 12px; width: 18px; min-width: 18px; height: 18px; min-height: 18px; transform: translateY(-50%); margin: 0; padding: 0; accent-color: var(--gold); }
+.summary-card { position: relative; overflow: hidden; padding: 20px; border: 1px solid rgba(201,169,110,.2); border-radius: 15px; background: radial-gradient(ellipse at 100% 0, rgba(201,169,110,.12), transparent 45%), linear-gradient(160deg, rgba(255,255,255,.035), rgba(255,255,255,.012)); box-shadow: 0 14px 35px rgba(0,0,0,.16); }
+.summary-card h3 { margin: 7px 0 5px; font-family: "Playfair Display", Georgia, serif; font-size: 19px; font-weight: 600; }
+.summary-intro { margin: 0 0 18px; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.summary-meta { display: grid; gap: 14px; }
 .summary-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 10px; }
-.summary-row strong { color: var(--text); font-size: 11px; }
+.summary-row strong { max-width: 62%; overflow-wrap: anywhere; color: var(--text); font-size: 11px; font-weight: 600; text-align: right; }
 .summary-divider { height: 1px; margin: 14px 0; background: var(--border); }
+.summary-price { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 19px; padding: 15px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); color: var(--muted); font-size: 10px; }
+.summary-price strong { color: var(--gold-light); font-family: "Playfair Display", Georgia, serif; font-size: 21px; }
+.summary-price strong span { font: inherit; }
+.summary-status { display: flex; align-items: center; gap: 8px; padding-top: 15px; color: var(--muted); font-size: 10px; }
+.summary-status strong { margin-left: auto; color: var(--text); font-size: 10px; }
+.summary-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px rgba(201,169,110,.55); }
+.booking-summary-note { margin: 14px 3px 0; color: var(--quiet); font-size: 10px; line-height: 1.6; }
+.booking-summary-note strong { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; }
 .summary-total { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .summary-total strong { font-size: 18px; font-family: "Playfair Display", serif; }
 .summary-total span { color: var(--muted); font-size: 10px; }
@@ -535,15 +562,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .booking-form-field textarea { min-height: 110px; }
   .booking-select-trigger { min-height: 48px; border-radius: 12px; font-size: 16px; }
   .booking-select-option { min-height: 46px; font-size: 14px; }
-  .booking-form-section + .booking-form-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
-  .booking-form-section h3 { padding-bottom: 11px; border-bottom: 1px solid rgba(255,255,255,.07); font-size: 14px; }
-  .booking-form-checks { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-  .check-chip { width: 100%; min-height: 46px; border-radius: 12px; font-size: 11px; }
+  .booking-form-section + .booking-form-section { margin-top: 0; padding-top: 19px; border-top: 0; }
+  .booking-form-section-heading h3 { padding: 0; border: 0; font-size: 14px; }
+  .booking-form-checks { display: grid; grid-template-columns: repeat(auto-fit,minmax(132px,1fr)); gap: 8px; }
+  .check-chip { width: 100%; min-width: 0; min-height: 46px; border-radius: 12px; font-size: 11px; }
   .booking-form-summary { padding: 14px; }
   .summary-card { padding: 16px; border-radius: 12px; }
   .summary-meta { gap: 14px; }
   .booking-form-footer { padding: 14px 16px 16px; }
-  .booking-form-footer .heading-actions { display: grid; width: 100%; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); justify-content: stretch; gap: 8px; }
+  .booking-form-footer .heading-actions { display: flex; width: 100%; justify-content: stretch; }
   .booking-form-footer .heading-actions > * { width: 100%; min-height: 46px; justify-content: center; }
   .booking-form-note { font-size: 11px; }
   .invoice-document { padding: 26px 20px 20px; }

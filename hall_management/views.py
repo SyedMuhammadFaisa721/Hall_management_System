@@ -1334,18 +1334,16 @@ def New_booking(request):
 
 @login_required(login_url='login')
 def Expense_form(request):
-    if request.method =='POST':
+    if request.method == 'POST':
         form = new_expense(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request , "Expense created successfully.")
+            messages.success(request, "Expense created successfully.")
             return redirect('expensesform')
-        elif form.is_not_valid():
-            messages.error(request , "Please correct the errors below.")
+        messages.error(request, "Please correct the errors below.")
     else:
         form = new_expense()
-    context = {'form': form}
-    return render(request , 'addexpense.html' , context)
+    return render(request, 'addexpense.html', {'form': form})
 @login_required(login_url='login')
 def New_staff(request):
     if request.method =='POST':

@@ -36,6 +36,8 @@
 .expense-category-option[aria-selected="true"] .expense-category-check { opacity: 1; }
 .expense-category-error { display: none; color: var(--red); font-size: 9px; line-height: 1.4; }
 .expense-category-error:not(:empty) { display: block; }
+.expense-field-error { color: var(--red) !important; font-size: 10px !important; line-height: 1.4; }
+.expense-form-errors { padding: 12px 23px 0; color: var(--red); font-size: 11px; }
 @keyframes expense-menu-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 700px) {

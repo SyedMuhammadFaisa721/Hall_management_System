@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Hall_portion, Inventory, InventoryCategory, newbooking
+from .models import Hall_portion, Inventory, InventoryCategory, expense, newbooking, payment
 
 
 class AvailabilityEventsTests(TestCase):
@@ -134,6 +134,129 @@ class InventoryCategoryFormTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Ensure this value has at most 20 characters')
         self.assertEqual(InventoryCategory.objects.count(), 0)
+
+
+class ExpenseFormTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(
+            username='expense-test',
+            password='test-password',
+        )
+        self.client.force_login(self.user)
+
+    def test_expense_form_saves_and_confirms_creation(self):
+        response = self.client.post(
+            reverse('expensesform'),
+            {
+                'expense_title': 'Generator fuel',
+                'expense_category': 'Electricity',
+                'date': '2026-11-14',
+                'amount': '2500',
+                'paid_by': 'Hall manager',
+                'status': 'Pending',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain, [(reverse('expensesform'), 302)])
+        self.assertContains(response, 'Expense created successfully.')
+        saved_expense = expense.objects.get(expense_title='Generator fuel')
+        self.assertEqual(saved_expense.expense_category, 'Electricity')
+        self.assertEqual(saved_expense.amount, 2500)
+        self.assertEqual(saved_expense.status, 'Pending')
+
+    def test_expense_form_rejects_invalid_category_and_nonpositive_amount(self):
+        response = self.client.post(
+            reverse('expensesform'),
+            {
+                'expense_title': 'Water bill',
+                'expense_category': 'Invalid category',
+                'date': '2026-11-14',
+                'amount': '0',
+                'paid_by': 'Hall manager',
+                'status': 'Paid',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Select a valid choice')
+        self.assertContains(response, 'Ensure this value is greater than or equal to 1.')
+        self.assertContains(response, 'value="Water bill"')
+        self.assertEqual(expense.objects.count(), 0)
+
+
+class PaymentFormTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(
+            username='payment-test',
+            password='test-password',
+        )
+        self.client.force_login(self.user)
+        self.booking = newbooking.objects.create(
+            customer_name='Payment Customer',
+            phone_number='03001234567',
+            nic_number='12345-1234567-1',
+            customer_email='payment@example.com',
+            event_name='Wedding',
+            event_type='Wedding',
+            event_date=date(2026, 12, 20),
+            event_guest=100,
+            hall_price=100000,
+            status='confirmed',
+            event_time='Night',
+            payment_status='Pending',
+        )
+
+    def test_payment_form_lists_bookings_and_default_payment_date(self):
+        response = self.client.get(reverse('paymentform'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.booking.booking_id)
+        self.assertContains(response, 'type="date"')
+        self.assertContains(response, 'name="csrfmiddlewaretoken"')
+
+    def test_payment_form_saves_payment_and_redirects_to_ledger(self):
+        response = self.client.post(
+            reverse('paymentform'),
+            {
+                'booking': self.booking.booking_id,
+                'payment_date': '2026-11-14',
+                'method': 'Bank Transfer',
+                'amount': '25000.50',
+                'refference_num': 'BANK-REF-001',
+                'payment_status': 'advance',
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain, [(reverse('payments'), 302)])
+        self.assertContains(response, 'Payment recorded successfully.')
+        saved_payment = payment.objects.get(refference_num='BANK-REF-001')
+        self.assertEqual(saved_payment.booking, self.booking)
+        self.assertEqual(saved_payment.amount, 25000.50)
+        self.assertTrue(saved_payment.payment_id)
+
+    def test_payment_form_rejects_nonpositive_amount_and_invalid_method(self):
+        response = self.client.post(
+            reverse('paymentform'),
+            {
+                'booking': self.booking.booking_id,
+                'payment_date': '2026-11-14',
+                'method': 'Unknown',
+                'amount': '0',
+                'refference_num': 'INVALID-REF',
+                'payment_status': 'advance',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ensure this value is greater than or equal to 0.01.')
+        self.assertContains(response, 'Select a valid choice')
+        self.assertEqual(payment.objects.count(), 0)
 
 
 class InventoryFormTests(TestCase):

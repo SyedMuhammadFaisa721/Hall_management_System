@@ -213,4 +213,20 @@
 {% endblock %}
 {% block page_scripts %}{{ block.super }}
 <link rel="stylesheet" href="{% static 'css/addpaymentform.css' %}">
+<script>
+	document.addEventListener('DOMContentLoaded', function () {
+		document.querySelectorAll('.payment-alert.success').forEach(function (alert) {
+			window.setTimeout(function () {
+				alert.style.transition = 'opacity 300ms ease, transform 300ms ease';
+				alert.style.opacity = '0';
+				alert.style.transform = 'translateY(-6px)';
+				window.setTimeout(function () {
+					alert.remove();
+					const container = document.querySelector('.payment-alerts');
+					if (container && !container.children.length) container.remove();
+				}, 300);
+			}, 4000);
+		});
+	});
+</script>
 {% endblock %}

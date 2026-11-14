@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const form = document.querySelector("#booking-form");
   const selects = document.querySelectorAll(".booking-form-field select");
   let activeDropdown = null;
 
@@ -147,4 +148,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("resize", () => closeDropdown());
   window.addEventListener("scroll", () => closeDropdown());
+
+  const summary = {
+    customer: document.querySelector("#booking-summary-customer"),
+    event: document.querySelector("#booking-summary-event"),
+    date: document.querySelector("#booking-summary-date"),
+    halls: document.querySelector("#booking-summary-halls"),
+    service: document.querySelector("#booking-summary-service"),
+    method: document.querySelector("#booking-summary-method"),
+    guests: document.querySelector("#booking-summary-guests"),
+    price: document.querySelector("#booking-summary-price"),
+    status: document.querySelector("#booking-summary-status"),
+  };
+
+  function updateSummary() {
+    const customerName = form.elements.customer_name.value.trim();
+    const eventName = form.elements.event_name.value.trim();
+    const eventDate = form.elements.event_date.value;
+    const hallNames = [...form.querySelectorAll('input[name="event_hall"]:checked')]
+      .map(input => input.closest("label").textContent.trim())
+      .join(", ");
+    const price = form.elements.hall_price.value;
+    const status = form.querySelector('input[name="status"]:checked');
+    const service = form.querySelector('input[name="service"]:checked');
+    const method = form.querySelector('input[name="method"]:checked');
+
+    summary.customer.textContent = customerName || "Add customer name";
+    summary.event.textContent = eventName || "Add event name";
+    summary.date.textContent = eventDate
+      ? new Date(`${eventDate}T00:00:00`).toLocaleDateString(undefined, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+      : "Choose a date";
+    summary.halls.textContent = hallNames || "Select a hall";
+    summary.service.textContent = service ? service.value : "Choose service";
+    summary.method.textContent = method ? method.closest("label").textContent.trim() : "Choose method";
+    summary.guests.textContent = form.elements.event_guest.value || "—";
+    summary.price.textContent = Number(price || 0).toLocaleString();
+    summary.status.textContent = status ? status.value : "Pending";
+  }
+
+  form.addEventListener("input", updateSummary);
+  form.addEventListener("change", updateSummary);
+  updateSummary();
 });

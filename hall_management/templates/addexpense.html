@@ -1,3 +1,4 @@
+{# Add expense entry page: submit validated expense details to Django and preview them live. #}
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Add Expense | HallMaster{% endblock %}
@@ -11,17 +12,20 @@
 	</header>
 
 	<div class="operation-create-layout">
-		<form class="operation-form" id="add-expense-form" novalidate>
+		<form class="operation-form" id="add-expense-form" method="post">
+			{% csrf_token %}
+			{% if form.non_field_errors %}<div class="expense-form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+			{% if messages %}{% for message in messages %}<p class="operation-form-feedback {{ message.tags }}" role="status">{{ message }}</p>{% endfor %}{% endif %}
 			<section class="operation-form-section" aria-labelledby="expense-details-title">
 				<div class="operation-section-heading"><span class="operation-section-index">01</span><div><h2 id="expense-details-title">Expense details</h2><p>Enter the purchase or service being recorded.</p></div></div>
 				<div class="operation-field-grid">
-					<label class="operation-field operation-field-wide"><span>Expense title <i>Required</i></span><input class="input" id="expense-title" name="expense_title" type="text" placeholder="e.g. Generator fuel reserve" maxlength="100" required></label>
+					<label class="operation-field operation-field-wide"><span>Expense title <i>Required</i></span><input class="input" id="expense-title" name="expense_title" type="text" value="{{ form.expense_title.value|default_if_none:'' }}" placeholder="e.g. Generator fuel reserve" maxlength="100" required aria-invalid="{% if form.expense_title.errors %}true{% else %}false{% endif %}">{% if form.expense_title.errors %}<small class="expense-field-error" role="alert">{{ form.expense_title.errors.0 }}</small>{% endif %}</label>
 					<div class="operation-field expense-category-field">
 						<span id="expense-category-label">Category <i>Required</i></span>
 						<div class="expense-category-picker" id="expense-category-picker">
-							<select class="expense-category-native" id="expense-category" name="expense_category" tabindex="-1" aria-hidden="true"><option value="" selected disabled>Select a category</option><option value="Food">Food</option><option value="Decoration">Decoration</option><option value="Maintenance">Maintenance</option><option value="Staff">Staff</option><option value="Electricity">Electricity</option><option value="Marketing">Marketing</option><option value="Other">Other</option></select>
-							<button class="expense-category-trigger" id="expense-category-trigger" type="button" role="combobox" aria-labelledby="expense-category-label expense-category-value" aria-haspopup="listbox" aria-expanded="false" aria-controls="expense-category-options" aria-required="true" aria-invalid="false" aria-describedby="expense-category-error">
-								<span class="expense-category-trigger-copy"><span class="expense-category-tag" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1"/></svg></span><span id="expense-category-value">Select a category</span></span>
+							<select class="expense-category-native" id="expense-category" name="expense_category" tabindex="-1" aria-hidden="true"><option value="" {% if not form.expense_category.value %}selected{% endif %} disabled>Select a category</option><option value="Food" {% if form.expense_category.value == 'Food' %}selected{% endif %}>Food</option><option value="Decoration" {% if form.expense_category.value == 'Decoration' %}selected{% endif %}>Decoration</option><option value="Maintenance" {% if form.expense_category.value == 'Maintenance' %}selected{% endif %}>Maintenance</option><option value="Staff" {% if form.expense_category.value == 'Staff' %}selected{% endif %}>Staff</option><option value="Electricity" {% if form.expense_category.value == 'Electricity' %}selected{% endif %}>Electricity</option><option value="Marketing" {% if form.expense_category.value == 'Marketing' %}selected{% endif %}>Marketing</option><option value="Other" {% if form.expense_category.value == 'Other' %}selected{% endif %}>Other</option></select>
+							<button class="expense-category-trigger" id="expense-category-trigger" type="button" role="combobox" aria-labelledby="expense-category-label expense-category-value" aria-haspopup="listbox" aria-expanded="false" aria-controls="expense-category-options" aria-required="true" aria-invalid="{% if form.expense_category.errors %}true{% else %}false{% endif %}" aria-describedby="expense-category-error">
+								<span class="expense-category-trigger-copy"><span class="expense-category-tag" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1"/></svg></span><span id="expense-category-value">{{ form.expense_category.value|default:'Select a category' }}</span></span>
 								<svg class="expense-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
 							</button>
 							<div class="expense-category-menu" id="expense-category-options" role="listbox" aria-labelledby="expense-category-label" hidden>
@@ -37,12 +41,12 @@
 								</div>
 							</div>
 						</div>
-						<small class="expense-category-error" id="expense-category-error" role="alert"></small>
+						<small class="expense-category-error" id="expense-category-error" role="alert">{% if form.expense_category.errors %}{{ form.expense_category.errors.0 }}{% endif %}</small>
 					</div>
-					<label class="operation-field"><span>Expense date <i>Required</i></span><input class="input" id="expense-date" name="date" type="date" value="{% now 'Y-m-d' %}" required></label>
-					<label class="operation-field"><span>Amount <i>Required</i></span><span class="operation-input-prefix"><span aria-hidden="true">Rs</span><input class="input" id="expense-amount" name="amount" type="number" min="1" step="1" inputmode="numeric" placeholder="0" required></span><small>Enter the total amount in Pakistani rupees.</small></label>
-					<label class="operation-field"><span>Paid by <i>Required</i></span><input class="input" id="expense-paid-by" name="paid_by" type="text" maxlength="30" placeholder="Staff member or supplier" required></label>
-					<label class="operation-field operation-field-wide"><span>Payment status <i>Required</i></span><div class="operation-status-options"><label><input type="radio" name="status" value="Paid" checked><span><i class="operation-status-dot paid"></i>Paid</span></label><label><input type="radio" name="status" value="Pending"><span><i class="operation-status-dot pending"></i>Pending</span></label></div></label>
+					<label class="operation-field"><span>Expense date <i>Required</i></span><input class="input" id="expense-date" name="date" type="date" value="{% if form.is_bound %}{{ form.date.value|default_if_none:'' }}{% else %}{% now 'Y-m-d' %}{% endif %}" required aria-invalid="{% if form.date.errors %}true{% else %}false{% endif %}">{% if form.date.errors %}<small class="expense-field-error" role="alert">{{ form.date.errors.0 }}</small>{% endif %}</label>
+					<label class="operation-field"><span>Amount <i>Required</i></span><span class="operation-input-prefix"><span aria-hidden="true">Rs</span><input class="input" id="expense-amount" name="amount" type="number" value="{{ form.amount.value|default_if_none:'' }}" min="1" step="1" inputmode="numeric" placeholder="0" required aria-invalid="{% if form.amount.errors %}true{% else %}false{% endif %}"></span><small>Enter the total amount in Pakistani rupees.</small>{% if form.amount.errors %}<small class="expense-field-error" role="alert">{{ form.amount.errors.0 }}</small>{% endif %}</label>
+					<label class="operation-field"><span>Paid by <i>Required</i></span><input class="input" id="expense-paid-by" name="paid_by" type="text" value="{{ form.paid_by.value|default_if_none:'' }}" maxlength="30" placeholder="Staff member or supplier" required aria-invalid="{% if form.paid_by.errors %}true{% else %}false{% endif %}">{% if form.paid_by.errors %}<small class="expense-field-error" role="alert">{{ form.paid_by.errors.0 }}</small>{% endif %}</label>
+					<div class="operation-field operation-field-wide"><span>Payment status <i>Required</i></span><div class="operation-status-options"><label><input type="radio" name="status" value="Paid" {% if form.status.value == 'Paid' or not form.status.value %}checked{% endif %}><span><i class="operation-status-dot paid"></i>Paid</span></label><label><input type="radio" name="status" value="Pending" {% if form.status.value == 'Pending' %}checked{% endif %}><span><i class="operation-status-dot pending"></i>Pending</span></label></div>{% if form.status.errors %}<small class="expense-field-error" role="alert">{{ form.status.errors.0 }}</small>{% endif %}</div>
 				</div>
 			</section>
 
@@ -59,14 +63,15 @@
 			<div class="operation-summary-row"><span>Category</span><strong id="expense-preview-category">Not selected</strong></div>
 			<div class="operation-summary-row"><span>Paid by</span><strong id="expense-preview-payer">Not entered</strong></div>
 			<div class="operation-summary-row"><span>Status</span><strong class="operation-preview-status" id="expense-preview-status">Paid</strong></div>
-			<div class="operation-preview-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><p>Frontend preview only. This form does not save an expense yet.</p></div>
+			<div class="operation-preview-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><p>Preview updates as you type. Submitting saves this expense to the ledger.</p></div>
 		</aside>
 	</div>
 </div>
 {% endblock %}
 {% block page_scripts %}
 <link rel="stylesheet" href="{% static 'css/operations.css' %}">
-<link rel="stylesheet" href="{% static 'css/addexpense.css' %}">
+<link rel="stylesheet" href="{% static 'css/addexpense.css' %}?v=2">
 {{ block.super }}
-<script defer src="{% static 'javascript/addexpense.js' %}"></script>
+<script defer src="{% static 'javascript/addexpense.js' %}?v=2"></script>
 {% endblock %}
+{# End of the functional add expense entry page. #}

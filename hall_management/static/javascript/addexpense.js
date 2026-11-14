@@ -146,17 +146,24 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('expense-preview-status').textContent = form.querySelector('input[name="status"]:checked').value;
   }
 
+  categoryValue.textContent = category.value || 'Select a category';
+  categoryOptions.forEach(function (option) {
+    option.setAttribute('aria-selected', String(option.dataset.value === category.value));
+  });
+  updatePreview();
+
   form.addEventListener('input', updatePreview);
   form.addEventListener('change', updatePreview);
   form.addEventListener('submit', function (event) {
-    event.preventDefault();
     if (!category.value) {
+      event.preventDefault();
       categoryTrigger.setAttribute('aria-invalid', 'true');
       categoryError.textContent = 'Choose an expense category to continue.';
       categoryTrigger.focus();
       return;
     }
-    if (!form.reportValidity()) return;
-    feedback.textContent = 'Preview only: connect a backend to save this expense.';
+    categoryTrigger.setAttribute('aria-invalid', 'false');
+    categoryError.textContent = '';
+    feedback.textContent = 'Saving expense...';
   });
 });

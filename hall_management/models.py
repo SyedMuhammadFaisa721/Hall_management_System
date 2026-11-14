@@ -27,6 +27,7 @@ class newbooking(models.Model):
                                       choices=[('Day','Day'), ('Night','Night')],
                                       default = 'Night')
     payment_status = models.CharField(max_length=20 , default="Pending")
+    service = models.CharField(max_length=20 , choices= [('Table Service','Table Service'), ('Buffet Service','Buffet Service')], default='Buffet Service')
     def save(self , *args ,**kwargs):
         if not self.booking_id:
             current_year = datetime.now().year

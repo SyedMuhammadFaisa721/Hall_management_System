@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}New Booking | HallMaster{% endblock %}
-{% block page_scripts %}{{ block.super }}<script defer src="{% static 'javascript/bookingform.js' %}?v=1"></script>{% endblock %}
+{% block page_scripts %}{{ block.super }}<script defer src="{% static 'javascript/bookingform.js' %}?v=4"></script>{% endblock %}
 {% block page_content %}
 <header class="page-heading booking-page-heading">
   <div>
     <span class="eyebrow">RESERVATIONS</span>
     <h1>New booking</h1>
-    <p>Create a premium venue reservation with all event details in one place.</p>
+    <p>Create a premium venue reservation with every important detail in one place.</p>
   </div>
   <div class="heading-actions">
     <a class="text-button" href="{% url 'bookings' %}">Back to bookings</a>
@@ -19,117 +19,136 @@
   <form id="booking-form" class="booking-form-card" method="post">
     {% csrf_token %}
     <div class="booking-form-header">
-      <h2>Royal Palace Hall reservation</h2>
-      <span class="booking-form-pill">Live reservation</span>
+      <div class="booking-form-heading-copy">
+        <span class="booking-form-kicker">RESERVATION DETAILS</span>
+        <h2>Make it a day to remember</h2>
+        <p>Tell us about your guest and the occasion you are planning.</p>
+      </div>
+      <span class="booking-form-pill">New reservation</span>
     </div>
 
     <div class="booking-form-layout">
       <div class="booking-form-main">
         <div class="booking-form-section">
-          <h3>Customer information</h3>
+          <div class="booking-form-section-heading">
+            <span class="booking-section-index">01</span>
+            <div><h3>Customer information</h3><p>Who should we contact about this booking?</p></div>
+          </div>
           <div class="booking-form-grid">
             <div class="booking-form-field">
               <label for="customer-name">Customer name</label>
-              <input id="customer-name" type="text" name="customer_name" value="Sarah Khan" required>
+              <input id="customer-name" type="text" name="customer_name" maxlength="100" value="{{ form.customer_name.value|default_if_none:'' }}" required>
+              {% if form.customer_name.errors %}<small role="alert">{{ form.customer_name.errors.0 }}</small>{% endif %}
             </div>
             <div class="booking-form-field">
               <label for="customer-phone">Phone number</label>
-              <input id="customer-phone" type="tel" name="phone" value="+92 300 1234567" required>
+              <input id="customer-phone" type="tel" name="phone_number" maxlength="12" value="{{ form.phone_number.value|default_if_none:'' }}" required>
+              {% if form.phone_number.errors %}<small role="alert">{{ form.phone_number.errors.0 }}</small>{% endif %}
+            </div>
+            <div class="booking-form-field">
+              <label for="customer-nic">NIC number</label>
+              <input id="customer-nic" type="text" name="nic_number" maxlength="15" value="{{ form.nic_number.value|default_if_none:'' }}" required>
+              {% if form.nic_number.errors %}<small role="alert">{{ form.nic_number.errors.0 }}</small>{% endif %}
             </div>
             <div class="booking-form-field">
               <label for="customer-email">Email</label>
-              <input id="customer-email" type="email" name="email" value="sarah.khan@email.com" required>
-            </div>
-            <div class="booking-form-field">
-              <label for="booking-source">Booking source</label>
-              <select id="booking-source" name="source">
-                <option selected>Instagram</option>
-                <option>Website</option>
-                <option>Referral</option>
-                <option>Walk-in</option>
-              </select>
+              <input id="customer-email" type="email" name="customer_email" value="{{ form.customer_email.value|default_if_none:'' }}" required>
+              {% if form.customer_email.errors %}<small role="alert">{{ form.customer_email.errors.0 }}</small>{% endif %}
             </div>
           </div>
         </div>
 
         <div class="booking-form-section">
-          <h3>Event details</h3>
+          <div class="booking-form-section-heading">
+            <span class="booking-section-index">02</span>
+            <div><h3>Event details</h3><p>Set the occasion, venue, schedule and booking status.</p></div>
+          </div>
           <div class="booking-form-grid">
             <div class="booking-form-field">
               <label for="event-name">Event name</label>
-              <input id="event-name" type="text" name="event_name" value="Wedding Reception" required>
+              <input id="event-name" type="text" name="event_name" maxlength="100" value="{{ form.event_name.value|default_if_none:'' }}" required>
+              {% if form.event_name.errors %}<small role="alert">{{ form.event_name.errors.0 }}</small>{% endif %}
             </div>
             <div class="booking-form-field">
               <label for="event-type">Event type</label>
-              <select id="event-type" name="event_type">
-                <option selected>Wedding</option>
-                <option>Engagement</option>
-                <option>Mehndi</option>
-                <option>Corporate</option>
-                <option>Birthday</option>
+              <select id="event-type" name="event_type" required>
+                <option value="">Choose event type</option>
+                <option value="Wedding" {% if form.event_type.value == 'Wedding' %}selected{% endif %}>Wedding</option>
+                <option value="Engagement" {% if form.event_type.value == 'Engagement' %}selected{% endif %}>Engagement</option>
+                <option value="Mehndi" {% if form.event_type.value == 'Mehndi' %}selected{% endif %}>Mehndi</option>
+                <option value="Corporate" {% if form.event_type.value == 'Corporate' %}selected{% endif %}>Corporate</option>
+                <option value="Birthday" {% if form.event_type.value == 'Birthday' %}selected{% endif %}>Birthday</option>
               </select>
+              {% if form.event_type.errors %}<small role="alert">{{ form.event_type.errors.0 }}</small>{% endif %}
             </div>
             <div class="booking-form-field">
               <label for="event-date">Event date</label>
-              <input id="event-date" type="date" name="event_date" value="2026-10-05" required>
+              <input id="event-date" type="date" name="event_date" value="{{ form.event_date.value|date:'Y-m-d' }}" required>
+              {% if form.event_date.errors %}<small role="alert">{{ form.event_date.errors.0 }}</small>{% endif %}
             </div>
             <div class="booking-form-field">
-              <label for="event-time">Start time</label>
-              <input id="event-time" type="time" name="event_time" value="18:00" required>
+              <label for="event-time">Event shift</label>
+              <select id="event-time" name="event_time" required>
+                <option value="Day" {% if form.event_time.value == 'Day' %}selected{% endif %}>Day</option>
+                <option value="Night" {% if form.event_time.value != 'Day' %}selected{% endif %}>Night</option>
+              </select>
             </div>
             <div class="booking-form-field">
               <label for="guest-count">Guests</label>
-              <input id="guest-count" type="number" name="guest_count" value="420" min="1" required>
+              <input id="guest-count" type="number" name="event_guest" min="1" value="{{ form.event_guest.value|default_if_none:'' }}" required>
+              {% if form.event_guest.errors %}<small role="alert">{{ form.event_guest.errors.0 }}</small>{% endif %}
             </div>
             <div class="booking-form-field">
-              <label for="hall-select">Hall</label>
-              <select id="hall-select" name="hall">
-                <option selected>Grand Ballroom</option>
-                <option>Crystal Hall</option>
-                <option>Garden Pavilion</option>
-                <option>Royal Terrace</option>
-              </select>
+              <label for="hall-price">Hall price</label>
+              <input id="hall-price" type="number" name="hall_price" min="0" step="1" value="{{ form.hall_price.value|default_if_none:'' }}" required>
+              {% if form.hall_price.errors %}<small role="alert">{{ form.hall_price.errors.0 }}</small>{% endif %}
             </div>
-            <div class="booking-form-field">
-              <label for="payment-status">Payment status</label>
-              <input id="payment-status" type="text" name="payment_status" value="Pending" required>
-            </div>
-            <div class="booking-form-field">
-              <label for="event-name">Event_Status</label>
-              <input id="event-name" type="text" name="event_name" value="Confirmed" required>
-            </div>
-            <div class="booking-form-field full">
-              <label for="event-notes">Special requirements</label>
-              <textarea id="event-notes" name="notes">Luxury floral stage, gold accent décor, live band at 8:30 PM, and a 3-course dinner setup.</textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="booking-form-section">
-          <h3>Package & add-ons</h3>
-          <div class="booking-form-grid">
-            <div class="booking-form-field">
-              <label for="package-type">Package</label>
-              <select id="package-type" name="package_type">
-                <option selected>Royal Wedding Signature</option>
-                <option>Premium Wedding</option>
-                <option>Corporate Event Master</option>
-                <option>Garden Celebration</option>
-              </select>
-            </div>
-            <div class="booking-form-field">
-              <label for="package-price">Package value</label>
-              <input id="package-price" type="text" name="package_value" value="Rs 1,850,000" readonly>
-            </div>
-            <div class="booking-form-field full">
-              <label>Included services</label>
+            <fieldset class="booking-form-field full">
+              <legend class="booking-form-field-label">Hall portions</legend>
               <div class="booking-form-checks">
-                <label class="check-chip"><input type="checkbox" checked> Catering</label>
-                <label class="check-chip"><input type="checkbox" checked> Stage décor</label>
-                <label class="check-chip"><input type="checkbox" checked> Sound system</label>
-                <label class="check-chip"><input type="checkbox"> Floral ceiling</label>
-                <label class="check-chip"><input type="checkbox"> Photographer</label>
+                {% for hall in form.event_hall.field.queryset %}
+                  <label class="check-chip">
+                    <input type="checkbox" name="event_hall" value="{{ hall.pk }}" id="event-hall-{{ hall.pk }}" aria-required="true" {% if hall.pk|stringformat:'s' in form.event_hall.value|default:'' %}checked{% endif %}>
+                    <span>{{ hall }}</span>
+                  </label>
+                {% empty %}
+                  <span>No hall portions available.</span>
+                {% endfor %}
               </div>
+              {% if form.event_hall.errors %}<small role="alert">{{ form.event_hall.errors.0 }}</small>{% endif %}
+            </fieldset>
+            <fieldset class="booking-form-field full">
+              <legend class="booking-form-field-label">Service type</legend>
+              <div class="booking-form-checks">
+                <label class="check-chip"><input type="radio" name="service" value="Table Service" {% if form.service.value == 'Table Service' %}checked{% endif %} required><span>Table service</span></label>
+                <label class="check-chip"><input type="radio" name="service" value="Buffet Service" {% if form.service.value == 'Buffet Service' or not form.service.value %}checked{% endif %}><span>Buffet service</span></label>
+              </div>
+              {% if form.service.errors %}<small role="alert">{{ form.service.errors.0 }}</small>{% endif %}
+            </fieldset>
+            <fieldset class="booking-form-field full">
+              <legend class="booking-form-field-label">Booking status</legend>
+              <div class="booking-form-checks">
+                <label class="check-chip"><input type="radio" name="status" value="Confirmed" {% if form.status.value == 'Confirmed' %}checked{% endif %} required><span>Confirmed</span></label>
+                <label class="check-chip"><input type="radio" name="status" value="Advance" {% if form.status.value == 'Advance' %}checked{% endif %}><span>Advance</span></label>
+                <label class="check-chip"><input type="radio" name="status" value="Pending" {% if form.status.value == 'Pending' or not form.status.value %}checked{% endif %}><span>Pending</span></label>
+                <label class="check-chip"><input type="radio" name="status" value="Cancelled" {% if form.status.value == 'Cancelled' %}checked{% endif %}><span>Cancelled</span></label>
+              </div>
+              {% if form.status.errors %}<small role="alert">{{ form.status.errors.0 }}</small>{% endif %}
+            </fieldset>
+            <fieldset class="booking-form-field full">
+              <legend class="booking-form-field-label">Payment method</legend>
+              <div class="booking-form-checks">
+                <label class="check-chip"><input type="radio" name="method" value="cash" {% if form.data.method == 'cash' %}checked{% endif %}><span>Cash</span></label>
+                <label class="check-chip"><input type="radio" name="method" value="Bank Transfer" {% if form.data.method == 'Bank Transfer' %}checked{% endif %}><span>Bank transfer</span></label>
+                <label class="check-chip"><input type="radio" name="method" value="card" {% if form.data.method == 'card' %}checked{% endif %}><span>Card</span></label>
+                <label class="check-chip"><input type="radio" name="method" value="Online" {% if form.data.method == 'Online' %}checked{% endif %}><span>Online</span></label>
+              </div>
+              <small class="booking-field-hint">Choose how the first payment will be made.</small>
+            </fieldset>
+            <div class="booking-form-field full">
+              <label for="special-requirements">Special requirements</label>
+              <textarea id="special-requirements" name="special_req" maxlength="500" required>{{ form.special_req.value|default_if_none:'' }}</textarea>
+              {% if form.special_req.errors %}<small role="alert">{{ form.special_req.errors.0 }}</small>{% endif %}
             </div>
           </div>
         </div>
@@ -137,31 +156,36 @@
 
       <aside class="booking-form-summary">
         <div class="summary-card">
-          <h3>Booking summary</h3>
+          <span class="summary-eyebrow">LIVE PREVIEW</span>
+          <h3>Your reservation</h3>
+          <p class="summary-intro">Your booking summary will take shape as you fill in the details.</p>
           <div class="summary-meta">
-            <div class="summary-row"><span>Customer</span><strong>Sarah Khan</strong></div>
-            <div class="summary-row"><span>Event date</span><strong>05 Oct 2026</strong></div>
-            <div class="summary-row"><span>Venue</span><strong>Grand Ballroom</strong></div>
-            <div class="summary-row"><span>Package</span><strong>Royal Wedding</strong></div>
-            <div class="summary-row"><span>Guests</span><strong>420</strong></div>
+            <div class="summary-row"><span>Customer</span><strong id="booking-summary-customer">Add customer name</strong></div>
+            <div class="summary-row"><span>Event</span><strong id="booking-summary-event">Add event name</strong></div>
+            <div class="summary-row"><span>Event date</span><strong id="booking-summary-date">Choose a date</strong></div>
+            <div class="summary-row"><span>Hall portions</span><strong id="booking-summary-halls">Select a hall</strong></div>
+            <div class="summary-row"><span>Service</span><strong id="booking-summary-service">Buffet Service</strong></div>
+            <div class="summary-row"><span>Payment method</span><strong id="booking-summary-method">Choose method</strong></div>
+            <div class="summary-row"><span>Guests</span><strong id="booking-summary-guests">—</strong></div>
           </div>
-          <div class="summary-divider"></div>
-          <div class="summary-total">
-            <div>
-              <span>Total estimate</span>
-              <strong>Rs 1.85M</strong>
-            </div>
-            <span>Deposit 30%</span>
+          <div class="summary-price">
+            <span>Hall price</span>
+            <strong>Rs <span id="booking-summary-price">0</span></strong>
+          </div>
+          <div class="summary-status">
+            <span class="summary-status-dot"></span>
+            <span>Status</span>
+            <strong id="booking-summary-status">Pending</strong>
           </div>
         </div>
+        <p class="booking-summary-note"><strong>Good to know</strong>Your booking ID and creation date are generated automatically when you save.</p>
       </aside>
     </div>
 
     <div class="booking-form-footer">
-      <span class="booking-form-note">Auto-saved 2 minutes ago</span>
+      <span class="booking-form-note">Review your details before saving your reservation.</span>
       <div class="heading-actions">
-        <button class="text-button" type="button">Save draft</button>
-        <button class="primary-button" type="submit">Confirm booking</button>
+        <button class="primary-button" type="submit">Save booking</button>
       </div>
     </div>
   </form>
