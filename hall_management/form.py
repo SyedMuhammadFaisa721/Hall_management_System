@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from django import forms
 from django.contrib.auth.models import Group
+from django.db.models import Q
+from django.utils import timezone
 from .models import newbooking , staff , expense , Inventory, InventoryCategory , payment
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
@@ -59,10 +61,98 @@ class hallmaster_user_creation(UserCreationForm):
         
         
         
+# START: Booking form backend
 class new_booking(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.booking_conflict_date = None
+
+    event_type = forms.ChoiceField(choices=[
+        ('Wedding', 'Wedding'),
+        ('Engagement', 'Engagement'),
+        ('Mehndi', 'Mehndi'),
+        ('Corporate', 'Corporate'),
+        ('Birthday', 'Birthday'),
+    ])
+    status = forms.ChoiceField(choices=[
+        ('Confirmed', 'Confirmed'),
+        ('Advance', 'Advance'),
+        ('Pending', 'Pending'),
+        ('Cancelled', 'Cancelled'),
+    ], initial='Pending')
+    payment_method = forms.ChoiceField(
+        choices=payment._meta.get_field('method').choices,
+        label='Payment method',
+        initial='cash',
+    )
+    advance_amount = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label='Advance amount',
+        widget=forms.NumberInput(attrs={'min': 1, 'step': 1, 'inputmode': 'numeric'}),
+    )
+
     class Meta:
         model = newbooking
-        fields = ("customer_name" , "phone_number", "nic_number" , "customer_email" , "event_name","event_type","event_date", "event_guest" , "event_hall", "special_req", "hall_price", "status", "service")
+        fields = (
+            "customer_name", "phone_number", "nic_number", "customer_email",
+            "event_name", "event_type", "event_date", "event_time",
+            "event_guest", "event_hall", "special_req", "hall_price",
+            "status", "service", "payment_method", "advance_amount",
+        )
+
+    def clean(self):
+        # START: Booking advance amount validation
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+        advance_amount = cleaned_data.get('advance_amount')
+        hall_price = cleaned_data.get('hall_price')
+
+        if status == 'Advance':
+            if advance_amount is None:
+                self.add_error('advance_amount', 'Enter the advance amount.')
+            elif hall_price is not None and advance_amount > hall_price:
+                self.add_error('advance_amount', 'Advance amount cannot exceed hall price.')
+        else:
+            cleaned_data['advance_amount'] = None
+
+        event_date = cleaned_data.get('event_date')
+        event_time = cleaned_data.get('event_time')
+        event_halls = cleaned_data.get('event_hall')
+        booking_status = cleaned_data.get('status', '').strip().lower()
+        today = timezone.localdate()
+        if event_date and event_date < today:
+            self.add_error('event_date', 'Past dates cannot be booked.')
+
+        if (
+            event_date
+            and event_date >= today
+            and event_time
+            and event_halls
+            and booking_status not in {'cancel', 'cancelled', 'canceled'}
+        ):
+            conflicting_bookings = newbooking.objects.filter(
+                event_date=event_date,
+                event_time=event_time,
+                event_hall__in=event_halls,
+            ).exclude(
+                Q(status__iexact='cancel')
+                | Q(status__iexact='cancelled')
+                | Q(status__iexact='canceled')
+            )
+            if self.instance.pk:
+                conflicting_bookings = conflicting_bookings.exclude(pk=self.instance.pk)
+
+            if conflicting_bookings.exists():
+                self.booking_conflict_date = event_date.isoformat()
+                self.add_error(
+                    None,
+                    'This date and event time already have a booking for one or more selected hall portions.',
+                )
+
+        return cleaned_data
+        # END: Booking advance amount validation
+# END: Booking form backend
 class new_staff(forms.ModelForm):
     class Meta:
         model = staff
@@ -106,15 +196,6 @@ class new_payment(forms.ModelForm):
         label='Booking',
         empty_label='Choose a booking',
     )
-    method = forms.ChoiceField(
-        choices=[
-            ('cash', 'Cash'),
-            ('Bank Transfer', 'Bank transfer'),
-            ('card', 'Card'),
-            ('Online', 'Online'),
-        ],
-        label='Payment method',
-    )
     payment_status = forms.ChoiceField(
         choices=[
             ('paid', 'Paid'),
@@ -142,6 +223,22 @@ class new_payment(forms.ModelForm):
         self.fields['refference_num'].widget.attrs['maxlength'] = 40
         for field in self.fields.values():
             field.widget.attrs['class'] = 'payment-form-control'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        booking = cleaned_data.get('booking')
+        amount = cleaned_data.get('amount')
+
+        if booking is not None and amount is not None:
+            remaining_balance = booking.remaining_balance
+            if amount > remaining_balance:
+                self.add_error(
+                    'amount',
+                    f'Amount cannot exceed the remaining balance of PKR {remaining_balance:,.2f}.',
+                )
+
+        return cleaned_data
+
 class new_inventory(forms.ModelForm):
     class Meta:
         model = Inventory

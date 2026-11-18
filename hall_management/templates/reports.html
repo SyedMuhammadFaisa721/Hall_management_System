@@ -683,7 +683,7 @@
       <div class="report-hall-stats">
         <div class="report-hall-stat">
           <span>Overall occupancy</span>
-          <strong>72%</strong>
+          <strong>{{ overall_occupancy }}%</strong>
         </div>
         <div class="report-hall-stat">
           <span>Bookings by hall portions</span>
@@ -711,8 +711,8 @@
               <td>{{ portion_a }}</td>
               <td>
                 <span class="report-occupancy">
-                  81%
-                  <span class="report-occupancy-track"><i style="width:81%"></i></span>
+                  {{ portion_a_occupancy }}%
+                  <span class="report-occupancy-track"><i style="width:{{ portion_a_occupancy }}%"></i></span>
                 </span>
               </td>
               <td>Rs {{ portion_a_display }}</td>
@@ -723,8 +723,8 @@
               <td>{{ portion_b }}</td>
               <td>
                 <span class="report-occupancy">
-                  69%
-                  <span class="report-occupancy-track"><i style="width:69%"></i></span>
+                  {{ portion_b_occupancy }}%
+                  <span class="report-occupancy-track"><i style="width:{{ portion_b_occupancy }}%"></i></span>
                 </span>
               </td>
               <td>Rs {{ portion_b_display }}</td>
@@ -735,8 +735,8 @@
               <td>{{ portion_c }}</td>
               <td>
                 <span class="report-occupancy">
-                  61%
-                  <span class="report-occupancy-track"><i style="width:61%"></i></span>
+                  {{ portion_c_occupancy }}%
+                  <span class="report-occupancy-track"><i style="width:{{ portion_c_occupancy }}%"></i></span>
                 </span>
               </td>
               <td>Rs {{ portion_c_display }}</td>
@@ -747,8 +747,8 @@
               <td>{{ portion_A_b }}</td>
               <td>
                 <span class="report-occupancy">
-                  61%
-                  <span class="report-occupancy-track"><i style="width:61%"></i></span>
+                  {{ portion_A_b_occupancy }}%
+                  <span class="report-occupancy-track"><i style="width:{{ portion_A_b_occupancy }}%"></i></span>
                 </span>
               </td>
               <td>Rs {{ portion_A_b_display }}</td>
@@ -759,8 +759,8 @@
               <td>{{ portion_b_c }}</td>
               <td>
                 <span class="report-occupancy">
-                  61%
-                  <span class="report-occupancy-track"><i style="width:61%"></i></span>
+                  {{ portion_b_c_occupancy }}%
+                  <span class="report-occupancy-track"><i style="width:{{ portion_b_c_occupancy }}%"></i></span>
                 </span>
               </td>
               <td>Rs {{ portion_b_c_display }}</td>

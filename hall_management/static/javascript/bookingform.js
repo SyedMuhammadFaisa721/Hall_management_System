@@ -159,7 +159,28 @@ document.addEventListener("DOMContentLoaded", () => {
     guests: document.querySelector("#booking-summary-guests"),
     price: document.querySelector("#booking-summary-price"),
     status: document.querySelector("#booking-summary-status"),
+    advance: document.querySelector("#booking-summary-advance"),
   };
+  const advanceField = document.querySelector("#advance-amount-field");
+  const advanceInput = form.elements.advance_amount;
+  const advanceSummaryRow = summary.advance.closest(".summary-row");
+
+  function updateAdvanceField() {
+    const status = form.querySelector('input[name="status"]:checked');
+    const isAdvance = status?.value === "Advance";
+    const hallPrice = form.elements.hall_price.value;
+
+    advanceField.hidden = !isAdvance;
+    advanceInput.required = isAdvance;
+    advanceSummaryRow.hidden = !isAdvance;
+    if (hallPrice) {
+      advanceInput.max = hallPrice;
+    } else {
+      advanceInput.removeAttribute("max");
+    }
+
+    if (!isAdvance) advanceInput.value = "";
+  }
 
   function updateSummary() {
     const customerName = form.elements.customer_name.value.trim();
@@ -171,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const price = form.elements.hall_price.value;
     const status = form.querySelector('input[name="status"]:checked');
     const service = form.querySelector('input[name="service"]:checked');
-    const method = form.querySelector('input[name="method"]:checked');
+    const method = form.querySelector('input[name="payment_method"]:checked');
 
     summary.customer.textContent = customerName || "Add customer name";
     summary.event.textContent = eventName || "Add event name";
@@ -188,9 +209,19 @@ document.addEventListener("DOMContentLoaded", () => {
     summary.guests.textContent = form.elements.event_guest.value || "—";
     summary.price.textContent = Number(price || 0).toLocaleString();
     summary.status.textContent = status ? status.value : "Pending";
+    summary.advance.textContent = advanceInput.value
+      ? `Rs ${Number(advanceInput.value).toLocaleString()}`
+      : "Enter amount";
   }
 
-  form.addEventListener("input", updateSummary);
-  form.addEventListener("change", updateSummary);
+  form.addEventListener("input", () => {
+    updateAdvanceField();
+    updateSummary();
+  });
+  form.addEventListener("change", () => {
+    updateAdvanceField();
+    updateSummary();
+  });
+  updateAdvanceField();
   updateSummary();
 });

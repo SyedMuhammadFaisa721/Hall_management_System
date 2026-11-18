@@ -133,7 +133,7 @@
             <div class="toolbar-left">
                 <label class="sr-only" for="booking-search">Search bookings</label>
                 <input class="input search-field" id="booking-search" name="search" type="search"
-                value="{{ search }}" placeholder="Search ID, customer or event">
+                value="{{ search }}" placeholder="Search ID, customer, event or payment status">
 
                 <label class="sr-only" for="booking-status">Booking status</label>
                 <select class="select select-compact" id="booking-status" name="status">
@@ -224,27 +224,27 @@
 			{% if page_obj.paginator.num_pages > 1 %}
 			<nav class="pagination" aria-label="Booking pages">
 				{% if page_obj.has_previous %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#booking-list" aria-label="Previous page">&#8249;</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if today_page_obj.number > 1 %}today_page={{ today_page_obj.number }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#booking-list" aria-label="Previous page">&#8249;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
 				{% endif %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page=1#booking-list" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if today_page_obj.number > 1 %}today_page={{ today_page_obj.number }}&amp;{% endif %}page=1#booking-list" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
 				{% if page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
 				{% for num in page_obj.paginator.page_range %}
 					{% if num != 1 and num != page_obj.paginator.num_pages and num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"1" %}
 						{% if page_obj.number == num %}
 					<span class="active" aria-current="page">{{ num }}</span>
 						{% else %}
-					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ num }}#booking-list">{{ num }}</a>
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if today_page_obj.number > 1 %}today_page={{ today_page_obj.number }}&amp;{% endif %}page={{ num }}#booking-list">{{ num }}</a>
 						{% endif %}
 					{% endif %}
 				{% endfor %}
 				{% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
 				{% if page_obj.paginator.num_pages > 1 %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}#booking-list" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if today_page_obj.number > 1 %}today_page={{ today_page_obj.number }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}#booking-list" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
 				{% endif %}
 				{% if page_obj.has_next %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#booking-list" aria-label="Next page">&#8250;</a>
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if today_page_obj.number > 1 %}today_page={{ today_page_obj.number }}&amp;{% endif %}page={{ page_obj.next_page_number }}#booking-list" aria-label="Next page">&#8250;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
 				{% endif %}
@@ -262,14 +262,14 @@
     </div>
 
     <div class="panel">
-        <form class="table-toolbar" id="booking-filters" method="GET" action="{% url 'bookings' %}#booking-list">
+        <form class="table-toolbar" id="today-booking-filters" method="GET" action="{% url 'bookings' %}#today_booking-list">
             <div class="toolbar-left">
-                <label class="sr-only" for="booking-search">Search bookings</label>
-                <input class="input search-field" id="booking-search" name="search" type="search"
-                value="{{ search }}" placeholder="Search ID, customer or event">
+                <label class="sr-only" for="today-booking-search">Search bookings</label>
+                <input class="input search-field" id="today-booking-search" name="search" type="search"
+                value="{{ search }}" placeholder="Search ID, customer, event or payment status">
 
-                <label class="sr-only" for="booking-status">Booking status</label>
-                <select class="select select-compact" id="booking-status" name="status">
+                <label class="sr-only" for="today-booking-status">Booking status</label>
+                <select class="select select-compact" id="today-booking-status" name="status">
                     <option value="" {% if not booking_status_filter %}selected{% endif %}>All statuses</option>
                     <option value="confirmed" {% if booking_status_filter|lower == 'confirmed' %}selected{% endif %}>Confirmed</option>
                     <option value="pending" {% if booking_status_filter|lower == 'pending' %}selected{% endif %}>Pending</option>
@@ -277,8 +277,8 @@
                     <option value="cancelled" {% if booking_status_filter|lower == 'cancelled' %}selected{% endif %}>Cancelled</option>
                 </select>
 
-                <label class="sr-only" for="booking-date">Event date</label>
-                <input class="input select-compact" id="booking-date" name="event_date" type="date" value="{{ booking_date }}" aria-label="Filter by event date">
+                <label class="sr-only" for="today-booking-date">Event date</label>
+                <input class="input select-compact" id="today-booking-date" name="event_date" type="date" value="{{ booking_date }}" aria-label="Filter by event date">
             </div>
             <div class="toolbar-right">
                 <button class="text-button" type="submit">Apply filters</button>
@@ -304,7 +304,7 @@
                     </tr>
                 </thead>
                 <tbody>
-					{% for booking in today_event_count %}
+					{% for booking in today_page_obj %}
                     <tr>
 						
                         <td class="cell-primary" data-label="Booking ID">{{ booking.booking_id }}</td>
@@ -348,36 +348,36 @@
 
         <div class="table-footer">
 			<span style="color: var(--gold-light)">
-				{% if page_obj.paginator.count %}
-				Showing {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} pages
+				{% if today_page_obj.paginator.count %}
+				Showing {{ today_page_obj.number }} of {{ today_page_obj.paginator.num_pages }} pages
 				{% else %}
 				No Records
 				{% endif %}
 			</span>
-			{% if page_obj.paginator.num_pages > 1 %}
-			<nav class="pagination" aria-label="Booking pages">
-				{% if page_obj.has_previous %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}#booking-list" aria-label="Previous page">&#8249;</a>
+			{% if today_page_obj.paginator.num_pages > 1 %}
+			<nav class="pagination" aria-label="Today's booking pages">
+				{% if today_page_obj.has_previous %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if page_obj.number > 1 %}page={{ page_obj.number }}&amp;{% endif %}today_page={{ today_page_obj.previous_page_number }}#today_booking-list" aria-label="Previous page">&#8249;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Previous page">&#8249;</span>
 				{% endif %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page=1#booking-list" {% if page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
-				{% if page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
-				{% for num in page_obj.paginator.page_range %}
-					{% if num != 1 and num != page_obj.paginator.num_pages and num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"1" %}
-						{% if page_obj.number == num %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if page_obj.number > 1 %}page={{ page_obj.number }}&amp;{% endif %}today_page=1#today_booking-list" {% if today_page_obj.number == 1 %}class="active" aria-current="page"{% endif %}>1</a>
+				{% if today_page_obj.number > 4 %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% for num in today_page_obj.paginator.page_range %}
+					{% if num != 1 and num != today_page_obj.paginator.num_pages and num >= today_page_obj.number|add:"-2" and num <= today_page_obj.number|add:"1" %}
+						{% if today_page_obj.number == num %}
 					<span class="active" aria-current="page">{{ num }}</span>
 						{% else %}
-					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ num }}#booking-list">{{ num }}</a>
+					<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if page_obj.number > 1 %}page={{ page_obj.number }}&amp;{% endif %}today_page={{ num }}#today_booking-list">{{ num }}</a>
 						{% endif %}
 					{% endif %}
 				{% endfor %}
-				{% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
-				{% if page_obj.paginator.num_pages > 1 %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.paginator.num_pages }}#booking-list" {% if page_obj.number == page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ page_obj.paginator.num_pages }}</a>
+				{% if today_page_obj.number < today_page_obj.paginator.num_pages|add:"-3" %}<span aria-hidden="true">&hellip;</span>{% endif %}
+				{% if today_page_obj.paginator.num_pages > 1 %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if page_obj.number > 1 %}page={{ page_obj.number }}&amp;{% endif %}today_page={{ today_page_obj.paginator.num_pages }}#today_booking-list" {% if today_page_obj.number == today_page_obj.paginator.num_pages %}class="active" aria-current="page"{% endif %}>{{ today_page_obj.paginator.num_pages }}</a>
 				{% endif %}
-				{% if page_obj.has_next %}
-				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}#booking-list" aria-label="Next page">&#8250;</a>
+				{% if today_page_obj.has_next %}
+				<a href="?{% if search %}search={{ search|urlencode }}&amp;{% endif %}{% if booking_status_filter %}status={{ booking_status_filter|urlencode }}&amp;{% endif %}{% if booking_date %}event_date={{ booking_date|urlencode }}&amp;{% endif %}{% if page_obj.number > 1 %}page={{ page_obj.number }}&amp;{% endif %}today_page={{ today_page_obj.next_page_number }}#today_booking-list" aria-label="Next page">&#8250;</a>
 				{% else %}
 				<span aria-disabled="true" aria-label="Next page">&#8250;</span>
 				{% endif %}

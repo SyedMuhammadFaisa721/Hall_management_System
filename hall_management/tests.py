@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import date, timedelta
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -6,6 +7,274 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import Hall_portion, Inventory, InventoryCategory, expense, newbooking, payment
+
+
+class BookingFormTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(
+            username='booking-form-test',
+            password='test-password',
+        )
+        self.client.force_login(self.user)
+        self.portion = Hall_portion.objects.create(
+            portion_name='A',
+            portion_capacity=200,
+        )
+
+    def valid_booking_data(self, **overrides):
+        data = {
+            'customer_name': 'Booking Form Customer',
+            'phone_number': '03001234567',
+            'nic_number': '12345-1234567-1',
+            'customer_email': 'booking@example.com',
+            'event_name': 'Wedding Reception',
+            'event_type': 'Wedding',
+            'event_date': '2026-12-20',
+            'event_time': 'Day',
+            'event_guest': '120',
+            'event_hall': [str(self.portion.pk)],
+            'special_req': 'Stage setup',
+            'hall_price': '75000',
+            'status': 'Confirmed',
+            'service': 'Buffet Service',
+            'payment_method': 'Bank Transfer',
+        }
+        data.update(overrides)
+        return data
+
+    def test_booking_form_renders_payment_methods_from_payment_model(self):
+        response = self.client.get(reverse('bookingform'))
+
+        self.assertEqual(response.status_code, 200)
+        for value, label in payment._meta.get_field('method').choices:
+            self.assertContains(response, f'value="{value}"')
+            self.assertContains(response, label)
+
+    def test_booking_form_saves_booking_halls_event_shift_and_payment_method(self):
+        response = self.client.post(
+            reverse('bookingform'),
+            self.valid_booking_data(),
+        )
+
+        self.assertRedirects(response, reverse('bookings'), fetch_redirect_response=False)
+        booking = newbooking.objects.get(customer_email='booking@example.com')
+        self.assertEqual(booking.event_time, 'Day')
+        self.assertEqual(booking.payment_method, 'Bank Transfer')
+        self.assertEqual(booking.service, 'Buffet Service')
+        self.assertEqual(list(booking.event_hall.all()), [self.portion])
+        saved_payment = payment.objects.get(booking=booking)
+        self.assertEqual(saved_payment.amount, Decimal('75000.00'))
+        self.assertEqual(saved_payment.payment_status, 'Pending')
+
+    def test_booking_form_rejects_same_portion_date_and_event_time(self):
+        existing_booking = newbooking.objects.create(
+            customer_name='Existing Customer',
+            phone_number='03001234567',
+            nic_number='12345-1234567-9',
+            customer_email='existing@example.com',
+            event_name='Existing Wedding',
+            event_type='Wedding',
+            event_date=date(2026, 12, 20),
+            event_guest=100,
+            hall_price=75000,
+            status='Confirmed',
+            event_time='Day',
+            payment_status='Pending',
+        )
+        existing_booking.event_hall.add(self.portion)
+
+        response = self.client.post(
+            reverse('bookingform'),
+            self.valid_booking_data(),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'already have a booking')
+        self.assertContains(response, 'View availability calendar for this date')
+        self.assertContains(response, '?date=2026-12-20#availability-calendar')
+        self.assertEqual(newbooking.objects.count(), 1)
+
+    def test_booking_form_allows_same_date_and_time_for_different_portion(self):
+        other_portion = Hall_portion.objects.create(
+            portion_name='B',
+            portion_capacity=200,
+        )
+        existing_booking = newbooking.objects.create(
+            customer_name='Existing Customer',
+            phone_number='03001234567',
+            nic_number='12345-1234567-9',
+            customer_email='existing@example.com',
+            event_name='Existing Wedding',
+            event_type='Wedding',
+            event_date=date(2026, 12, 20),
+            event_guest=100,
+            hall_price=75000,
+            status='Confirmed',
+            event_time='Day',
+            payment_status='Pending',
+        )
+        existing_booking.event_hall.add(self.portion)
+
+        response = self.client.post(
+            reverse('bookingform'),
+            self.valid_booking_data(event_hall=[str(other_portion.pk)]),
+        )
+
+        self.assertRedirects(response, reverse('bookings'), fetch_redirect_response=False)
+        self.assertEqual(newbooking.objects.count(), 2)
+
+    def test_booking_form_rejects_past_event_date(self):
+        with patch('hall_management.form.timezone.localdate', return_value=date(2026, 12, 21)):
+            response = self.client.post(
+                reverse('bookingform'),
+                self.valid_booking_data(event_date='2026-12-20'),
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Past dates cannot be booked.')
+        self.assertEqual(newbooking.objects.count(), 0)
+
+    def test_booking_form_date_picker_starts_at_today(self):
+        with patch('hall_management.views.timezone.localdate', return_value=date(2026, 12, 21)):
+            response = self.client.get(reverse('bookingform'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'min="2026-12-21"')
+
+    def test_advance_booking_saves_amount_within_hall_price(self):
+        response = self.client.post(
+            reverse('bookingform'),
+            self.valid_booking_data(status='Advance', advance_amount='25000'),
+        )
+
+        self.assertRedirects(response, reverse('bookings'), fetch_redirect_response=False)
+        booking = newbooking.objects.get(customer_email='booking@example.com')
+        self.assertEqual(booking.advance_amount, 25000)
+        saved_payment = payment.objects.get(booking=booking)
+        self.assertEqual(saved_payment.method, 'Bank Transfer')
+        self.assertEqual(saved_payment.amount, Decimal('75000.00'))
+        self.assertEqual(saved_payment.refference_num, 'None')
+        self.assertEqual(saved_payment.payment_status, 'Advance')
+        self.assertEqual(saved_payment.remaining_amount, Decimal('50000.00'))
+
+    def test_advance_amount_greater_than_hall_price_is_rejected(self):
+        response = self.client.post(
+            reverse('bookingform'),
+            self.valid_booking_data(status='Advance', advance_amount='75001'),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Advance amount cannot exceed hall price.')
+        self.assertEqual(newbooking.objects.count(), 0)
+
+    def test_advance_status_requires_an_amount(self):
+        response = self.client.post(
+            reverse('bookingform'),
+            self.valid_booking_data(status='Advance'),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Enter the advance amount.')
+        self.assertEqual(newbooking.objects.count(), 0)
+
+    def test_invalid_booking_form_renders_errors_without_creating_booking(self):
+        response = self.client.post(reverse('bookingform'), {'customer_name': ''})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'This field is required.')
+        self.assertEqual(newbooking.objects.count(), 0)
+
+
+class BookingSearchTests(TestCase):
+    def test_booking_search_matches_payment_status(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username='booking-search-test',
+            password='test-password',
+        )
+        self.client.force_login(user)
+        today = date.today()
+        current_date = today.replace(day=15)
+        previous_month_end = today.replace(day=1) - timedelta(days=1)
+        previous_date = previous_month_end.replace(day=15)
+        portion = Hall_portion.objects.create(portion_name='A', portion_capacity=100)
+
+        def create_booking(event_date, status, customer_name):
+            return newbooking.objects.create(
+                customer_name=customer_name,
+                phone_number='03001234567',
+                nic_number=f'NIC-{customer_name}',
+                customer_email=f'{customer_name.replace(" ", "").lower()}@example.com',
+                event_name='Search Test Event',
+                event_type='Wedding',
+                event_date=event_date,
+                event_guest=50,
+                hall_price=50000,
+                status=status,
+                event_time='Day',
+                payment_status='Pending',
+            )
+
+        create_booking(previous_date, 'Confirmed', 'Previous Confirmed')
+        create_booking(previous_date, 'Pending', 'Previous Pending')
+        create_booking(previous_date, 'cancelled', 'Previous Cancelled')
+        target = create_booking(current_date, 'Confirmed', 'Payment Status Match')
+        target.payment_status = 'Advance'
+        target.save(update_fields=['payment_status'])
+        target.event_hall.add(portion)
+
+        response = self.client.get(reverse('bookings'), {'search': 'Advance'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['page_obj'].object_list), [target])
+
+
+class BookingPaginationTests(TestCase):
+    def test_booking_tables_use_independent_pagination(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username='booking-pagination-test',
+            password='test-password',
+        )
+        self.client.force_login(user)
+        today = date.today()
+        previous_month_date = (today.replace(day=1) - timedelta(days=1)).replace(day=15)
+
+        def create_booking(index, event_date, status):
+            return newbooking.objects.create(
+                customer_name=f'Paginator Customer {index}',
+                phone_number=f'0300{index:07d}',
+                nic_number=f'PAG-{index:04d}',
+                customer_email=f'paginator-{index}@example.com',
+                event_name='Paginator Event',
+                event_type='Wedding',
+                event_date=event_date,
+                event_guest=50,
+                hall_price=1000,
+                status=status,
+                event_time='Day',
+                payment_status='Pending',
+            )
+
+        for index, status in enumerate(('Confirmed', 'Pending', 'cancelled'), start=1):
+            booking = create_booking(index, previous_month_date, status)
+            newbooking.objects.filter(pk=booking.pk).update(created_at=previous_month_date)
+        for index in range(4, 16):
+            create_booking(index, today, 'Pending')
+
+        all_bookings_page = self.client.get(reverse('bookings'), {'page': 2})
+        self.assertEqual(all_bookings_page.status_code, 200)
+        self.assertEqual(all_bookings_page.context['page_obj'].number, 2)
+        self.assertEqual(all_bookings_page.context['today_page_obj'].number, 1)
+
+        today_bookings_page = self.client.get(
+            reverse('bookings'),
+            {'page': 2, 'today_page': 2},
+        )
+        self.assertEqual(today_bookings_page.status_code, 200)
+        self.assertEqual(today_bookings_page.context['page_obj'].number, 2)
+        self.assertEqual(today_bookings_page.context['today_page_obj'].number, 2)
 
 
 class AvailabilityEventsTests(TestCase):
@@ -101,6 +370,123 @@ class AvailabilityEventsTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+
+
+class ReportsViewTests(TestCase):
+    def test_reports_page_handles_portion_name_filters(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username='reports-test',
+            password='test-password',
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('reports'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['portion_a'], 0)
+
+    def test_reports_hall_metrics_use_exact_portion_combinations(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username='reports-combination-test',
+            password='test-password',
+        )
+        self.client.force_login(user)
+        portion_a = Hall_portion.objects.create(portion_name='A', portion_capacity=100)
+        portion_b = Hall_portion.objects.create(portion_name='B', portion_capacity=100)
+
+        previous_booking = newbooking.objects.create(
+            customer_name='Previous Customer',
+            phone_number='03001234567',
+            nic_number='12345-1234567-3',
+            customer_email='previous@example.com',
+            event_name='Previous Event',
+            event_type='Wedding',
+            event_date=date(2026, 10, 15),
+            event_guest=50,
+            hall_price=10000,
+            status='Confirmed',
+            event_time='Day',
+        )
+        previous_booking.event_hall.add(portion_a)
+        current_booking = newbooking.objects.create(
+            customer_name='Current Customer',
+            phone_number='03001234568',
+            nic_number='12345-1234567-4',
+            customer_email='current@example.com',
+            event_name='Current Event',
+            event_type='Wedding',
+            event_date=date(2026, 11, 15),
+            event_guest=80,
+            hall_price=50000,
+            status='Confirmed',
+            event_time='Night',
+        )
+        current_booking.event_hall.add(portion_a, portion_b)
+
+        with patch('hall_management.views.timezone.localdate', return_value=date(2026, 11, 18)):
+            response = self.client.get(reverse('reports'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['portion_a'], 0)
+        self.assertEqual(response.context['portion_A_b'], 1)
+        self.assertEqual(response.context['portion_A_b_display'], '50,000')
+        self.assertEqual(response.context['overall_occupancy'], 2)
+        self.assertEqual(response.context['portion_A_b_occupancy'], 2)
+        self.assertEqual(response.context['portion_a_occupancy'], 0)
+
+
+class DashboardAvailabilityTests(TestCase):
+    def test_dashboard_hall_availability_uses_current_month_bookings(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username='dashboard-availability-test',
+            password='test-password',
+        )
+        self.client.force_login(user)
+        portion_a = Hall_portion.objects.create(portion_name='A', portion_capacity=100)
+        portion_b = Hall_portion.objects.create(portion_name='B', portion_capacity=100)
+        today = date.today()
+
+        confirmed_booking = newbooking.objects.create(
+            customer_name='Confirmed Dashboard Customer',
+            phone_number='03001234567',
+            nic_number='12345-1234567-5',
+            customer_email='confirmed-dashboard@example.com',
+            event_name='Confirmed Dashboard Event',
+            event_type='Wedding',
+            event_date=today,
+            event_guest=50,
+            hall_price=0,
+            status='Confirmed',
+            event_time='Day',
+        )
+        confirmed_booking.event_hall.add(portion_a)
+        pending_booking = newbooking.objects.create(
+            customer_name='Pending Dashboard Customer',
+            phone_number='03001234568',
+            nic_number='12345-1234567-6',
+            customer_email='pending-dashboard@example.com',
+            event_name='Pending Dashboard Event',
+            event_type='Wedding',
+            event_date=today,
+            event_guest=50,
+            hall_price=0,
+            status='Pending',
+            event_time='Night',
+        )
+        pending_booking.event_hall.add(portion_b)
+
+        response = self.client.get(reverse('dashboard'))
+        remaining_days = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
+        remaining_days = (remaining_days - today).days
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['dashboard_confirmed_bookings'], 1)
+        self.assertEqual(response.context['dashboard_pending_bookings'], 1)
+        self.assertEqual(response.context['booked_capacity_percentage'], round(100 / remaining_days))
+        self.assertEqual(response.context['available_dates'], max(remaining_days - 1, 0))
 
 
 class InventoryCategoryFormTests(TestCase):
@@ -240,6 +626,69 @@ class PaymentFormTests(TestCase):
         self.assertEqual(saved_payment.amount, 25000.50)
         self.assertTrue(saved_payment.payment_id)
 
+    def test_payment_form_shows_selected_booking_details(self):
+        response = self.client.get(reverse('paymentform'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'BOOKING SUMMARY')
+        self.assertContains(response, 'Payment Customer')
+        self.assertContains(response, 'event_type_status')
+        self.assertContains(response, 'remaining_balance')
+
+    def test_payment_form_rejects_amount_above_balance_after_advance_and_payments(self):
+        self.booking.advance_amount = 20000
+        self.booking.save(update_fields=['advance_amount'])
+        payment.objects.create(
+            booking=self.booking,
+            method='cash',
+            amount=Decimal('30000.00'),
+            refference_num='EXISTING-001',
+            payment_status='paid',
+        )
+
+        response = self.client.post(
+            reverse('paymentform'),
+            {
+                'booking': self.booking.booking_id,
+                'payment_date': '2026-11-14',
+                'method': 'cash',
+                'amount': '50000.01',
+                'refference_num': 'OVER-BALANCE',
+                'payment_status': 'paid',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Amount cannot exceed the remaining balance of PKR 50,000.00.')
+        self.assertFalse(payment.objects.filter(refference_num='OVER-BALANCE').exists())
+
+    def test_payment_form_balance_ignores_booking_total_placeholder_payment(self):
+        self.booking.advance_amount = 20000
+        self.booking.save(update_fields=['advance_amount'])
+        payment.objects.create(
+            booking=self.booking,
+            method='cash',
+            amount=Decimal('100000.00'),
+            refference_num='None',
+            payment_status='Advance',
+        )
+
+        response = self.client.post(
+            reverse('paymentform'),
+            {
+                'booking': self.booking.booking_id,
+                'payment_date': '2026-11-14',
+                'method': 'cash',
+                'amount': '80000',
+                'refference_num': 'REMAINING-BALANCE',
+                'payment_status': 'paid',
+            },
+        )
+
+        self.assertRedirects(response, reverse('payments'), fetch_redirect_response=False)
+        saved_payment = payment.objects.get(refference_num='REMAINING-BALANCE')
+        self.assertEqual(saved_payment.amount, Decimal('80000.00'))
+
     def test_payment_form_rejects_nonpositive_amount_and_invalid_method(self):
         response = self.client.post(
             reverse('paymentform'),
@@ -257,6 +706,23 @@ class PaymentFormTests(TestCase):
         self.assertContains(response, 'Ensure this value is greater than or equal to 0.01.')
         self.assertContains(response, 'Select a valid choice')
         self.assertEqual(payment.objects.count(), 0)
+
+    def test_payments_page_renders_remaining_amount_without_template_arithmetic(self):
+        self.booking.advance_amount = 20000
+        self.booking.save(update_fields=['advance_amount'])
+        payment.objects.create(
+            booking=self.booking,
+            payment_date=date(2026, 11, 14),
+            method='cash',
+            amount=Decimal('25000.00'),
+            refference_num='REMAINING-001',
+            payment_status='advance',
+        )
+
+        response = self.client.get(reverse('payments'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_obj'][0].remaining_amount, Decimal('5000.00'))
 
 
 class InventoryFormTests(TestCase):

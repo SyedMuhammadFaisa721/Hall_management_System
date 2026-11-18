@@ -142,6 +142,8 @@
 						<th>DATE</th>
 						<th>METHOD</th>
 						<th>AMOUNT</th>
+						<th>ADVANCE</th>
+						<th>REMAINING</th>
 						<th>REFERENCE</th>
 						<th>STATUS</th>
 					</tr>
@@ -155,6 +157,8 @@
 						<td>{{ payment.payment_date }}</td>
 						<td>{{ payment.method }}</td>
 						<td class="cell-primary">Rs {{ payment.amount|intword|intcomma }}</td>
+						<td class="cell-primary">Rs {{ payment.booking.advance_amount|intword|intcomma }}</td>
+						<td class="cell-primary">Rs {{ payment.remaining_amount|intword|intcomma }}</td>
 						<td>{{ payment.refference_num }}</td>
 						<td><span class="status {{ payment.payment_status|lower }}">{{ payment.payment_status }}</span></td>
 					</tr>

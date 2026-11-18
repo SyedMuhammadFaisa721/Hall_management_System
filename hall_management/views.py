@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST
+from django.db import transaction
 from .form import hallmaster_user_creation, new_booking , new_expense ,new_inventory ,new_staff ,new_inventory_category, loginform , new_payment
 from django.views.generic import ListView
 from django.contrib import messages
@@ -95,6 +96,8 @@ def log_out(request):
 def dashboard(request):
     # Dashboard backend code starts here: prepare monthly revenue for the dashboard graph.
     today = timezone.now().date()
+    month_start = today.replace(day=1)
+    next_month = (month_start + timedelta(days=32)).replace(day=1)
     previous_day = today - timedelta(days = 1)
     current_month = datetime.now().month
     current_year = datetime.now().year
@@ -144,6 +147,52 @@ def dashboard(request):
     pending_payment = newbooking.objects.filter(status__in=status_pending , created_at__month = current_month , created_at__year =current_year ).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
     pending_payment_count = newbooking.objects.filter(status__in = status_pending , created_at__month = current_month , created_at__year = current_year).count()
 
+    availability_month_bookings = newbooking.objects.filter(
+        event_date__month=today.month,
+        event_date__year=today.year,
+    )
+    dashboard_confirmed_bookings = availability_month_bookings.filter(
+        Q(status__iexact='confirmed') | Q(status__iexact='advance'),
+    ).count()
+    dashboard_pending_bookings = availability_month_bookings.filter(
+        status__iexact='pending',
+    ).count()
+    active_portion_ids = set(
+        Hall_portion.objects.filter(portion_status__iexact='Active').values_list('pk', flat=True)
+    )
+    booked_portions_by_date = {}
+    if active_portion_ids:
+        active_bookings = (
+            newbooking.objects.filter(
+                event_date__gte=today,
+                event_date__lt=next_month,
+                event_hall__portion_status__iexact='Active',
+            )
+            .exclude(
+                Q(status__iexact='cancel')
+                | Q(status__iexact='cancelled')
+                | Q(status__iexact='canceled')
+            )
+            .values_list('event_date', 'event_hall__pk')
+        )
+        for event_date, portion_id in active_bookings:
+            booked_portions_by_date.setdefault(event_date, set()).add(portion_id)
+
+    remaining_month_days = (next_month - today).days
+    available_dates = sum(
+        1
+        for day_offset in range(remaining_month_days)
+        if active_portion_ids.difference(
+            booked_portions_by_date.get(today + timedelta(days=day_offset), set())
+        )
+    )
+    total_portion_days = len(active_portion_ids) * remaining_month_days
+    booked_portion_days = sum(len(portions) for portions in booked_portions_by_date.values())
+    booked_capacity_percentage = (
+        round(booked_portion_days / total_portion_days * 100)
+        if total_portion_days else 0
+    )
+
     # Dashboard graph backend code starts here: calculate confirmed revenue for each month.
     monthly_revenue = []
     for month in range(1, 13):
@@ -172,6 +221,11 @@ def dashboard(request):
         'pending_payment':pending_payment,
         'current_year':current_year,
         'pending_payment_count':pending_payment_count,
+        'availability_month': today.strftime('%B'),
+        'booked_capacity_percentage': booked_capacity_percentage,
+        'dashboard_confirmed_bookings': dashboard_confirmed_bookings,
+        'dashboard_pending_bookings': dashboard_pending_bookings,
+        'available_dates': available_dates,
         'today_event_record':today_event_record,
         # Dashboard graph context starts here: send the monthly values to the template.
         'monthly_revenue': monthly_revenue,
@@ -207,26 +261,35 @@ def booking_view(request):
     booking_date = request.GET.get('event_date', '')
 
     booking_list = newbooking.objects.all().order_by('-booking_id')
-    today_event_count = newbooking.objects.filter(created_at = today).order_by('-booking_id')[:10]
+    today_booking_list = newbooking.objects.filter(created_at=today).order_by('-booking_id')
     if search:
-        booking_list = booking_list.filter(
+        search_filter = (
             Q(customer_name__icontains = search)|
             Q(booking_id__icontains = search)|
             Q(event_name__icontains = search)|
-            Q(event_hall__icontains = search)|
+            Q(event_hall__portion_name__icontains = search)|
+            Q(payment_status__icontains = search)|
             Q(status__icontains = search)
         )
+        booking_list = booking_list.filter(search_filter)
+        today_booking_list = today_booking_list.filter(search_filter)
     if booking_status_filter.lower() == 'confirmed':
         booking_list = booking_list.filter(status__in=booking_status)
+        today_booking_list = today_booking_list.filter(status__in=booking_status)
     elif booking_status_filter.lower() == 'pending':
         booking_list = booking_list.filter(status__in=booking_status_pending)
+        today_booking_list = today_booking_list.filter(status__in=booking_status_pending)
     elif booking_status_filter:
         booking_list = booking_list.filter(status__iexact=booking_status_filter)
+        today_booking_list = today_booking_list.filter(status__iexact=booking_status_filter)
     if booking_date:
         booking_list = booking_list.filter(event_date=booking_date)
+        today_booking_list = today_booking_list.filter(event_date=booking_date)
 
     paginator = Paginator(booking_list, 10)
     page_obj = paginator.get_page(request.GET.get('page'))
+    today_paginator = Paginator(today_booking_list, 10)
+    today_page_obj = today_paginator.get_page(request.GET.get('today_page'))
 
     context = {
                 'booking_total':booking_total,
@@ -242,7 +305,7 @@ def booking_view(request):
                 'booking_status_filter':booking_status_filter,
                 'booking_date':booking_date,
                 'pending_booking_previous':pending_booking_previous,
-                'today_event_count':today_event_count
+                'today_page_obj': today_page_obj,
             }
     return render(request, 'bookings.html', context)
 @login_required(login_url='login')
@@ -472,7 +535,7 @@ def Packages_view(request):
     return render(request , 'packages.html')
 @login_required(login_url='login')
 def Payments_view(request):
-    payment_details = payment.objects.all().order_by('-payment_id')
+    payment_details = payment.objects.all().order_by('-created_at','-payment_id')
     search = request.GET.get('search' , '')
     payment_method = request.GET.get('method')
     today = datetime.now()
@@ -501,7 +564,7 @@ def Payments_view(request):
             Q(amount__icontains = search)|
             Q(booking__customer_name__icontains = search)|
             Q(payment_date__icontains = search)
-        )
+        ).order_by('-created_at','-payment_id')
         paginator = Paginator(payment_obj , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -521,7 +584,7 @@ def Payments_view(request):
         }
         return render(request , 'payments.html' , context)
     elif payment_method:
-        payment_obj = payment.objects.filter(method = payment_method)
+        payment_obj = payment.objects.filter(method = payment_method).order_by('-created_at','-payment_id')
         paginator = Paginator(payment_obj , 10)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -573,7 +636,34 @@ def Payment_form(request):
             return redirect('payments')
     else:
         form = new_payment()
-    return render(request, 'addpaymentform.html', {'form': form, 'page': 'payments'})
+
+    booking_details = {}
+    bookings = form.fields['booking'].queryset.prefetch_related('event_hall')
+    for booking in bookings:
+        booking_details[booking.booking_id] = {
+            'booking_id': booking.booking_id,
+            'customer_name': booking.customer_name,
+            'phone_number': booking.phone_number,
+            'customer_email': booking.customer_email,
+            'event_name': booking.event_name,
+            'event_type': booking.event_type,
+            'event_date': booking.event_date.strftime('%d %b %Y'),
+            'event_time': booking.event_time,
+            'event_guest': booking.event_guest,
+            'event_halls': ', '.join(hall.portion_name for hall in booking.event_hall.all()) or 'Not assigned',
+            'service': booking.service,
+            'status': booking.status,
+            'hall_price': str(booking.hall_price),
+            'advance_amount': str(booking.advance_amount or 0),
+            'recorded_payment_total': str(booking.recorded_payment_total),
+            'remaining_balance': str(booking.remaining_balance),
+        }
+
+    return render(request, 'addpaymentform.html', {
+        'form': form,
+        'page': 'payments',
+        'booking_details': booking_details,
+    })
 
 
 #used for download payments records
@@ -865,21 +955,82 @@ def Reports_view(request):
     bank_transfer_payment_percentage = (bank_transfer_payment/total_revenue) * 100 if total_revenue else 0
 
     #Hall performance backend logic starts here
-    portion_a = newbooking.objects.filter(event_hall = 'A' , event_date__month = current__month , event_date__year = current_year).count()
-    portion_b = newbooking.objects.filter(event_hall = 'B' , event_date__month = current__month , event_date__year = current_year).count()
-    portion_c = newbooking.objects.filter(event_hall = 'C' , event_date__month = current__month , event_date__year = current_year).count()
-    portion_A_b = newbooking.objects.filter(event_hall = 'A and B' , event_date__month = current__month , event_date__year = current_year).count()
-    portion_b_c = newbooking.objects.filter(event_hall = 'B and C' , event_date__month = current__month , event_date__year = current_year).count()
-    portion_a_price = newbooking.objects.filter(event_hall = 'A' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
-    portion_b_price = newbooking.objects.filter(event_hall = 'B' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
-    portion_c_price = newbooking.objects.filter(event_hall = 'C' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
-    portion_A_b_price = newbooking.objects.filter(event_hall = 'A and B' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
-    portion_b_c_price = newbooking.objects.filter(event_hall = 'B and C' , event_date__month = current__month , event_date__year = current_year).aggregate(Sum('hall_price'))['hall_price__sum'] or 0
+    def hall_bookings_for_portions(*portion_names):
+        bookings = newbooking.objects.filter(
+            event_date__month=current__month,
+            event_date__year=current_year,
+        ).annotate(
+            portion_count=Count('event_hall', distinct=True),
+        )
+        for portion_name in portion_names:
+            bookings = bookings.filter(event_hall__portion_name=portion_name)
+        return list(bookings.filter(portion_count=len(portion_names)).distinct())
+
+    portion_bookings = {
+        'a': hall_bookings_for_portions('A'),
+        'b': hall_bookings_for_portions('B'),
+        'c': hall_bookings_for_portions('C'),
+        'a_b': hall_bookings_for_portions('A', 'B'),
+        'b_c': hall_bookings_for_portions('B', 'C'),
+    }
+    portion_a = len(portion_bookings['a'])
+    portion_b = len(portion_bookings['b'])
+    portion_c = len(portion_bookings['c'])
+    portion_A_b = len(portion_bookings['a_b'])
+    portion_b_c = len(portion_bookings['b_c'])
+    portion_a_price = sum(booking.hall_price for booking in portion_bookings['a'])
+    portion_b_price = sum(booking.hall_price for booking in portion_bookings['b'])
+    portion_c_price = sum(booking.hall_price for booking in portion_bookings['c'])
+    portion_A_b_price = sum(booking.hall_price for booking in portion_bookings['a_b'])
+    portion_b_c_price = sum(booking.hall_price for booking in portion_bookings['b_c'])
     portion_a_display = format_report_payment_amount(portion_a_price)
     portion_b_display = format_report_payment_amount(portion_b_price)
     portion_c_display = format_report_payment_amount(portion_c_price)
     portion_A_b_display = format_report_payment_amount(portion_A_b_price)
     portion_b_c_display = format_report_payment_amount(portion_b_c_price)
+    report_month_start = today.replace(day=1)
+    report_next_month = (report_month_start + timedelta(days=32)).replace(day=1)
+    report_month_days = (report_next_month - report_month_start).days
+    monthly_shift_slots = report_month_days * 2
+    active_portions = Hall_portion.objects.filter(portion_status__iexact='Active')
+    active_portion_ids = set(active_portions.values_list('pk', flat=True))
+    active_portion_names = set(active_portions.values_list('portion_name', flat=True))
+    non_cancelled_month_bookings = newbooking.objects.filter(
+        event_date__gte=report_month_start,
+        event_date__lt=report_next_month,
+    ).exclude(
+        Q(status__iexact='cancel')
+        | Q(status__iexact='cancelled')
+        | Q(status__iexact='canceled')
+    )
+    occupied_portion_slots = non_cancelled_month_bookings.filter(
+        event_hall__in=active_portion_ids,
+    ).values(
+        'event_date',
+        'event_time',
+        'event_hall',
+    ).distinct().count()
+    overall_occupancy = (
+        round(occupied_portion_slots / (len(active_portion_ids) * monthly_shift_slots) * 100)
+        if active_portion_ids and monthly_shift_slots else 0
+    )
+
+    def hall_occupancy_for_portions(*portion_names):
+        if not portion_names or any(name not in active_portion_names for name in portion_names):
+            return 0
+        bookings = non_cancelled_month_bookings.annotate(
+            portion_count=Count('event_hall', distinct=True),
+        ).filter(portion_count=len(portion_names))
+        for portion_name in portion_names:
+            bookings = bookings.filter(event_hall__portion_name=portion_name)
+        occupied_slots = bookings.values('event_date', 'event_time').distinct().count()
+        return round(occupied_slots / monthly_shift_slots * 100) if monthly_shift_slots else 0
+
+    portion_a_occupancy = hall_occupancy_for_portions('A')
+    portion_b_occupancy = hall_occupancy_for_portions('B')
+    portion_c_occupancy = hall_occupancy_for_portions('C')
+    portion_A_b_occupancy = hall_occupancy_for_portions('A', 'B')
+    portion_b_c_occupancy = hall_occupancy_for_portions('B', 'C')
     portions = {
         'Hall A': portion_a,
         'Hall B': portion_b,
@@ -1159,6 +1310,12 @@ def Reports_view(request):
         'portion_c_display':portion_c_display,
         'portion_A_b_display':portion_A_b_display,
         'portion_b_c_display':portion_b_c_display,
+        'overall_occupancy': overall_occupancy,
+        'portion_a_occupancy': portion_a_occupancy,
+        'portion_b_occupancy': portion_b_occupancy,
+        'portion_c_occupancy': portion_c_occupancy,
+        'portion_A_b_occupancy': portion_A_b_occupancy,
+        'portion_b_c_occupancy': portion_b_c_occupancy,
         'top_hall_portion':top_hall_portion,
         #financial performance context data
         'received_amount_display':Received_amount_display,
@@ -1317,20 +1474,34 @@ def Notifications_view(request):
 @login_required(login_url='login')
 def Settings_view(request):
     return render(request , 'settings.html')
+# START: Booking form backend
 @login_required(login_url='login')
 def New_booking(request):
     if request.method == 'POST':
         form = new_booking(request.POST)
         if form.is_valid():
-            form.save()
+            with transaction.atomic():
+                booking = form.save()
+                payment.objects.create(
+                    booking=booking,
+                    method=booking.payment_method,
+                    amount=booking.hall_price,
+                    refference_num='None',
+                    payment_status='Advance' if booking.advance_amount else 'Pending',
+                )
             messages.success(request, "Booking created successfully.")
             return redirect('bookings')
-        elif form.is_not_valid():
-            messages.error(request, "Please correct the errors below.")
+
+        messages.error(request, "Please correct the errors below.")
     else:
         form = new_booking()
-    context  = {'form': form}
+    context = {
+        'form': form,
+        'booking_conflict_date': form.booking_conflict_date,
+        'min_event_date': timezone.localdate().isoformat(),
+    }
     return render(request , 'bookingform.html', context)
+# END: Booking form backend
 
 @login_required(login_url='login')
 def Expense_form(request):

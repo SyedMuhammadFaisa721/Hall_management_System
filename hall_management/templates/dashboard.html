@@ -315,21 +315,21 @@
             <div class="section-head">
                 <div>
                     <h2>Hall availability</h2>
-                    <p>September occupancy</p>
+                    <p>{{ availability_month }} occupancy</p>
                 </div>
-                <a class="section-link" href="/availability/">Calendar</a>
+                <a class="section-link" href="{% url 'availability' %}">Calendar</a>
             </div>
             <div class="progress-label">
                 <span>Booked capacity</span>
-                <strong>78%</strong>
+                <strong>{{ booked_capacity_percentage }}%</strong>
             </div>
-            <div class="progress-track" role="progressbar" aria-label="Booked capacity" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100">
-                <div class="progress-fill" style="width:78%"></div>
+            <div class="progress-track" role="progressbar" aria-label="Booked capacity" aria-valuenow="{{ booked_capacity_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-fill" style="width:{{ booked_capacity_percentage }}%"></div>
             </div>
             <div class="availability-summary">
-                <div><strong>18</strong><span>Confirmed</span></div>
-                <div><strong>3</strong><span>Pending</span></div>
-                <div><strong>12</strong><span>Available</span></div>
+                <div><strong>{{ dashboard_confirmed_bookings }}</strong><span>Confirmed</span></div>
+                <div><strong>{{ dashboard_pending_bookings }}</strong><span>Pending</span></div>
+                <div><strong>{{ available_dates }}</strong><span>Available</span></div>
             </div>
             
             <div class="section">

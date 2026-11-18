@@ -435,6 +435,10 @@ fieldset.booking-form-field { min-width: 0; border: 0; padding: 0; }
 .booking-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 22px 20px; border-top: 1px solid var(--border); background: rgba(255,255,255,.015); }
 .booking-form-note { color: var(--quiet); font-size: 10px; }
 .booking-form-card .heading-actions { width: auto; }
+.booking-form-errors { margin: 18px 22px 0; padding: 11px 14px; border: 1px solid rgba(255,120,110,.3); border-radius: 10px; background: rgba(255,120,110,.08); color: #ffaaa3; font-size: 11px; }
+.booking-availability-link { display: inline-block; margin-top: 8px; color: var(--gold-light); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.booking-form-field[hidden],
+.summary-row[hidden] { display: none !important; }
 .invoice-page { padding: 2px 0 20px; }
 .invoice-document { max-width: 920px; margin: 0 auto; padding: 48px 54px 28px; border: 1px solid rgba(255,255,255,.12); border-top: 3px solid var(--gold); background: #fdfcf9; box-shadow: 0 22px 60px rgba(0,0,0,.3); color: #20211f; }
 .invoice-document-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding-bottom: 30px; border-bottom: 1px solid #e7e4de; }

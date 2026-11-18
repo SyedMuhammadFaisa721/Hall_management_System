@@ -1,5 +1,16 @@
 from django.db import models
+from django.utils import timezone
 from datetime import datetime
+from decimal import Decimal
+
+# START: Booking/payment method backend
+PAYMENT_METHOD_CHOICES = [
+    ('cash', 'Cash'),
+    ('Bank Transfer', 'Bank transfer'),
+    ('card', 'Card'),
+    ('Online', 'Online'),
+]
+# END: Booking/payment method backend
 
 class Hall_portion(models.Model):
      portion_name = models.CharField(max_length=10 , null=False)
@@ -13,14 +24,14 @@ class newbooking(models.Model):
     created_at     = models.DateField(auto_now_add=True)
     customer_name  = models.CharField(max_length=100)
     phone_number   = models.CharField(max_length=12)
-    nic_number     = models.CharField(max_length=15 , null=True)
+    nic_number     = models.CharField(max_length=15 , blank=True , default='NIC Not Provided')
     customer_email = models.EmailField()
     event_name     = models.CharField(max_length=100)
     event_type     = models.CharField(max_length=100)
     event_date     = models.DateField()
     event_guest    = models.IntegerField(null=False)
     event_hall     = models.ManyToManyField(Hall_portion , related_name='booked_halls')
-    special_req    = models.CharField(max_length=500 , null= True)
+    special_req    = models.CharField(max_length=500 , blank=True , default='No Special Requirements')
     hall_price     = models.IntegerField(null=False)
     status         = models.CharField(max_length=20)
     event_time     = models.CharField(max_length=8, 
@@ -28,6 +39,27 @@ class newbooking(models.Model):
                                       default = 'Night')
     payment_status = models.CharField(max_length=20 , default="Pending")
     service = models.CharField(max_length=20 , choices= [('Table Service','Table Service'), ('Buffet Service','Buffet Service')], default='Buffet Service')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, blank=True, default='')
+    # START: Booking advance amount backend
+    advance_amount = models.PositiveIntegerField(blank=True, null=True)
+    # END: Booking advance amount backend
+
+    @property
+    def recorded_payment_total(self):
+        total = self.payments.exclude(refference_num='None').aggregate(
+            total=models.Sum('amount'),
+        )['total']
+        return total or Decimal('0')
+
+    @property
+    def remaining_balance(self):
+        balance = (
+            Decimal(self.hall_price)
+            - Decimal(self.advance_amount or 0)
+            - self.recorded_payment_total
+        )
+        return max(balance, Decimal('0'))
+
     def save(self , *args ,**kwargs):
         if not self.booking_id:
             current_year = datetime.now().year
@@ -100,7 +132,7 @@ class staff(models.Model):
     staff_role      = models.CharField(max_length=30)
     staff_nic_num   = models.CharField(max_length=16 , unique=True , null=False)
     staff_status    = models.CharField(max_length=10)
-    staff_join_date = models.DateField(default=datetime.now)
+    staff_join_date = models.DateField(default=timezone.now)
     category        = models.CharField(max_length=20 , default='worker')
     Salary_status   = models.CharField(
         max_length=20,
@@ -144,11 +176,17 @@ class payment(models.Model):
                               )
                           super().save(*args , **kwargs)
      booking = models.ForeignKey(newbooking , on_delete=models.CASCADE , related_name='payments')
-     payment_date =  models.DateField(default=datetime.now)
-     method = models.CharField(max_length=20)
+     payment_date =  models.DateField(default=timezone.now )
+     method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
      amount = models.DecimalField(max_digits=12 , decimal_places=2)
      refference_num = models.CharField(max_length=40)
      payment_status = models.CharField(max_length=30)
+     created_at = models.DateTimeField(default = timezone.now ,editable= False)
+     # START: Payment remaining amount calculation
+     @property
+     def remaining_amount(self):
+          return self.amount - (self.booking.advance_amount or 0)
+     # END: Payment remaining amount calculation
      def __str__(self):
           return self.payment_id    
 # Create your models here.

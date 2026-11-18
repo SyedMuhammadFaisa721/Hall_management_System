@@ -19,7 +19,15 @@ document.addEventListener('DOMContentLoaded', function () {
   const errorElement = document.getElementById('availability-calendar-error');
   const portions = JSON.parse(document.getElementById('availability-portions-data').textContent);
   const bookingsByDate = new Map();
-  let selectedDate = toDateKey(new Date());
+  const requestedDate = new URLSearchParams(window.location.search).get('date');
+
+  function isDateKey(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return false;
+    const [year, month, day] = value.split('-').map(Number);
+    return toDateKey(new Date(year, month - 1, day, 12)) === value;
+  }
+
+  let selectedDate = isDateKey(requestedDate) ? requestedDate : toDateKey(new Date());
 
   function toDateKey(date) {
     const year = date.getFullYear();
