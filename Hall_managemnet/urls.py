@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Availability_events , Customers_view, Packages_view,Payments_view, Payment_form, Invoices_view, Reports_view,  Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data ,download_payments_records,expense_data_download,export_reports_csv
+from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Availability_events , Customers_view, Packages_view,Payments_view, Payment_form, Invoices_view, Reports_view,  Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data ,download_payments_records,expense_data_download,export_reports_csv, verify_manager_email
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -47,6 +47,7 @@ urlpatterns = [
         path('bookingform/' , New_booking , name = "bookingform"),
         path('addexpense/', Expense_form , name = "expensesform"),
         path('addstaff/' , New_staff , name = "staffform"),
+        path('staff/verify-manager/<str:staff_id>/<str:token>/', verify_manager_email, name='verify_manager_email'),
         path('addinventory/' , New_inventory , name = "inventoryform"),
         path('addinventorycategory/' , New_inventory_category , name = "inventorycategoryform"),
         path('tester/', tester, name='tester'),

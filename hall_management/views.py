@@ -1,23 +1,119 @@
+import logging
+import random
+import secrets
+import string
+from html import unescape
+from smtplib import SMTPException
+
+from django.conf import settings
 from django.shortcuts import render , redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
-from django.views.decorators.http import require_POST
+from django.core import signing
+from django.core.exceptions import ImproperlyConfigured
+from django.core.mail import EmailMultiAlternatives, get_connection
+from django.core.signing import BadSignature
 from django.db import transaction
 from .form import hallmaster_user_creation, new_booking , new_expense ,new_inventory ,new_staff ,new_inventory_category, loginform , new_payment
 from django.views.generic import ListView
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.db.models import Count, Q
 from django.db.models.functions import ExtractMonth, ExtractYear
 from django.core.paginator import Paginator
 from .models import Hall_portion, newbooking , staff , expense , Inventory, InventoryCategory , payment
 from django.db.models import Sum ,Max 
 from datetime import date , datetime , timedelta
+from django.utils.crypto import get_random_string
+from django.utils.html import strip_tags
+from django.utils.text import slugify
+from django.views.decorators.http import require_http_methods, require_POST
 import csv
 import math
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
+MANAGER_EMAIL_VERIFICATION_SALT = 'hall_management.manager-email-verification'
+MANAGER_EMAIL_VERIFICATION_MAX_AGE = 24 * 60 * 60
+
+
+def _send_template_email(subject, template_name, context, recipient):
+    mailers = getattr(settings, 'MAILERS', None)
+    if not mailers or 'default' not in mailers:
+        raise ImproperlyConfigured('Configure MAILERS["default"] before sending email.')
+
+    mailer = mailers['default']
+    options = mailer.get('OPTIONS', {})
+    connection = get_connection(
+        backend=mailer['BACKEND'],
+        **options,
+    )
+    html_content = render_to_string(template_name, context)
+    text_content = unescape(strip_tags(html_content)).strip()
+    message = EmailMultiAlternatives(
+        subject=subject,
+        body=text_content,
+        from_email=options.get('username') or settings.DEFAULT_FROM_EMAIL,
+        to=[recipient],
+        connection=connection,
+    )
+    message.attach_alternative(html_content, 'text/html')
+    if message.send(fail_silently=False) != 1:
+        raise SMTPException('The email backend did not send the message.')
+
+
+def _manager_username(staff_name, user_model):
+    username_base = slugify(staff_name).replace('-', '') or 'manager'
+    username_field = user_model.USERNAME_FIELD
+    for _ in range(10_000):
+        username = f"{username_base}{get_random_string(4, allowed_chars=string.digits)}"
+        if not user_model._default_manager.filter(
+            **{f'{username_field}__iexact': username}
+        ).exists():
+            return username
+    raise RuntimeError('Could not generate a unique manager username.')
+
+
+def _manager_temporary_password():
+    character_groups = (
+        string.ascii_lowercase,
+        string.ascii_uppercase,
+        string.digits,
+        '!#$%()*+,-./:;=?@[]^_{}~',
+    )
+    alphabet = ''.join(character_groups)
+    characters = [secrets.choice(group) for group in character_groups]
+    characters.extend(secrets.choice(alphabet) for _ in range(4))
+    random.SystemRandom().shuffle(characters)
+    return ''.join(characters)
+
+
+def _manager_from_verification_token(staff_id, token):
+    try:
+        payload = signing.loads(
+            token,
+            salt=MANAGER_EMAIL_VERIFICATION_SALT,
+            max_age=MANAGER_EMAIL_VERIFICATION_MAX_AGE,
+        )
+    except BadSignature:
+        return None
+
+    if not isinstance(payload, dict) or payload.get('staff_id') != staff_id:
+        return None
+
+    manager = staff.objects.filter(
+        pk=staff_id,
+        staff_role__iexact='manager',
+    ).first()
+    if not manager or payload.get('email') != manager.staff_email:
+        return None
+    return manager
+
 
 def format_report_payment_amount(amount):
     if amount >= 1_000_000_000:
@@ -1438,8 +1534,8 @@ def export_reports_csv(request):
 @login_required(login_url='login')
 def Staff_view(request):
     total_staff = staff.objects.all().count()
-    active_staff = staff.objects.filter(staff_status = 'active').count()
-    manager_count = staff.objects.filter(staff_role = 'manager').count()
+    active_staff = staff.objects.filter(staff_status__iexact='active').count()
+    manager_count = staff.objects.filter(staff_role__iexact='manager').count()
     search = request.GET.get('search' , '')
     status_filter = request.GET.get('status', '')
     staff_list = staff.objects.all().order_by('-staff_id')
@@ -1517,18 +1613,157 @@ def Expense_form(request):
     return render(request, 'addexpense.html', {'form': form})
 @login_required(login_url='login')
 def New_staff(request):
-    if request.method =='POST':
-        form =new_staff(request.POST)
+    if request.method == 'POST':
+        form = new_staff(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request , "Staff created successfully.")
-            return redirect('staffform')
-        elif form.is_not_valid():
-            messages.error(request , "Please correct the errors below.")
+            is_manager = form.cleaned_data['staff_role'].strip().casefold() == 'manager'
+            try:
+                with transaction.atomic():
+                    staff_member = form.save(commit=False)
+                    if is_manager:
+                        staff_member.manager_email_verified = False
+                    staff_member.save()
+
+                    if is_manager:
+                        token = signing.dumps(
+                            {
+                                'staff_id': staff_member.pk,
+                                'email': staff_member.staff_email,
+                            },
+                            salt=MANAGER_EMAIL_VERIFICATION_SALT,
+                        )
+                        verification_url = request.build_absolute_uri(
+                            reverse(
+                                'verify_manager_email',
+                                kwargs={
+                                    'staff_id': staff_member.pk,
+                                    'token': token,
+                                },
+                            )
+                        )
+                        _send_template_email(
+                            'Confirm your HallMaster manager email',
+                            'emails/manager_email_verification.html',
+                            {
+                                'manager_name': staff_member.staff_name,
+                                'email': staff_member.staff_email,
+                                'verification_url': verification_url,
+                            },
+                            staff_member.staff_email,
+                        )
+            except (SMTPException, OSError):
+                logger.exception('Could not send manager verification email.')
+                form.add_error(
+                    None,
+                    'The verification email could not be sent. The staff member was not saved; please try again.',
+                )
+            else:
+                if is_manager:
+                    messages.success(
+                        request,
+                        'Staff member saved. A verification email has been sent to the manager.',
+                    )
+                else:
+                    messages.success(request, 'Staff member created successfully.')
+                return redirect('staffform')
     else:
-        form =new_staff()
+        form = new_staff()
     context = {'form': form}
-    return render (request , 'addstaff.html' , context)
+    return render(request, 'addstaff.html', context)
+
+
+@require_http_methods(['GET', 'POST'])
+def verify_manager_email(request, staff_id, token):
+    manager = _manager_from_verification_token(staff_id, token)
+    if not manager:
+        return render(
+            request,
+            'emails/manager_email_verification_confirm.html',
+            {'state': 'invalid'},
+            status=400,
+        )
+
+    if manager.manager_email_verified:
+        return render(
+            request,
+            'emails/manager_email_verification_confirm.html',
+            {'state': 'already_verified', 'manager_name': manager.staff_name},
+        )
+
+    if request.method == 'GET':
+        return render(
+            request,
+            'emails/manager_email_verification_confirm.html',
+            {'state': 'confirm', 'manager_name': manager.staff_name},
+        )
+
+    user_model = get_user_model()
+    try:
+        with transaction.atomic():
+            manager = staff.objects.select_for_update().filter(
+                pk=staff_id,
+                staff_role__iexact='manager',
+            ).first()
+            signed_manager = _manager_from_verification_token(
+                staff_id,
+                token,
+            )
+            if (
+                not manager
+                or not signed_manager
+                or manager.staff_email != signed_manager.staff_email
+            ):
+                state = 'invalid'
+            elif manager.manager_email_verified:
+                state = 'already_verified'
+            elif user_model._default_manager.filter(
+                email__iexact=manager.staff_email,
+            ).exists():
+                state = 'account_exists'
+            else:
+                username = _manager_username(manager.staff_name, user_model)
+                temporary_password = _manager_temporary_password()
+                manager_user = user_model._default_manager.create_user(
+                    username=username,
+                    email=manager.staff_email,
+                    first_name=manager.staff_name,
+                    password=temporary_password,
+                    is_staff=True,
+                    is_active=manager.staff_status.casefold() == 'active',
+                )
+                manager_group, _ = Group.objects.get_or_create(name='Manager')
+                manager_user.groups.add(manager_group)
+                _send_template_email(
+                    'Your HallMaster manager sign-in details',
+                    'emails/manager_credentials.html',
+                    {
+                        'manager_name': manager.staff_name,
+                        'username': username,
+                        'password': temporary_password,
+                        'account_active': manager_user.is_active,
+                        'login_url': request.build_absolute_uri(reverse('login')),
+                    },
+                    manager.staff_email,
+                )
+                manager.manager_email_verified = True
+                manager.save(update_fields=['manager_email_verified'])
+                state = 'complete'
+    except (SMTPException, OSError):
+        logger.exception('Could not send manager credentials email.')
+        state = 'send_failed'
+
+    status_codes = {
+        'invalid': 400,
+        'account_exists': 409,
+        'send_failed': 503,
+    }
+    status_code = status_codes.get(state, 200)
+    return render(
+        request,
+        'emails/manager_email_verification_confirm.html',
+        {'state': state, 'manager_name': manager.staff_name if manager else ''},
+        status=status_code,
+    )
 @login_required(login_url='login')
 def New_inventory(request):
     inventory_categories = InventoryCategory.objects.all()

@@ -1,38 +1,44 @@
 document.addEventListener('DOMContentLoaded', function () {
   const nameField = document.getElementById('staff-name');
   const roleField = document.getElementById('staff-role-select');
-  const avatarField = document.getElementById('staff-avatar');
-  const avatarPreview = document.getElementById('staff-avatar-preview');
+  const emailField = document.getElementById('staff-email');
+  const emailRequired = document.getElementById('staff-email-required');
+  const emailHint = document.getElementById('staff-email-hint');
   const previewAvatar = document.getElementById('staff-preview-avatar');
   const previewName = document.getElementById('staff-preview-name');
   const previewRole = document.getElementById('staff-preview-role');
-  const feedback = document.getElementById('staff-form-feedback');
+  const statusField = document.getElementById('staff-status-select');
+  const previewStatus = document.getElementById('staff-preview-status');
 
   function initials(name) {
     return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(function (part) { return part[0]; }).join('').toUpperCase() || 'ST';
   }
 
-  nameField.addEventListener('input', function () {
+  function updateName() {
     const name = nameField.value.trim();
     previewName.textContent = name || 'New team member';
-    if (!previewAvatar.querySelector('img')) previewAvatar.textContent = initials(name);
-    if (!avatarPreview.querySelector('img')) avatarPreview.textContent = initials(name);
-  });
-  roleField.addEventListener('change', function () { previewRole.textContent = roleField.value; });
-  avatarField.addEventListener('change', function () {
-    const file = avatarField.files && avatarField.files[0];
-    if (!file || !file.type.startsWith('image/')) return;
-    const imageUrl = URL.createObjectURL(file);
-    [avatarPreview, previewAvatar].forEach(function (target) {
-      const image = document.createElement('img');
-      image.src = imageUrl;
-      image.alt = '';
-      target.replaceChildren(image);
-    });
-  });
-  document.getElementById('add-staff-form').addEventListener('submit', function (event) {
-    event.preventDefault();
-    if (!event.currentTarget.reportValidity()) return;
-    feedback.textContent = 'Preview only: connect a backend to save this staff member.';
-  });
+    previewAvatar.textContent = initials(name);
+  }
+
+  nameField.addEventListener('input', updateName);
+  updateName();
+  function updateRole() {
+    const isManager = roleField.value.toLowerCase() === 'manager';
+    previewRole.textContent = roleField.value || 'Select a role';
+    emailField.required = isManager;
+    emailRequired.hidden = !isManager;
+    emailHint.textContent = isManager
+      ? 'A verification email will be sent before manager sign-in details are issued.'
+      : 'Optional contact email for this staff member.';
+  }
+
+  function updateStatus() {
+    previewStatus.querySelector('span').textContent = statusField.value;
+    previewStatus.classList.toggle('is-inactive', statusField.value === 'Inactive');
+  }
+
+  roleField.addEventListener('change', updateRole);
+  updateRole();
+  statusField.addEventListener('change', updateStatus);
+  updateStatus();
 });

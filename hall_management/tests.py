@@ -1,12 +1,17 @@
+import re
 from datetime import date, timedelta
 from decimal import Decimal
+from smtplib import SMTPException
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test import TestCase
+from django.test import override_settings
 from django.urls import reverse
+from urllib.parse import urlparse
 
-from .models import Hall_portion, Inventory, InventoryCategory, expense, newbooking, payment
+from .models import Hall_portion, Inventory, InventoryCategory, expense, newbooking, payment, staff
 
 
 class BookingFormTests(TestCase):
@@ -806,3 +811,165 @@ class InventoryFormTests(TestCase):
         self.assertContains(response, 'id="inventory-damaged-errors"')
         self.assertContains(response, 'Quantity cannot be negative.')
         self.assertEqual(Inventory.objects.count(), 0)
+
+
+@override_settings(MAILERS={
+    'default': {
+        'BACKEND': 'django.core.mail.backends.locmem.EmailBackend',
+        'OPTIONS': {},
+    },
+})
+class StaffManagerVerificationTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(
+            username='staff-verification-test',
+            password='test-password',
+        )
+        self.client.force_login(self.user)
+
+    def valid_staff_data(self, **overrides):
+        data = {
+            'staff_name': 'Manager Test',
+            'staff_email': 'manager@example.com',
+            'staff_number': '03001234567',
+            'staff_role': 'Manager',
+            'staff_nic_num': '12345-1234567-1',
+            'staff_status': 'Active',
+            'staff_join_date': '2026-11-19',
+            'category': 'worker',
+            'Salary_status': 'Unpaid',
+        }
+        data.update(overrides)
+        return data
+
+    def test_manager_gets_verification_then_credentials_only_after_confirmation(self):
+        response = self.client.post(
+            reverse('staffform'),
+            self.valid_staff_data(),
+        )
+
+        self.assertRedirects(response, reverse('staffform'), fetch_redirect_response=False)
+        self.assertContains(self.client.get(response['Location']), 'verification email has been sent')
+        manager = staff.objects.get(staff_email='manager@example.com')
+        self.assertFalse(manager.manager_email_verified)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['manager@example.com'])
+        verification_html = next(
+            content
+            for content, mimetype in mail.outbox[0].alternatives
+            if mimetype == 'text/html'
+        )
+        verification_path = urlparse(
+            re.search(r'href="([^"]+)"', verification_html).group(1)
+        ).path
+
+        confirmation_page = self.client.get(verification_path)
+        self.assertEqual(confirmation_page.status_code, 200)
+        self.assertContains(confirmation_page, 'Confirm your manager email')
+        self.assertFalse(get_user_model().objects.filter(email='manager@example.com').exists())
+
+        response = self.client.post(verification_path)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Email confirmed')
+        manager.refresh_from_db()
+        self.assertTrue(manager.manager_email_verified)
+        self.assertEqual(len(mail.outbox), 2)
+
+        credentials = mail.outbox[1].body
+        username = re.search(r'Username\s+(\S+)', credentials).group(1)
+        password = re.search(r'Temporary password\s+(\S+)', credentials).group(1)
+        self.assertRegex(username, r'^managertest\d{4}$')
+        self.assertEqual(len(password), 8)
+        self.assertTrue(any(character.islower() for character in password))
+        self.assertTrue(any(character.isupper() for character in password))
+        self.assertTrue(any(character.isdigit() for character in password))
+        self.assertTrue(any(not character.isalnum() for character in password))
+
+        manager_user = get_user_model().objects.get(email='manager@example.com')
+        self.assertTrue(manager_user.is_staff)
+        self.assertTrue(manager_user.check_password(password))
+        login_response = self.client.post(
+            reverse('login'),
+            {'username': username, 'password': password},
+        )
+        self.assertRedirects(
+            login_response,
+            reverse('dashboard'),
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(mail.outbox[1].to, ['manager@example.com'])
+        self.assertTrue(manager_user.groups.filter(name='Manager').exists())
+
+        self.client.post(verification_path)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(get_user_model().objects.filter(email='manager@example.com').count(), 1)
+
+    def test_non_manager_is_saved_without_verification_email_or_login_account(self):
+        response = self.client.post(
+            reverse('staffform'),
+            self.valid_staff_data(
+                staff_name='Receptionist Test',
+                staff_email='',
+                staff_role='Receptionist',
+                staff_nic_num='12345-1234567-2',
+            ),
+        )
+
+        self.assertRedirects(response, reverse('staffform'), fetch_redirect_response=False)
+        self.assertEqual(staff.objects.count(), 1)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertFalse(get_user_model().objects.filter(first_name='Receptionist Test').exists())
+
+    def test_manager_without_email_is_rejected(self):
+        response = self.client.post(
+            reverse('staffform'),
+            self.valid_staff_data(staff_email=''),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'An email address is required for a manager.')
+        self.assertEqual(staff.objects.count(), 0)
+        self.assertEqual(len(mail.outbox), 0)
+
+    @patch(
+        'hall_management.views._send_template_email',
+        side_effect=SMTPException('mail unavailable'),
+    )
+    def test_manager_record_is_rolled_back_when_verification_email_fails(self, send_email):
+        response = self.client.post(
+            reverse('staffform'),
+            self.valid_staff_data(),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'The verification email could not be sent.')
+        self.assertEqual(staff.objects.count(), 0)
+        send_email.assert_called_once()
+
+
+class InvoiceTemplateTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(
+            username='invoice-template-test',
+            password='test-password',
+        )
+        self.client.force_login(self.user)
+
+    def test_invoices_page_renders_sample_printable_invoice_and_existing_register(self):
+        response = self.client.get(reverse('invoices'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'INV-2026-126')
+        self.assertContains(response, 'Sarah Khan')
+        self.assertContains(response, 'Grand Ballroom rental')
+        self.assertContains(response, 'Rs 1,500,000')
+        self.assertContains(response, 'NOT A REAL INVOICE')
+        self.assertContains(response, 'TERMS &amp; CONDITIONS')
+        self.assertContains(response, 'HallMaster &copy; 2026 &middot; Secure Venue Management System.')
+        self.assertContains(response, 'href="https://syedfaisal721.pythonanywhere.com/"')
+        self.assertContains(response, 'window.print()')
+        self.assertContains(response, 'invoice-template.css')
+        self.assertContains(response, 'Invoice register')

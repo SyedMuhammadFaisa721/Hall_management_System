@@ -11,7 +11,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 class loginform(AuthenticationForm):
         def __init__(self, *args, **kwargs):
             super(loginform, self).__init__(*args, **kwargs)
-            self.fields['username'].widget.attrs.update({'placeholder': 'Enter your email' })
+            self.fields['username'].widget.attrs.update({'placeholder': 'Enter your username' })
             self.fields['password'].widget.attrs.update({'placeholder': 'Enter your password'})
 
 
@@ -154,9 +154,85 @@ class new_booking(forms.ModelForm):
         # END: Booking advance amount validation
 # END: Booking form backend
 class new_staff(forms.ModelForm):
+    staff_role = forms.ChoiceField(
+        choices=[
+            ('', 'Select a role'),
+            ('Manager', 'Manager'),
+            ('Administrator', 'Administrator'),
+            ('Accountant', 'Accountant'),
+            ('Event Manager', 'Event Manager'),
+            ('Receptionist', 'Receptionist'),
+        ],
+        initial='',
+        widget=forms.Select(attrs={'class': 'select', 'id': 'staff-role-select'}),
+    )
+    staff_status = forms.ChoiceField(
+        choices=[('Active', 'Active'), ('Inactive', 'Inactive')],
+        initial='Active',
+        widget=forms.Select(attrs={'class': 'select', 'id': 'staff-status-select'}),
+    )
+
     class Meta:
         model = staff
         exclude = ["staff_id"]
+        widgets = {
+            'staff_name': forms.TextInput(attrs={
+                'class': 'input',
+                'id': 'staff-name',
+                'maxlength': 40,
+                'placeholder': 'e.g. Ayesha Khan',
+                'autocomplete': 'name',
+            }),
+            'staff_email': forms.EmailInput(attrs={
+                'class': 'input',
+                'id': 'staff-email',
+                'placeholder': 'name@example.com',
+                'autocomplete': 'email',
+            }),
+            'staff_number': forms.TextInput(attrs={
+                'class': 'input',
+                'type': 'tel',
+                'maxlength': 13,
+                'placeholder': '300 123 4567',
+                'autocomplete': 'tel-national',
+            }),
+            'staff_nic_num': forms.TextInput(attrs={
+                'class': 'input',
+                'maxlength': 16,
+                'inputmode': 'numeric',
+                'placeholder': 'XXXXX-XXXXXXX-X',
+                'autocomplete': 'off',
+            }),
+            'staff_join_date': forms.DateInput(attrs={
+                'class': 'input',
+                'type': 'date',
+            }),
+            'category': forms.TextInput(attrs={
+                'class': 'input',
+                'maxlength': 20,
+            }),
+            'Salary_status': forms.Select(attrs={'class': 'select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['staff_email'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        role = (cleaned_data.get('staff_role') or '').strip().casefold()
+        email = cleaned_data.get('staff_email')
+
+        if role == 'manager':
+            if not email:
+                self.add_error('staff_email', 'An email address is required for a manager.')
+            elif get_user_model()._default_manager.filter(email__iexact=email).exists():
+                self.add_error(
+                    'staff_email',
+                    'A HallMaster account already uses this email address.',
+                )
+
+        return cleaned_data
 class new_expense(forms.ModelForm):
     expense_category = forms.ChoiceField(choices=[
         ('Food', 'Food'),

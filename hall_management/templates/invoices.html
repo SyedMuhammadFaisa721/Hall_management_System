@@ -1,20 +1,141 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Invoices | HallMaster{% endblock %}
 
+{% block page_scripts %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/invoice-template.css' %}">
+{% endblock %}
+
 {% block page_content %}
-<header class="page-heading">
+<header class="page-heading invoice-page-heading">
 	<div>
-		<span class="eyebrow">BILLING</span>
-		<h1>Invoices</h1>
-		<p>Create polished invoices and follow up on balances.</p>
+		<span class="eyebrow">BILLING / SAMPLE PREVIEW</span>
+		<h1>Booking invoice</h1>
+		<p>A print-ready invoice preview with sample booking details.</p>
 	</div>
 	<div class="heading-actions">
-		<a class="text-button" href="#invoice-register">Print statement</a>
-		<a class="primary-button" href="#invoice-register">+ Create invoice</a>
+		<a class="text-button" href="#invoice-register">View invoice register</a>
+		<button class="primary-button" type="button" onclick="window.print()">Print / Save PDF</button>
 	</div>
 </header>
 
-<section class="stats-grid" aria-label="Invoice summary">
+<div class="invoice-preview-notice" role="note">
+	<span aria-hidden="true">i</span>
+	<p>This is a frontend sample. The values below are illustrative and are not connected to a booking.</p>
+</div>
+
+<section class="invoice-page invoice-preview-page" aria-label="Sample booking invoice">
+	<article class="invoice-document" aria-label="Sample invoice INV-2026-126">
+		<header class="invoice-document-head">
+			<div class="invoice-brand">
+				<span class="invoice-brand-mark" aria-hidden="true">HM</span>
+				<div>
+					<strong>ROYAL PALACE HALL</strong>
+					<span>EVENTS &amp; HOSPITALITY</span>
+					<small class="invoice-brand-location">Karachi, Pakistan</small>
+				</div>
+			</div>
+			<div class="invoice-heading-meta">
+				<span class="invoice-word">INVOICE</span>
+				<strong>INV-2026-126</strong>
+				<span class="invoice-sample-badge">SAMPLE PREVIEW</span>
+				<span class="status pending">Awaiting payment</span>
+			</div>
+		</header>
+
+		<div class="invoice-detail-grid">
+			<section class="invoice-party">
+				<span class="invoice-label">PREPARED FOR</span>
+				<h2>Sarah Khan</h2>
+				<p>sarah.khan@example.com</p>
+				<p>Wedding Reception</p>
+				<p>Grand Ballroom · 420 guests</p>
+			</section>
+			<section class="invoice-meta-grid" aria-label="Invoice and booking details">
+				<div><span class="invoice-label">BOOKING REFERENCE</span><strong>BK-2026-084</strong></div>
+				<div><span class="invoice-label">EVENT DATE</span><strong>05 Oct 2026</strong></div>
+				<div><span class="invoice-label">ISSUED ON</span><strong>19 Sep 2026</strong></div>
+				<div><span class="invoice-label">PAYMENT DUE</span><strong>28 Sep 2026</strong></div>
+			</section>
+		</div>
+
+		<div class="invoice-items-wrap">
+			<table class="invoice-items">
+				<thead>
+					<tr>
+						<th scope="col">SERVICE</th>
+						<th scope="col">QTY</th>
+						<th scope="col">RATE</th>
+						<th scope="col">AMOUNT</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><strong>Grand Ballroom rental</strong><small>Venue hire for the wedding reception</small></td>
+						<td>1</td>
+						<td>Rs 920,000</td>
+						<td>Rs 920,000</td>
+					</tr>
+					<tr>
+						<td><strong>Catering &amp; service</strong><small>Dining service for 420 guests</small></td>
+						<td>1</td>
+						<td>Rs 680,000</td>
+						<td>Rs 680,000</td>
+					</tr>
+					<tr>
+						<td><strong>Stage &amp; event setup</strong><small>Event production and hall arrangement</small></td>
+						<td>1</td>
+						<td>Rs 250,000</td>
+						<td>Rs 250,000</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<section class="invoice-payment-summary">
+			<div class="invoice-note">
+				<span class="invoice-label">PAYMENT DETAILS</span>
+				<p>Please include invoice <strong>INV-2026-126</strong> as your payment reference.</p>
+				<p>Thank you for choosing Royal Palace Hall for your special occasion.</p>
+				<div class="invoice-sample-stamp">SAMPLE · NOT A REAL INVOICE</div>
+			</div>
+			<dl class="invoice-totals">
+				<div><dt>Subtotal</dt><dd>Rs 1,850,000</dd></div>
+				<div class="invoice-paid-row"><dt>Amount paid</dt><dd>Rs 350,000</dd></div>
+				<div class="invoice-balance"><dt>Balance due</dt><dd>Rs 1,500,000</dd></div>
+			</dl>
+		</section>
+
+		<section class="invoice-terms" aria-label="Sample terms and conditions">
+			<div class="invoice-terms-heading">
+				<span class="invoice-label">TERMS &amp; CONDITIONS</span>
+				<span class="invoice-terms-note">Sample terms - confirm your venue policy before use</span>
+			</div>
+			<ol>
+				<li>Please settle the outstanding balance by the due date shown on this invoice.</li>
+				<li>Changes to guest count, event timing, venue setup, or selected services may affect the final amount.</li>
+				<li>Additional services not listed on this invoice are not included and may be charged separately.</li>
+				<li>Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.</li>
+				<li>Please quote the invoice reference when asking about a payment or balance.</li>
+				<li>Please quote the invoice reference when asking about a payment or balance.</li>
+				<li>Please quote the invoice reference when asking about a payment or balance.</li>
+			</ol>
+		</section>
+
+		<footer class="invoice-document-footer">
+			<span>ROYAL PALACE HALL</span>
+			<span>Karachi, Pakistan</span>
+			<span>INV-2026-126</span>
+			<div class="invoice-attribution">
+				<span>HallMaster &copy; 2026 &middot; Secure Venue Management System.</span>
+				<span>Design and Develope by <a href="https://syedfaisal721.pythonanywhere.com/" target="_blank" rel="noopener noreferrer"><strong>Syed Muhammad Faisal</strong></a></span>
+			</div>
+		</footer>
+	</article>
+</section>
+
+<section class="stats-grid invoice-summary" aria-label="Invoice summary">
 	<article class="stat-card">
 		<div class="stat-top">
 			<span class="stat-label">Total invoices</span>

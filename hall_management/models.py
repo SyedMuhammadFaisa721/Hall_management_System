@@ -134,6 +134,7 @@ class staff(models.Model):
     staff_status    = models.CharField(max_length=10)
     staff_join_date = models.DateField(default=timezone.now)
     category        = models.CharField(max_length=20 , default='worker')
+    manager_email_verified = models.BooleanField(default=False, editable=False)
     Salary_status   = models.CharField(
         max_length=20,
         choices=[('Paid', 'Paid'), ('Unpaid', 'Unpaid')],
