@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Availability_events , Customers_view, Packages_view,Payments_view, Payment_form, Invoices_view, Reports_view,  Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data ,download_payments_records,expense_data_download,export_reports_csv, verify_manager_email
+from hall_management.views import dashboard, log_in, log_out, tester, user_create, users_page , New_booking , Expense_form , New_staff , New_inventory , New_inventory_category , Inventory_view , booking_view , Availability_view , Availability_events , Customers_view, Packages_view,Payments_view, Payment_form, Invoices_view, invoice_detail, Reports_view, Booking_history_view, Expenses_view, Staff_view, Notifications_view, Settings_view, export_booking_data ,download_payments_records,expense_data_download,export_reports_csv, verify_manager_email
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,7 +32,11 @@ urlpatterns = [
         path('payments/add/' , Payment_form , name ="paymentform"),
         path('payments/export/' , download_payments_records , name ="download_payments_records"),
         path('invoices/' , Invoices_view , name ="invoices"),
+        # START: Invoice detail backend route
+        path('invoices/<str:invoice_id>/', invoice_detail, name='invoice_detail'),
+        # END: Invoice detail backend route
         path('reports/' , Reports_view , name ="reports"),
+        path('reports/booking-history/', Booking_history_view, name='booking_history'),
         path('reports/export/csv/', export_reports_csv, name='export_reports_csv'),
         path('expenses/' , Expenses_view , name ="expenses"),
         path('expenses/export/' , expense_data_download , name ="expense_data_download"),

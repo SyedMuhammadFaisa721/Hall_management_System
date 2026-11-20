@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Annual Booking History | HallMaster{% endblock %}
+{% block page_key %}booking-history{% endblock %}
+{% block page_scripts %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/booking-history.css' %}?v=1">
+<script defer src="{% static 'javascript/booking-history.js' %}?v=1"></script>
+{% endblock %}
+
+{% block page_content %}
+<div class="booking-history-page" id="booking-history">
+	<header class="history-heading">
+		<div class="history-title">
+			<span class="history-eyebrow">HALLMASTER ANALYTICS</span>
+			<h1>Annual booking history</h1>
+			<p>Review total, confirmed, and cancelled bookings year by year.</p>
+		</div>
+		<div class="history-range" role="group" aria-label="Choose history range">
+			<button type="button" data-history-range="10" aria-pressed="false">10 years</button>
+			<button type="button" data-history-range="20" aria-pressed="true">20 years</button>
+		</div>
+	</header>
+
+	<p class="history-demo-note"><span aria-hidden="true"></span><strong>Sample data</strong> — these figures are for preview only and are not connected to live bookings.</p>
+
+	<section class="history-stats" aria-label="Booking totals">
+		<article class="history-stat history-stat-total">
+			<div class="history-stat-top">
+				<span>Total bookings</span>
+				<span class="history-stat-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+				</span>
+			</div>
+			<strong data-history-total>—</strong>
+			<small data-history-period>—</small>
+		</article>
+		<article class="history-stat history-stat-confirmed">
+			<div class="history-stat-top">
+				<span>Confirmed</span>
+				<span class="history-stat-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>
+				</span>
+			</div>
+			<strong data-history-confirmed>—</strong>
+			<small>Confirmed bookings in range</small>
+		</article>
+		<article class="history-stat history-stat-cancelled">
+			<div class="history-stat-top">
+				<span>Cancelled</span>
+				<span class="history-stat-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10M17 7 7 17"/></svg>
+				</span>
+			</div>
+			<strong data-history-cancelled>—</strong>
+			<small>Cancelled bookings in range</small>
+		</article>
+		<article class="history-stat history-stat-rate">
+			<div class="history-stat-top">
+				<span>Confirmation rate</span>
+				<span class="history-stat-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5m0 14h16M7 15l4-4 3 2 5-7"/></svg>
+				</span>
+			</div>
+			<strong data-history-rate>—</strong>
+			<small>Confirmed out of total bookings</small>
+		</article>
+	</section>
+
+	<section class="history-panel" aria-labelledby="history-table-title">
+		<div class="history-panel-heading">
+			<div>
+				<h2 id="history-table-title">Year-by-year breakdown</h2>
+				<p>Booking counts by event year</p>
+			</div>
+			<span class="history-period-chip" data-history-chip>Last 20 years</span>
+		</div>
+		<div class="history-table-scroll">
+			<table class="history-table">
+				<thead>
+					<tr>
+						<th scope="col">YEAR</th>
+						<th scope="col">TOTAL BOOKINGS</th>
+						<th scope="col">CONFIRMED</th>
+						<th scope="col">CANCELLED</th>
+						<th scope="col" class="history-mix-heading">BOOKING MIX</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr data-history-year="2026" data-total="84" data-confirmed="64" data-cancelled="8"><th scope="row">2026 <span class="history-current">Current</span></th><td data-row-total>84</td><td class="history-confirmed-value" data-row-confirmed>64</td><td class="history-cancelled-value" data-row-cancelled>8</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2025" data-total="79" data-confirmed="60" data-cancelled="7"><th scope="row">2025</th><td data-row-total>79</td><td class="history-confirmed-value" data-row-confirmed>60</td><td class="history-cancelled-value" data-row-cancelled>7</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2024" data-total="72" data-confirmed="54" data-cancelled="6"><th scope="row">2024</th><td data-row-total>72</td><td class="history-confirmed-value" data-row-confirmed>54</td><td class="history-cancelled-value" data-row-cancelled>6</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2023" data-total="65" data-confirmed="47" data-cancelled="7"><th scope="row">2023</th><td data-row-total>65</td><td class="history-confirmed-value" data-row-confirmed>47</td><td class="history-cancelled-value" data-row-cancelled>7</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2022" data-total="59" data-confirmed="42" data-cancelled="5"><th scope="row">2022</th><td data-row-total>59</td><td class="history-confirmed-value" data-row-confirmed>42</td><td class="history-cancelled-value" data-row-cancelled>5</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2021" data-total="45" data-confirmed="32" data-cancelled="6"><th scope="row">2021</th><td data-row-total>45</td><td class="history-confirmed-value" data-row-confirmed>32</td><td class="history-cancelled-value" data-row-cancelled>6</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2020" data-total="18" data-confirmed="10" data-cancelled="5"><th scope="row">2020</th><td data-row-total>18</td><td class="history-confirmed-value" data-row-confirmed>10</td><td class="history-cancelled-value" data-row-cancelled>5</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2019" data-total="51" data-confirmed="37" data-cancelled="4"><th scope="row">2019</th><td data-row-total>51</td><td class="history-confirmed-value" data-row-confirmed>37</td><td class="history-cancelled-value" data-row-cancelled>4</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2018" data-total="47" data-confirmed="34" data-cancelled="3"><th scope="row">2018</th><td data-row-total>47</td><td class="history-confirmed-value" data-row-confirmed>34</td><td class="history-cancelled-value" data-row-cancelled>3</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2017" data-total="42" data-confirmed="30" data-cancelled="4"><th scope="row">2017</th><td data-row-total>42</td><td class="history-confirmed-value" data-row-confirmed>30</td><td class="history-cancelled-value" data-row-cancelled>4</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2016" data-total="39" data-confirmed="27" data-cancelled="3"><th scope="row">2016</th><td data-row-total>39</td><td class="history-confirmed-value" data-row-confirmed>27</td><td class="history-cancelled-value" data-row-cancelled>3</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2015" data-total="34" data-confirmed="23" data-cancelled="3"><th scope="row">2015</th><td data-row-total>34</td><td class="history-confirmed-value" data-row-confirmed>23</td><td class="history-cancelled-value" data-row-cancelled>3</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2014" data-total="30" data-confirmed="20" data-cancelled="2"><th scope="row">2014</th><td data-row-total>30</td><td class="history-confirmed-value" data-row-confirmed>20</td><td class="history-cancelled-value" data-row-cancelled>2</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2013" data-total="27" data-confirmed="18" data-cancelled="2"><th scope="row">2013</th><td data-row-total>27</td><td class="history-confirmed-value" data-row-confirmed>18</td><td class="history-cancelled-value" data-row-cancelled>2</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2012" data-total="24" data-confirmed="16" data-cancelled="2"><th scope="row">2012</th><td data-row-total>24</td><td class="history-confirmed-value" data-row-confirmed>16</td><td class="history-cancelled-value" data-row-cancelled>2</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2011" data-total="21" data-confirmed="14" data-cancelled="2"><th scope="row">2011</th><td data-row-total>21</td><td class="history-confirmed-value" data-row-confirmed>14</td><td class="history-cancelled-value" data-row-cancelled>2</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2010" data-total="18" data-confirmed="12" data-cancelled="1"><th scope="row">2010</th><td data-row-total>18</td><td class="history-confirmed-value" data-row-confirmed>12</td><td class="history-cancelled-value" data-row-cancelled>1</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2009" data-total="16" data-confirmed="10" data-cancelled="1"><th scope="row">2009</th><td data-row-total>16</td><td class="history-confirmed-value" data-row-confirmed>10</td><td class="history-cancelled-value" data-row-cancelled>1</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2008" data-total="13" data-confirmed="8" data-cancelled="1"><th scope="row">2008</th><td data-row-total>13</td><td class="history-confirmed-value" data-row-confirmed>8</td><td class="history-cancelled-value" data-row-cancelled>1</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+					<tr data-history-year="2007" data-total="11" data-confirmed="7" data-cancelled="1"><th scope="row">2007</th><td data-row-total>11</td><td class="history-confirmed-value" data-row-confirmed>7</td><td class="history-cancelled-value" data-row-cancelled>1</td><td><div class="history-mix" role="img" aria-label="Booking mix"><span class="history-mix-confirmed"></span><span class="history-mix-cancelled"></span></div></td></tr>
+				</tbody>
+			</table>
+		</div>
+		<footer class="history-table-footer">
+			<span><i class="history-legend-confirmed"></i> Confirmed <i class="history-legend-cancelled"></i> Cancelled</span>
+			<span data-history-count>Showing 20 years</span>
+		</footer>
+	</section>
+</div>
+{% endblock %}

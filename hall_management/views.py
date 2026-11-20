@@ -2,11 +2,12 @@ import logging
 import random
 import secrets
 import string
+from decimal import Decimal
 from html import unescape
 from smtplib import SMTPException
 
 from django.conf import settings
-from django.shortcuts import render , redirect
+from django.shortcuts import get_object_or_404, render , redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -20,7 +21,7 @@ from django.db import transaction
 from .form import hallmaster_user_creation, new_booking , new_expense ,new_inventory ,new_staff ,new_inventory_category, loginform , new_payment
 from django.views.generic import ListView
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.db.models import Count, Q
@@ -35,7 +36,15 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods, require_POST
 import csv
 import math
+from io import BytesIO
 from django.utils import timezone
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_RIGHT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.platypus import Flowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from django.utils.html import escape
 
 logger = logging.getLogger(__name__)
 MANAGER_EMAIL_VERIFICATION_SALT = 'hall_management.manager-email-verification'
@@ -65,6 +74,376 @@ def _send_template_email(subject, template_name, context, recipient):
     message.attach_alternative(html_content, 'text/html')
     if message.send(fail_silently=False) != 1:
         raise SMTPException('The email backend did not send the message.')
+
+
+class _InvoiceLogo(Flowable):
+    def __init__(self):
+        super().__init__()
+        self.width = 46
+        self.height = 46
+
+    def draw(self):
+        self.canv.setFillColor(colors.HexColor('#c7a864'))
+        self.canv.roundRect(0, 0, self.width, self.height, 9, fill=1, stroke=0)
+        self.canv.setFillColor(colors.HexColor('#241d10'))
+        self.canv.setFont('Times-Bold', 16)
+        self.canv.drawCentredString(self.width / 2, 15, 'HM')
+
+
+def _invoice_paragraph(value, style):
+    return Paragraph(escape(str(value)), style)
+
+
+def _build_invoice_pdf(invoice, invoice_id):
+    ink = colors.HexColor('#20211f')
+    muted = colors.HexColor('#73736c')
+    gold = colors.HexColor('#a9864b')
+    cream = colors.HexColor('#fdfcf9')
+    line = colors.HexColor('#e7e4de')
+    page_width, page_height = A4
+    content_width = page_width - 32 * mm
+    output = BytesIO()
+
+    def paint_page(canvas, document):
+        canvas.saveState()
+        canvas.setFillColor(cream)
+        canvas.rect(0, 0, page_width, page_height, fill=1, stroke=0)
+        canvas.setFillColor(gold)
+        canvas.rect(0, page_height - 3, page_width, 3, fill=1, stroke=0)
+        canvas.restoreState()
+
+    doc = SimpleDocTemplate(
+        output,
+        pagesize=A4,
+        leftMargin=16 * mm,
+        rightMargin=16 * mm,
+        topMargin=19 * mm,
+        bottomMargin=12 * mm,
+    )
+    styles = {
+        'brand': ParagraphStyle(
+            'InvoiceBrand', fontName='Helvetica-Bold', fontSize=11,
+            leading=14, textColor=ink,
+        ),
+        'brand_sub': ParagraphStyle(
+            'InvoiceBrandSub', fontName='Helvetica', fontSize=7.5,
+            leading=11, textColor=muted,
+        ),
+        'invoice_word': ParagraphStyle(
+            'InvoiceWord', fontName='Times-Roman', fontSize=20,
+            leading=23, textColor=gold, alignment=TA_RIGHT,
+        ),
+        'right': ParagraphStyle(
+            'InvoiceRight', fontName='Helvetica-Bold', fontSize=9,
+            leading=12, textColor=ink, alignment=TA_RIGHT,
+        ),
+        'status': ParagraphStyle(
+            'InvoiceStatus', fontName='Helvetica', fontSize=8,
+            leading=11, textColor=gold, alignment=TA_RIGHT,
+        ),
+        'label': ParagraphStyle(
+            'InvoiceLabel', fontName='Helvetica-Bold', fontSize=9,
+            leading=12, textColor=ink,
+        ),
+        'name': ParagraphStyle(
+            'InvoiceCustomer', fontName='Times-Bold', fontSize=18,
+            leading=22, textColor=ink,
+        ),
+        'body': ParagraphStyle(
+            'InvoiceBody', fontName='Helvetica', fontSize=9.5,
+            leading=14, textColor=ink,
+        ),
+        'muted': ParagraphStyle(
+            'InvoiceMuted', fontName='Helvetica', fontSize=8.5,
+            leading=12, textColor=muted,
+        ),
+        'meta_label': ParagraphStyle(
+            'InvoiceMetaLabel', fontName='Helvetica-Bold', fontSize=8,
+            leading=10, textColor=ink,
+        ),
+        'meta_value': ParagraphStyle(
+            'InvoiceMetaValue', fontName='Helvetica-Bold', fontSize=9,
+            leading=12, textColor=ink,
+        ),
+        'table_head': ParagraphStyle(
+            'InvoiceTableHead', fontName='Helvetica-Bold', fontSize=8,
+            leading=10, textColor=muted,
+        ),
+        'item': ParagraphStyle(
+            'InvoiceItem', fontName='Helvetica-Bold', fontSize=9,
+            leading=12, textColor=ink,
+        ),
+        'item_detail': ParagraphStyle(
+            'InvoiceItemDetail', fontName='Helvetica', fontSize=8,
+            leading=11, textColor=muted,
+        ),
+        'note': ParagraphStyle(
+            'InvoiceNote', fontName='Helvetica', fontSize=8.5,
+            leading=13, textColor=muted,
+        ),
+        'term': ParagraphStyle(
+            'InvoiceTerm', fontName='Helvetica', fontSize=7.5,
+            leading=10, textColor=muted,
+        ),
+        'footer': ParagraphStyle(
+            'InvoiceFooter', fontName='Helvetica', fontSize=7.5,
+            leading=10, textColor=muted,
+        ),
+    }
+
+    def p(value, style):
+        return _invoice_paragraph(value, styles[style])
+
+    header_meta = [
+        p('INVOICE', 'invoice_word'),
+        p(invoice_id, 'right'),
+        p(invoice['status'].capitalize(), 'status'),
+    ]
+    header = Table(
+        [[
+            _InvoiceLogo(),
+            [
+                p('ROYAL PALACE HALL', 'brand'),
+                p('EVENTS & HOSPITALITY', 'brand_sub'),
+            ],
+            header_meta,
+        ]],
+        colWidths=[54, content_width - 54 - 125, 125],
+    )
+    header.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 14),
+        ('LINEBELOW', (0, 0), (-1, -1), 0.7, line),
+    ]))
+
+    def meta_cell(label, value):
+        return [p(label, 'meta_label'), p(value, 'meta_value')]
+
+    meta = Table(
+        [
+            [meta_cell('BOOKING ID', invoice['booking']), meta_cell('EVENT DATE', invoice['event_date'])],
+            [meta_cell('ISSUED ON', invoice['issued']), meta_cell('DUE DATE', invoice['due'])],
+        ],
+        colWidths=[content_width * .24, content_width * .23],
+    )
+    meta.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+    ]))
+    customer = [
+        p('BILLED TO', 'label'),
+        Spacer(1, 6),
+        p(invoice['customer'], 'name'),
+        Spacer(1, 3),
+        p(f'Email: {invoice["customer_email"]}', 'muted'),
+        p(f'Event: {invoice["event"]}', 'muted'),
+        p(f'Portion: {invoice["venue"]}', 'muted'),
+    ]
+    details = Table(
+        [[customer, meta]],
+        colWidths=[content_width * .53, content_width * .47],
+    )
+    details.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 19),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 19),
+    ]))
+
+    item_rows = [[
+        p('SERVICE', 'table_head'),
+        p('QTY', 'table_head'),
+        p('RATE', 'table_head'),
+        p('AMOUNT', 'table_head'),
+    ]]
+    for item in invoice['items']:
+        item_rows.append([
+            [p(item['description'], 'item'), p(item['detail'], 'item_detail')],
+            p(item['quantity'], 'body'),
+            p(f'Rs {item["rate"]}', 'body'),
+            p(f'Rs {item["amount"]}', 'body'),
+        ])
+    item_widths = [
+        content_width * .48,
+        content_width * .10,
+        content_width * .21,
+        content_width * .21,
+    ]
+    items = Table(item_rows, colWidths=item_widths, repeatRows=1)
+    items.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN', (1, 0), (1, -1), 'CENTER'),
+        ('ALIGN', (2, 0), (-1, -1), 'RIGHT'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, 0), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 9),
+        ('TOPPADDING', (0, 1), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 12),
+        ('LINEABOVE', (0, 0), (-1, 0), 0.7, line),
+        ('LINEBELOW', (0, 0), (-1, 0), 0.7, line),
+        ('LINEBELOW', (0, 1), (-1, -1), 0.6, colors.HexColor('#efede8')),
+    ]))
+
+    totals = Table([
+        [p('Subtotal', 'muted'), p(f'Rs {invoice["total"]}', 'right')],
+        [p('Amount paid', 'muted'), p(f'Rs {invoice["paid"]}', 'right')],
+        [p('Balance due', 'label'), p(f'Rs {invoice["balance"]}', 'right')],
+    ], colWidths=[content_width * .24, content_width * .20])
+    totals.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, 1), 7),
+        ('BOTTOMPADDING', (0, 0), (-1, 1), 7),
+        ('TEXTCOLOR', (1, 1), (1, 1), colors.HexColor('#42785e')),
+        ('BACKGROUND', (0, 2), (-1, 2), colors.HexColor('#f7f2e8')),
+        ('BOX', (0, 2), (-1, 2), 0.8, colors.HexColor('#e8dfcc')),
+        ('TOPPADDING', (0, 2), (-1, 2), 11),
+        ('BOTTOMPADDING', (0, 2), (-1, 2), 11),
+    ]))
+    summary = Table([[
+        [
+            p('PAYMENT NOTE', 'label'),
+            Spacer(1, 8),
+            Paragraph(
+                f'Please include <b>{escape(invoice_id)}</b> as the payment reference.',
+                styles['note'],
+            ),
+            Spacer(1, 6),
+            p('Thank you for choosing Royal Palace Hall.', 'note'),
+        ],
+        totals,
+    ]], colWidths=[content_width * .55, content_width * .45])
+    summary.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (0, 0), 14),
+        ('RIGHTPADDING', (1, 0), (1, 0), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 20),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
+    ]))
+
+    terms = [
+        'Please settle the outstanding balance by the due date shown on this invoice.',
+        'Changes to guest count, event timing, venue setup, or selected services may affect the final amount.',
+        'Additional services not listed on this invoice are not included and may be charged separately.',
+        'Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.',
+        'Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.',
+        'Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.',
+        'Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.',
+    ]
+    term_rows = []
+    for index in range(0, len(terms), 2):
+        term_rows.append([
+            p(f'{index + 1}. {terms[index]}', 'term'),
+            p(f'{index + 2}. {terms[index + 1]}', 'term') if index + 1 < len(terms) else '',
+        ])
+    terms_table = Table(term_rows, colWidths=[content_width * .5, content_width * .5])
+    terms_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    terms_heading = Table([[
+        p('TERMS & CONDITIONS', 'label'),
+        p('Payment is due by the event date.', 'muted'),
+    ]], colWidths=[content_width * .65, content_width * .35])
+    terms_heading.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, -1), 15),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+        ('LINEABOVE', (0, 0), (-1, -1), 0.7, line),
+    ]))
+    footer = Table([
+        [
+            p('ROYAL PALACE HALL', 'footer'),
+            p('Karachi, Pakistan', 'footer'),
+            p(invoice_id, 'footer'),
+        ],
+        [
+            p('HallMaster (C) 2026 - Secure Venue Management System.', 'footer'),
+            '',
+            p('Design and Developed by Syed Muhammad Faisal', 'footer'),
+        ],
+    ], colWidths=[content_width * .4, content_width * .3, content_width * .3])
+    footer.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+        ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+        ('SPAN', (0, 1), (1, 1)),
+        ('LEFTPADDING', (0, 0), (-1, -1), 0),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 11),
+        ('TOPPADDING', (0, 1), (-1, 1), 9),
+        ('LINEABOVE', (0, 0), (-1, 0), 0.7, line),
+        ('LINEABOVE', (0, 1), (-1, 1), 0.5, colors.HexColor('#efede8')),
+    ]))
+
+    story = [
+        header,
+        details,
+        items,
+        summary,
+        terms_heading,
+        terms_table,
+        Spacer(1, 12),
+        footer,
+    ]
+    doc.build(story, onFirstPage=paint_page, onLaterPages=paint_page)
+    return output.getvalue()
+
+
+def _send_invoice_email(request, booking):
+    invoice_id = booking.booking_id.replace('BK-', 'INV-', 1)
+    invoice = _build_invoice(booking)
+    invoice_url = request.build_absolute_uri(
+        reverse('invoice_detail', args=[invoice_id])
+    )
+    context = {
+        'invoice': invoice,
+        'invoice_id': invoice_id,
+        'invoice_url': f'{invoice_url}?popup=1',
+    }
+    html_content = render_to_string('emails/invoice_sender.html', context)
+    pdf_content = _build_invoice_pdf(invoice, invoice_id)
+
+    mailers = getattr(settings, 'MAILERS', None)
+    if not mailers or 'default' not in mailers:
+        raise ImproperlyConfigured('Configure MAILERS["default"] before sending email.')
+
+    mailer = mailers['default']
+    options = mailer.get('OPTIONS', {})
+    connection = get_connection(
+        backend=mailer['BACKEND'],
+        **options,
+    )
+    message = EmailMultiAlternatives(
+        subject=f'Invoice {invoice_id} - Royal Palace Hall',
+        body=unescape(strip_tags(html_content)).strip(),
+        from_email=options.get('username') or settings.DEFAULT_FROM_EMAIL,
+        to=[booking.customer_email],
+        connection=connection,
+    )
+    message.attach_alternative(html_content, 'text/html')
+    message.attach(f'{invoice_id}.pdf', pdf_content, 'application/pdf')
+    if message.send(fail_silently=False) != 1:
+        raise SMTPException('The invoice email did not send.')
 
 
 def _manager_username(staff_name, user_model):
@@ -798,9 +1177,123 @@ def download_payments_records(request):
         ])
     return response
 
+# START: Invoice list and calculation backend
+def _format_invoice_amount(amount):
+    if amount == amount.to_integral_value():
+        return f'{amount:,.0f}'
+    return f'{amount:,.2f}'
+
+
+def _build_invoice(booking, today=None):
+    today = today or timezone.localdate()
+    total = Decimal(booking.hall_price)
+    posted_payments = sum(
+        (
+            recorded_payment.amount
+            for recorded_payment in booking.payments.all()
+            if recorded_payment.refference_num != 'None'
+            and recorded_payment.payment_status.casefold() in {'paid', 'advance'}
+        ),
+        Decimal('0'),
+    )
+    paid = min(total, Decimal(booking.advance_amount or 0) + posted_payments)
+    balance = max(total - paid, Decimal('0'))
+    if balance == 0:
+        status = 'paid'
+    elif booking.event_date < today:
+        status = 'overdue'
+    else:
+        status = 'pending'
+    venues = ', '.join(hall.portion_name for hall in booking.event_hall.all())
+    total_display = _format_invoice_amount(total)
+
+    return {
+        'invoice_id': booking.booking_id.replace('BK-', 'INV-', 1),
+        'customer': booking.customer_name,
+        'customer_email': booking.customer_email,
+        'booking': booking.booking_id,
+        'event': booking.event_name,
+        'venue': venues or 'Not assigned',
+        'event_date': booking.event_date.strftime('%d %b %Y'),
+        'issued': booking.created_at.strftime('%d %b %Y'),
+        'due': booking.event_date.strftime('%d %b %Y'),
+        'total': total_display,
+        'paid': _format_invoice_amount(paid),
+        'balance': _format_invoice_amount(balance),
+        'total_amount': total,
+        'paid_amount': paid,
+        'balance_amount': balance,
+        'status': status,
+        'items': [{
+            'description': 'Venue and event package',
+            'detail': f'{booking.event_name} · {booking.event_guest} guests',
+            'quantity': 1,
+            'rate': total_display,
+            'amount': total_display,
+        }],
+    }
+
+
 @login_required(login_url='login')
 def Invoices_view(request):
-    return render(request , 'invoices.html')
+    today = timezone.localdate()
+    bookings = newbooking.objects.prefetch_related(
+        'payments',
+        'event_hall',
+    ).order_by('-created_at', '-booking_id')
+    invoices = [_build_invoice(booking, today) for booking in bookings]
+
+    total_invoices = len(invoices)
+    paid_amount = sum((invoice['paid_amount'] for invoice in invoices), Decimal('0'))
+    pending_invoices = [invoice for invoice in invoices if invoice['status'] == 'pending']
+    overdue_invoices = [invoice for invoice in invoices if invoice['status'] == 'overdue']
+    total_amount = sum((invoice['total_amount'] for invoice in invoices), Decimal('0'))
+    collected_percentage = round(paid_amount / total_amount * 100) if total_amount else 0
+
+    search = request.GET.get('search', '').strip()
+    status_filter = request.GET.get('status', '').strip().lower()
+    if search:
+        search_value = search.casefold()
+        invoices = [
+            invoice for invoice in invoices
+            if search_value in ' '.join((
+                invoice['invoice_id'],
+                invoice['booking'],
+                invoice['customer'],
+                invoice['customer_email'],
+                invoice['event'],
+                invoice['venue'],
+            )).casefold()
+        ]
+    if status_filter in {'paid', 'pending', 'overdue'}:
+        invoices = [invoice for invoice in invoices if invoice['status'] == status_filter]
+    else:
+        status_filter = ''
+
+    page_obj = Paginator(invoices, 10).get_page(request.GET.get('page'))
+    return render(request, 'invoices.html', {
+        'page': 'invoices',
+        'page_obj': page_obj,
+        'invoice_list': page_obj.object_list,
+        'search': search,
+        'status_filter': status_filter,
+        'total_invoices': total_invoices,
+        'paid_amount': _format_invoice_amount(paid_amount),
+        'collected_percentage': collected_percentage,
+        'pending_amount': _format_invoice_amount(sum(
+            (invoice['balance_amount'] for invoice in pending_invoices),
+            Decimal('0'),
+        )),
+        'pending_count': len(pending_invoices),
+        'overdue_amount': _format_invoice_amount(sum(
+            (invoice['balance_amount'] for invoice in overdue_invoices),
+            Decimal('0'),
+        )),
+        'overdue_count': len(overdue_invoices),
+    })
+# END: Invoice list and calculation backend
+
+
 @login_required(login_url='login')
 def Expenses_view(request):
     total_expenses = expense.objects.aggregate(Sum('amount'))['amount__sum'] or 0
@@ -907,6 +1400,11 @@ def expense_data_download(request):
         ])
     return response
         
+
+@login_required(login_url='login')
+def Booking_history_view(request):
+    return render(request, 'booking_history.html', {'page': 'booking-history'})
+
 
 @login_required(login_url='login')
 def Reports_view(request):
@@ -1586,7 +2084,22 @@ def New_booking(request):
                     payment_status='Advance' if booking.advance_amount else 'Pending',
                 )
             messages.success(request, "Booking created successfully.")
-            return redirect('bookings')
+            invoice_id = booking.booking_id.replace('BK-', 'INV-', 1)
+            invoice_url = reverse('invoice_detail', args=[invoice_id])
+            try:
+                _send_invoice_email(request, booking)
+                messages.success(request, f"Invoice sent to {booking.customer_email}.")
+            except (SMTPException, ImproperlyConfigured) as error:
+                logger.warning(
+                    'Invoice email could not be sent for booking %s: %s',
+                    booking.booking_id,
+                    error,
+                )
+                messages.warning(
+                    request,
+                    f"Booking saved, but the invoice could not be emailed to {booking.customer_email}.",
+                )
+            return redirect(f'{invoice_url}?popup=1')
 
         messages.error(request, "Please correct the errors below.")
     else:
@@ -1855,46 +2368,29 @@ def user_create(request):
     })
 
 
-INVOICE_DETAILS = {
-    'INV-2026-126': {
-        'customer': 'Sarah Khan', 'booking': 'BK-2026-084', 'event': 'Wedding Reception',
-        'venue': 'Grand Ballroom', 'event_date': '05 Oct 2026', 'issued': '19 Sep 2026',
-        'due': '28 Sep 2026', 'total': '1,850,000', 'paid': '350,000', 'balance': '1,500,000',
-        'status': 'pending', 'items': [('Grand Ballroom rental', '920,000'), ('Catering and service, 420 guests', '680,000'), ('Stage and event setup', '250,000')],
-    },
-    'INV-2026-125': {
-        'customer': 'Ahmed Malik', 'booking': 'BK-2026-083', 'event': 'Corporate Gala',
-        'venue': 'Crystal Hall', 'event_date': '12 Oct 2026', 'issued': '18 Sep 2026',
-        'due': '30 Sep 2026', 'total': '960,000', 'paid': '960,000', 'balance': '0',
-        'status': 'paid', 'items': [('Crystal Hall rental', '480,000'), ('Catering and service', '360,000'), ('Audio and visual setup', '120,000')],
-    },
-    'INV-2026-124': {
-        'customer': 'Ayesha Siddiqui', 'booking': 'BK-2026-082', 'event': 'Engagement Celebration',
-        'venue': 'Royal Terrace', 'event_date': '12 Oct 2026', 'issued': '16 Sep 2026',
-        'due': '03 Oct 2026', 'total': '1,420,000', 'paid': '200,000', 'balance': '1,220,000',
-        'status': 'pending', 'items': [('Royal Terrace venue package', '700,000'), ('Dinner service', '520,000'), ('Floral event setup', '200,000')],
-    },
-    'INV-2026-123': {
-        'customer': 'Mariam Ali', 'booking': 'BK-2026-081', 'event': 'Mehndi Night',
-        'venue': 'Garden Pavilion', 'event_date': '11 Oct 2026', 'issued': '15 Sep 2026',
-        'due': '05 Oct 2026', 'total': '625,000', 'paid': '150,000', 'balance': '475,000',
-        'status': 'pending', 'items': [('Garden Pavilion rental', '250,000'), ('Dinner service', '275,000'), ('Stage and lighting', '100,000')],
-    },
-    'INV-2026-122': {
-        'customer': 'Bilal Ahmed', 'booking': 'BK-2026-079', 'event': 'Corporate Banquet',
-        'venue': 'Grand Ballroom', 'event_date': '20 Sep 2026', 'issued': '08 Sep 2026',
-        'due': '14 Sep 2026', 'total': '2,150,000', 'paid': '0', 'balance': '2,150,000',
-        'status': 'overdue', 'items': [('Grand Ballroom rental', '1,000,000'), ('Catering and service', '900,000'), ('Event production and setup', '250,000')],
-    },
-}
-
-
+# START: Invoice detail backend
+@login_required(login_url='login')
 def invoice_detail(request, invoice_id):
-    invoice = INVOICE_DETAILS.get(invoice_id)
-    if invoice is None:
-        from django.http import Http404
+    if not invoice_id.startswith('INV-'):
         raise Http404('Invoice not found')
-    return render(request, 'genrateinvoice.html', {'page': 'invoices', 'invoice_id': invoice_id, 'invoice': invoice})
+
+    booking_id = invoice_id.replace('INV-', 'BK-', 1)
+    booking = get_object_or_404(
+        newbooking.objects.prefetch_related('payments', 'event_hall'),
+        booking_id=booking_id,
+    )
+    invoice = _build_invoice(booking)
+    return render(request, 'genrateinvoice.html', {
+        'page': 'invoices',
+        'invoice_id': invoice_id,
+        'invoice': invoice,
+        'layout_template': (
+            'invoice_popup_base.html'
+            if request.GET.get('popup') == '1'
+            else 'base.html'
+        ),
+    })
+# END: Invoice detail backend
 
 
 def hallmaster_login(request):

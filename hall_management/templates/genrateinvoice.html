@@ -1,5 +1,10 @@
-{% extends "base.html" %}
+{% extends layout_template %}
+{% load static %}
 {% block title %}Invoice {{ invoice_id }} | HallMaster{% endblock %}
+{% block page_scripts %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/invoice-template.css' %}">
+{% endblock %}
 {% block page_content %}
 <header class="page-heading invoice-page-heading">
 	<div>
@@ -31,8 +36,9 @@
 			<section class="invoice-party">
 				<span class="invoice-label">BILLED TO</span>
 				<h2>{{ invoice.customer }}</h2>
-				<p>{{ invoice.event }}</p>
-				<p>{{ invoice.venue }}</p>
+				<p><strong style="font-weight: bold;">Email:</strong> {{ invoice.customer_email }}</p>
+				<p><strong style="font-weight: bold;">Event:</strong> {{ invoice.event }}</p>
+				<p><strong style="font-weight: bold;" color="black">Portion:</strong> {{ invoice.venue }}</p>
 			</section>
 			<section class="invoice-meta-grid" aria-label="Invoice details">
 				<div><span class="invoice-label">BOOKING ID</span><strong>{{ invoice.booking }}</strong></div>
@@ -44,10 +50,15 @@
 
 		<div class="invoice-items-wrap">
 			<table class="invoice-items">
-				<thead><tr><th>DESCRIPTION</th><th>AMOUNT</th></tr></thead>
+				<thead><tr><th>SERVICE</th><th>QTY</th><th>RATE</th><th>AMOUNT</th></tr></thead>
 				<tbody>
 					{% for item in invoice.items %}
-					<tr><td>{{ item.0 }}</td><td>Rs {{ item.1 }}</td></tr>
+					<tr>
+						<td><strong>{{ item.description }}</strong><small>{{ item.detail }}</small></td>
+						<td>{{ item.quantity }}</td>
+						<td>Rs {{ item.rate }}</td>
+						<td>Rs {{ item.amount }}</td>
+					</tr>
 					{% endfor %}
 				</tbody>
 			</table>
@@ -61,15 +72,35 @@
 			</div>
 			<dl class="invoice-totals">
 				<div><dt>Subtotal</dt><dd>Rs {{ invoice.total }}</dd></div>
-				<div><dt>Amount paid</dt><dd>Rs {{ invoice.paid }}</dd></div>
+				<div class="invoice-paid-row"><dt>Amount paid</dt><dd>Rs {{ invoice.paid }}</dd></div>
 				<div class="invoice-balance"><dt>Balance due</dt><dd>Rs {{ invoice.balance }}</dd></div>
 			</dl>
+		</section>
+
+		<section class="invoice-terms" aria-label="Terms and conditions">
+			<div class="invoice-terms-heading">
+				<span class="invoice-label">TERMS &amp; CONDITIONS</span>
+				<span class="invoice-terms-note">Payment is due by the event date.</span>
+			</div>
+			<ol>
+				<li>Please settle the outstanding balance by the due date shown on this invoice.</li>
+				<li>Changes to guest count, event timing, venue setup, or selected services may affect the final amount.</li>
+				<li>Additional services not listed on this invoice are not included and may be charged separately.</li>
+				<li>Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.</li>
+				<li>Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.</li>
+				<li>Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.</li>
+				<li>Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.</li>
+			</ol>
 		</section>
 
 		<footer class="invoice-document-footer">
 			<span>ROYAL PALACE HALL</span>
 			<span>Karachi, Pakistan</span>
 			<span>{{ invoice_id }}</span>
+			<div class="invoice-attribution">
+				<span>HallMaster &copy; 2026 &middot; Secure Venue Management System.</span>
+				<span>Design and Develope by <a href="https://syedfaisal721.pythonanywhere.com/" target="_blank" rel="noopener noreferrer"><strong>Syed Muhammad Faisal</strong></a></span>
+			</div>
 		</footer>
 	</article>
 </section>

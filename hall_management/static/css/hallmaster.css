@@ -452,7 +452,7 @@ fieldset.booking-form-field { min-width: 0; border: 0; padding: 0; }
 .invoice-heading-meta > strong { color: #575750; font-size: 11px; }
 .invoice-heading-meta .status { min-height: 22px; }
 .invoice-detail-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(270px,.9fr); gap: 38px; padding: 30px 0; }
-.invoice-label { display: block; color: #929088; font-size: 9px; font-weight: 700; letter-spacing: .13em; }
+.invoice-label { display: block; color: #000000; font-size: 13px; font-weight: 700; letter-spacing: .13em; }
 .invoice-party h2 { margin: 11px 0 7px; color: #242521; font-family: "Playfair Display",serif; font-size: 21px; font-weight: 600; }
 .invoice-party p { margin: 4px 0; color: #686861; font-size: 11px; }
 .invoice-meta-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px 16px; }

@@ -1,4 +1,5 @@
 import re
+from io import BytesIO
 from datetime import date, timedelta
 from decimal import Decimal
 from smtplib import SMTPException
@@ -9,9 +10,11 @@ from django.core import mail
 from django.test import TestCase
 from django.test import override_settings
 from django.urls import reverse
+from pypdf import PdfReader
 from urllib.parse import urlparse
 
 from .models import Hall_portion, Inventory, InventoryCategory, expense, newbooking, payment, staff
+from .views import _build_invoice, _build_invoice_pdf
 
 
 class BookingFormTests(TestCase):
@@ -48,6 +51,10 @@ class BookingFormTests(TestCase):
         data.update(overrides)
         return data
 
+    def invoice_url_for(self, booking):
+        invoice_id = booking.booking_id.replace('BK-', 'INV-', 1)
+        return f"{reverse('invoice_detail', args=[invoice_id])}?popup=1"
+
     def test_booking_form_renders_payment_methods_from_payment_model(self):
         response = self.client.get(reverse('bookingform'))
 
@@ -57,13 +64,24 @@ class BookingFormTests(TestCase):
             self.assertContains(response, label)
 
     def test_booking_form_saves_booking_halls_event_shift_and_payment_method(self):
-        response = self.client.post(
-            reverse('bookingform'),
-            self.valid_booking_data(),
-        )
+        with patch('hall_management.views._send_invoice_email') as send_invoice:
+            response = self.client.post(
+                reverse('bookingform'),
+                self.valid_booking_data(),
+            )
 
-        self.assertRedirects(response, reverse('bookings'), fetch_redirect_response=False)
         booking = newbooking.objects.get(customer_email='booking@example.com')
+        send_invoice.assert_called_once()
+        self.assertEqual(send_invoice.call_args.args[1], booking)
+        self.assertRedirects(
+            response,
+            self.invoice_url_for(booking),
+            fetch_redirect_response=False,
+        )
+        invoice_response = self.client.get(response.url)
+        self.assertEqual(invoice_response.status_code, 200)
+        self.assertContains(invoice_response, booking.customer_name)
+        self.assertContains(invoice_response, booking.event_name)
         self.assertEqual(booking.event_time, 'Day')
         self.assertEqual(booking.payment_method, 'Bank Transfer')
         self.assertEqual(booking.service, 'Buffet Service')
@@ -126,7 +144,12 @@ class BookingFormTests(TestCase):
             self.valid_booking_data(event_hall=[str(other_portion.pk)]),
         )
 
-        self.assertRedirects(response, reverse('bookings'), fetch_redirect_response=False)
+        booking = newbooking.objects.get(customer_email='booking@example.com')
+        self.assertRedirects(
+            response,
+            self.invoice_url_for(booking),
+            fetch_redirect_response=False,
+        )
         self.assertEqual(newbooking.objects.count(), 2)
 
     def test_booking_form_rejects_past_event_date(self):
@@ -153,8 +176,12 @@ class BookingFormTests(TestCase):
             self.valid_booking_data(status='Advance', advance_amount='25000'),
         )
 
-        self.assertRedirects(response, reverse('bookings'), fetch_redirect_response=False)
         booking = newbooking.objects.get(customer_email='booking@example.com')
+        self.assertRedirects(
+            response,
+            self.invoice_url_for(booking),
+            fetch_redirect_response=False,
+        )
         self.assertEqual(booking.advance_amount, 25000)
         saved_payment = payment.objects.get(booking=booking)
         self.assertEqual(saved_payment.method, 'Bank Transfer')
@@ -378,6 +405,22 @@ class AvailabilityEventsTests(TestCase):
 
 
 class ReportsViewTests(TestCase):
+    def test_booking_history_page_renders_twenty_years_of_sample_data(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username='booking-history-test',
+            password='test-password',
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('booking_history'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page'], 'booking-history')
+        self.assertContains(response, 'Annual booking history')
+        self.assertContains(response, 'Sample data')
+        self.assertEqual(response.content.count(b'data-history-year='), 20)
+
     def test_reports_page_handles_portion_name_filters(self):
         user_model = get_user_model()
         user = user_model.objects.create_user(
@@ -958,18 +1001,164 @@ class InvoiceTemplateTests(TestCase):
         )
         self.client.force_login(self.user)
 
-    def test_invoices_page_renders_sample_printable_invoice_and_existing_register(self):
+    def create_booking(self, **overrides):
+        booking_data = {
+            'customer_name': 'Invoice Customer',
+            'phone_number': '03001234567',
+            'nic_number': '12345-1234567-1',
+            'customer_email': 'invoice@example.com',
+            'event_name': 'Wedding Reception',
+            'event_type': 'Wedding',
+            'event_date': date.today() + timedelta(days=30),
+            'event_guest': 120,
+            'hall_price': 100000,
+            'status': 'Confirmed',
+            'event_time': 'Day',
+        }
+        booking_data.update(overrides)
+        booking = newbooking.objects.create(**booking_data)
+        hall = Hall_portion.objects.create(
+            portion_name=f'H{newbooking.objects.count()}',
+            portion_capacity=200,
+        )
+        booking.event_hall.add(hall)
+        return booking
+
+    def test_invoices_page_renders_booking_and_calculates_paid_and_balance(self):
+        booking = self.create_booking(advance_amount=20000)
+        payment.objects.create(
+            booking=booking,
+            method='cash',
+            amount=Decimal('100000.00'),
+            refference_num='None',
+            payment_status='Advance',
+        )
+        payment.objects.create(
+            booking=booking,
+            method='cash',
+            amount=Decimal('30000.00'),
+            refference_num='INVOICE-PAID',
+            payment_status='paid',
+        )
+        payment.objects.create(
+            booking=booking,
+            method='cash',
+            amount=Decimal('10000.00'),
+            refference_num='INVOICE-PENDING',
+            payment_status='pending',
+        )
+
         response = self.client.get(reverse('invoices'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'INV-2026-126')
-        self.assertContains(response, 'Sarah Khan')
-        self.assertContains(response, 'Grand Ballroom rental')
-        self.assertContains(response, 'Rs 1,500,000')
-        self.assertContains(response, 'NOT A REAL INVOICE')
-        self.assertContains(response, 'TERMS &amp; CONDITIONS')
-        self.assertContains(response, 'HallMaster &copy; 2026 &middot; Secure Venue Management System.')
-        self.assertContains(response, 'href="https://syedfaisal721.pythonanywhere.com/"')
-        self.assertContains(response, 'window.print()')
+        self.assertContains(response, booking.booking_id.replace('BK-', 'INV-', 1))
+        self.assertContains(response, 'Invoice Customer')
+        self.assertContains(response, 'Rs 100,000')
+        self.assertContains(response, 'Rs 50,000')
+        self.assertNotContains(response, 'Venue and event package')
         self.assertContains(response, 'invoice-template.css')
         self.assertContains(response, 'Invoice register')
+        self.assertContains(response, 'See invoice')
+        self.assertContains(
+            response,
+            f'href="{reverse("invoice_detail", args=[booking.booking_id.replace("BK-", "INV-", 1)])}?popup=1"',
+        )
+
+    def test_invoice_register_filters_database_invoices(self):
+        paid_booking = self.create_booking(
+            customer_name='Paid Invoice Customer',
+            customer_email='paid-invoice@example.com',
+            hall_price=50000,
+        )
+        payment.objects.create(
+            booking=paid_booking,
+            method='cash',
+            amount=Decimal('50000.00'),
+            refference_num='PAID-INVOICE',
+            payment_status='paid',
+        )
+        self.create_booking(
+            customer_name='Pending Invoice Customer',
+            customer_email='pending-invoice@example.com',
+        )
+
+        response = self.client.get(
+            reverse('invoices'),
+            {'search': 'Paid Invoice Customer', 'status': 'paid'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_obj'].paginator.count, 1)
+        self.assertEqual(response.context['invoice_list'][0]['booking'], paid_booking.booking_id)
+
+    def test_invoice_register_paginates_and_preserves_filters(self):
+        for index in range(11):
+            self.create_booking(customer_name=f'Pagination Customer {index}')
+
+        response = self.client.get(
+            reverse('invoices'),
+            {'search': 'Pagination Customer', 'status': 'pending', 'page': 2},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_obj'].number, 2)
+        self.assertEqual(len(response.context['invoice_list']), 1)
+        self.assertContains(response, 'search=Pagination%20Customer&amp;status=pending&amp;page=1')
+
+    def test_invoice_register_marks_past_unpaid_bookings_overdue(self):
+        overdue_booking = self.create_booking(
+            event_date=date.today() - timedelta(days=1),
+        )
+
+        response = self.client.get(reverse('invoices'), {'status': 'overdue'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['invoice_list'][0]['booking'], overdue_booking.booking_id)
+        self.assertEqual(response.context['invoice_list'][0]['status'], 'overdue')
+
+    def test_invoice_detail_uses_current_booking_and_payments(self):
+        booking = self.create_booking(advance_amount=25000)
+        invoice_id = booking.booking_id.replace('BK-', 'INV-', 1)
+
+        response = self.client.get(f'{reverse("invoice_detail", args=[invoice_id])}?popup=1')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, invoice_id)
+        self.assertContains(response, 'Invoice Customer')
+        self.assertContains(response, 'H1')
+        self.assertContains(response, 'Rs 25,000')
+        self.assertContains(response, 'Rs 75,000')
+        self.assertContains(response, 'TERMS &amp; CONDITIONS')
+        self.assertContains(response, 'window.print()')
+        self.assertNotContains(response, 'Main navigation')
+
+    def test_generated_invoice_pdf_has_complete_single_page_layout(self):
+        booking = self.create_booking(advance_amount=25000)
+        invoice_id = booking.booking_id.replace('BK-', 'INV-', 1)
+        pdf = _build_invoice_pdf(_build_invoice(booking), invoice_id)
+        reader = PdfReader(BytesIO(pdf))
+
+        self.assertEqual(len(reader.pages), 1)
+        page_text = reader.pages[0].extract_text()
+        for expected_text in (
+            'ROYAL PALACE HALL',
+            invoice_id,
+            booking.customer_email,
+            'PAYMENT NOTE',
+            'Balance due',
+            'TERMS & CONDITIONS',
+            'Karachi, Pakistan',
+        ):
+            self.assertIn(expected_text, page_text)
+
+    def test_invoice_detail_returns_404_for_unknown_invoice(self):
+        response = self.client.get(reverse('invoice_detail', args=['INV-2099-999']))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_invoice_register_has_no_fake_invoice_when_no_bookings_exist(self):
+        response = self.client.get(reverse('invoices'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No invoices yet.')
+        self.assertNotContains(response, 'INV-2026-126')

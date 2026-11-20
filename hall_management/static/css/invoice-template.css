@@ -89,11 +89,34 @@
 
 @media (max-width: 700px) {
   .invoice-preview-notice { align-items: flex-start; }
-  .invoice-items { min-width: 620px; }
-  .invoice-heading-meta { flex: 0 0 auto; }
+  .invoice-document-head { flex-wrap: wrap; }
+  .invoice-brand { min-width: 0; flex: 1 1 170px; }
+  .invoice-brand > div { min-width: 0; }
+  .invoice-brand strong { justify-content: flex-start; text-align: left; }
+  .invoice-heading-meta { min-width: 0; flex: 1 1 130px; }
+  .invoice-heading-meta > strong { overflow-wrap: anywhere; text-align: right; }
+  .invoice-party p { overflow-wrap: anywhere; }
+  .invoice-items { min-width: 0; table-layout: fixed; }
+  .invoice-items th, .invoice-items td { padding-right: 6px; padding-left: 6px; white-space: normal; }
+  .invoice-items th:first-child, .invoice-items td:first-child { width: 40%; }
+  .invoice-items th:nth-child(2), .invoice-items td:nth-child(2) { width: 10%; white-space: normal; }
+  .invoice-items th:nth-child(3), .invoice-items td:nth-child(3) { width: 24%; white-space: normal; overflow-wrap: anywhere; }
+  .invoice-items th:last-child, .invoice-items td:last-child { width: 26%; white-space: normal; overflow-wrap: anywhere; }
+  .invoice-items td:first-child small { overflow-wrap: anywhere; }
   .invoice-terms ol { grid-template-columns: 1fr; }
   .invoice-terms-heading { align-items: flex-start; flex-direction: column; gap: 6px; }
   .invoice-document-footer .invoice-attribution { flex-direction: column; }
+}
+
+@media (max-width: 460px) {
+  .invoice-document { padding: 18px 12px 14px; }
+  .invoice-brand { flex-basis: 155px; }
+  .invoice-brand strong { font-size: 9px; }
+  .invoice-brand div > span { font-size: 7px; letter-spacing: .06em; }
+  .invoice-heading-meta { flex-basis: 110px; }
+  .invoice-items th { font-size: 8px; letter-spacing: .04em; }
+  .invoice-items th, .invoice-items td { padding-right: 3px; padding-left: 3px; }
+  .invoice-items td { font-size: 9px; }
 }
 
 @media print {

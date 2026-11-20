@@ -1,0 +1,317 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<style>
+		@page { size: A4; margin: 12mm 10mm 8mm; }
+		body {
+			margin: 0;
+			background: #fdfcf9;
+			color: #20211f;
+			font-family: Arial, sans-serif;
+			font-size: 11px;
+		}
+		.document {
+			width: 100%;
+			border-top: 3px solid #a9864b;
+			background: #fdfcf9;
+		}
+		.document-inner { padding: 26px 30px 18px; }
+		.head { width: 100%; padding-bottom: 22px; border-bottom: 1px solid #e7e4de; }
+		.head td { vertical-align: top; }
+		.brand-mark {
+			width: 46px;
+			height: 46px;
+			background: #c7a864;
+			color: #241d10;
+			border-radius: 9px;
+			font-family: Georgia, serif;
+			font-size: 16px;
+			font-weight: bold;
+			text-align: center;
+			line-height: 46px;
+		}
+		.brand-name {
+			color: #262723;
+			font-size: 12px;
+			font-weight: bold;
+			letter-spacing: 1px;
+			padding-left: 12px;
+		}
+		.brand-sub {
+			color: #85847e;
+			font-size: 8px;
+			letter-spacing: 2px;
+			padding: 5px 0 0 12px;
+		}
+		.heading-meta { text-align: right; }
+		.invoice-word {
+			display: block;
+			color: #9c7d46;
+			font-family: Georgia, serif;
+			font-size: 21px;
+			letter-spacing: 2px;
+		}
+		.invoice-id {
+			display: block;
+			margin-top: 7px;
+			color: #575750;
+			font-size: 11px;
+			font-weight: bold;
+		}
+		.status {
+			display: inline-block;
+			margin-top: 7px;
+			padding: 5px 9px;
+			border: 1px solid #ead9b8;
+			border-radius: 20px;
+			background: #fbf5e8;
+			color: #9c6f2d;
+			font-size: 8px;
+		}
+		.details { width: 100%; border-collapse: separate; border-spacing: 0; padding: 24px 0 28px; }
+		.details td { vertical-align: top; }
+		.details-left { width: 52%; }
+		.details-right { width: 48%; }
+		.label {
+			display: block;
+			color: #20211f;
+			font-size: 10px;
+			font-weight: bold;
+			letter-spacing: 2px;
+		}
+		.customer-name {
+			margin: 8px 0 7px;
+			color: #242521;
+			font-family: Georgia, serif;
+			font-size: 20px;
+			font-weight: bold;
+		}
+		.party-line { margin: 5px 0; color: #686861; font-size: 10px; }
+		.meta-table { width: 100%; }
+		.meta-table td { width: 50%; padding: 0 8px 17px 0; vertical-align: top; }
+		.meta-table strong {
+			display: block;
+			margin-top: 6px;
+			color: #292a26;
+			font-size: 11px;
+		}
+		.items {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		.items th {
+			padding: 12px 10px;
+			border-top: 1px solid #e7e4de;
+			border-bottom: 1px solid #e7e4de;
+			color: #8c8a82;
+			font-size: 8px;
+			letter-spacing: 2px;
+			text-align: left;
+		}
+		.items td {
+			padding: 15px 10px;
+			border-bottom: 1px solid #efede8;
+			color: #40413c;
+			font-size: 11px;
+			vertical-align: top;
+		}
+		.items th:nth-child(2),
+		.items td:nth-child(2) { text-align: center; }
+		.items th:nth-child(3),
+		.items th:nth-child(4),
+		.items td:nth-child(3),
+		.items td:nth-child(4) { text-align: right; white-space: nowrap; }
+		.service-name { display: block; color: #30312c; font-weight: bold; }
+		.service-detail { display: block; margin-top: 5px; color: #85847d; font-size: 9px; }
+		.summary { width: 100%; border-collapse: collapse; margin-top: 26px; }
+		.summary td { vertical-align: top; }
+		.summary-left { width: 55%; padding-right: 28px; }
+		.summary-right { width: 45%; }
+		.payment-note {
+			margin: 9px 0 0;
+			color: #73736c;
+			font-size: 10px;
+			line-height: 1.6;
+		}
+		.totals { width: 100%; border-collapse: collapse; }
+		.totals td {
+			padding: 7px 0;
+			color: #686861;
+			font-size: 11px;
+		}
+		.totals td:last-child {
+			color: #33342f;
+			font-weight: bold;
+			text-align: right;
+			white-space: nowrap;
+		}
+		.totals .paid td:last-child { color: #42785e; }
+		.totals .balance td {
+			margin-top: 7px;
+			padding: 14px 13px;
+			border: 1px solid #e8dfcc;
+			border-radius: 7px;
+			background: #f7f2e8;
+			color: #33342f;
+			font-size: 13px;
+			font-weight: bold;
+		}
+		.totals .balance td:last-child { color: #866a39; }
+		.terms {
+			margin-top: 20px;
+			padding: 18px 0 20px;
+			border-top: 1px solid #e7e4de;
+		}
+		.terms-table { width: 100%; margin-top: 10px; }
+		.terms-table td {
+			width: 50%;
+			padding: 4px 18px 5px 0;
+			color: #73736c;
+			font-size: 9px;
+			line-height: 1.5;
+			vertical-align: top;
+		}
+		.terms-note { color: #99978f; font-size: 8px; text-align: right; }
+		.footer {
+			padding-top: 14px;
+			border-top: 1px solid #e7e4de;
+			color: #99978f;
+			font-size: 8px;
+		}
+		.footer table { width: 100%; }
+		.footer td { vertical-align: top; }
+		.attribution {
+			padding-top: 10px;
+			border-top: 1px solid #efede8;
+			text-align: left;
+		}
+		.attribution-right { text-align: right; }
+	</style>
+</head>
+<body>
+	<div class="document">
+		<div class="document-inner">
+			<table class="head">
+				<tr>
+					<td width="62">
+						<div class="brand-mark">HM</div>
+					</td>
+					<td>
+						<div class="brand-name">ROYAL PALACE HALL</div>
+						<div class="brand-sub">EVENTS &amp; HOSPITALITY</div>
+					</td>
+					<td class="heading-meta">
+						<span class="invoice-word">INVOICE</span>
+						<span class="invoice-id">{{ invoice_id }}</span>
+						<span class="status">{{ invoice.status|capfirst }}</span>
+					</td>
+				</tr>
+			</table>
+
+			<table class="details">
+				<tr>
+					<td class="details-left">
+						<span class="label">BILLED TO</span>
+						<div class="customer-name">{{ invoice.customer }}</div>
+						<p class="party-line"><strong>Email:</strong> {{ invoice.customer_email }}</p>
+						<p class="party-line"><strong>Event:</strong> {{ invoice.event }}</p>
+						<p class="party-line"><strong>Portion:</strong> {{ invoice.venue }}</p>
+					</td>
+					<td class="details-right">
+						<table class="meta-table">
+							<tr>
+								<td><span class="label">BOOKING ID</span><strong>{{ invoice.booking }}</strong></td>
+								<td><span class="label">EVENT DATE</span><strong>{{ invoice.event_date }}</strong></td>
+							</tr>
+							<tr>
+								<td><span class="label">ISSUED ON</span><strong>{{ invoice.issued }}</strong></td>
+								<td><span class="label">DUE DATE</span><strong>{{ invoice.due }}</strong></td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+
+			<table class="items">
+				<thead>
+					<tr><th>SERVICE</th><th>QTY</th><th>RATE</th><th>AMOUNT</th></tr>
+				</thead>
+				<tbody>
+					{% for item in invoice.items %}
+					<tr>
+						<td>
+							<span class="service-name">{{ item.description }}</span>
+							<span class="service-detail">{{ item.detail }}</span>
+						</td>
+						<td>{{ item.quantity }}</td>
+						<td>Rs {{ item.rate }}</td>
+						<td>Rs {{ item.amount }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+
+			<table class="summary">
+				<tr>
+					<td class="summary-left">
+						<span class="label">PAYMENT NOTE</span>
+						<p class="payment-note">Please include <strong>{{ invoice_id }}</strong> as the payment reference.</p>
+						<p class="payment-note">Thank you for choosing Royal Palace Hall.</p>
+					</td>
+					<td class="summary-right">
+						<table class="totals">
+							<tr><td>Subtotal</td><td>Rs {{ invoice.total }}</td></tr>
+							<tr class="paid"><td>Amount paid</td><td>Rs {{ invoice.paid }}</td></tr>
+							<tr class="balance"><td>Balance due</td><td>Rs {{ invoice.balance }}</td></tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+
+			<div class="terms">
+				<table style="width:100%;">
+					<tr>
+						<td><span class="label">TERMS &amp; CONDITIONS</span></td>
+						<td class="terms-note">Payment is due by the event date.</td>
+					</tr>
+				</table>
+				<table class="terms-table">
+					<tr>
+						<td>1. Please settle the outstanding balance by the due date shown on this invoice.</td>
+						<td>2. Changes to guest count, event timing, venue setup, or selected services may affect the final amount.</td>
+					</tr>
+					<tr>
+						<td>3. Additional services not listed on this invoice are not included and may be charged separately.</td>
+						<td>4. Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.</td>
+					</tr>
+					<tr>
+						<td>5. Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.</td>
+						<td>6. Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.</td>
+					</tr>
+					<tr>
+						<td>7. Cancellation or rescheduling requests are handled under the terms agreed in the booking confirmation.</td>
+						<td></td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="footer">
+				<table>
+					<tr>
+						<td>ROYAL PALACE HALL</td>
+						<td style="text-align:center;">Karachi, Pakistan</td>
+						<td style="text-align:right;">{{ invoice_id }}</td>
+					</tr>
+				</table>
+				<table class="attribution">
+					<tr>
+						<td>HallMaster &copy; 2026 &middot; Secure Venue Management System.</td>
+						<td class="attribution-right">Design and Developed by Syed Muhammad Faisal</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
